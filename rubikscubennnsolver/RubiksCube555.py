@@ -440,7 +440,7 @@ class LookupTable555TsaiPhase3EdgesOrient(LookupTable):
             max_depth=10)
 
     def state(self):
-        return self.parent.tsai_phase3_orient_edges_state(False)
+        return self.parent.tsai_phase3_orient_edges_state()
 
 
 class LookupTable555TsaiPhase3LRCenters(LookupTable):
@@ -1376,7 +1376,7 @@ class LookupTable555TsaiPhase3(LookupTableIDA):
 
     def state(self):
         parent_state = self.parent.state
-        orient_edge_state = self.parent.tsai_phase3_orient_edges_state(return_hex=False)
+        orient_edge_state = self.parent.tsai_phase3_orient_edges_state()
 
         # Return the state of the edges plus the LR centers
         result = []
@@ -2802,76 +2802,33 @@ class RubiksCube555(RubiksCube):
 
     def build_tsai_phase3_orient_edges_555(self):
         state = self.state
+        new_tsai_phase3_orient_edges_555 = {}
 
         for x in range(1000000):
 
             # make random moves
-            step = moves_5x5x5[randint(0, len(moves_5x5x5)-1)]
+            step = moves_555[randint(0, len(moves_555)-1)]
+            self.rotate(step)
 
-            for (x, y) in (
-                (2, 104), (4, 102), (6, 27), (10, 79), (16, 29), (20, 77), (22, 52), (24, 54),
-                (27, 6), (29, 16), (31, 110), (35, 56), (41, 120), (45, 66), (47, 141), (49, 131),
-                (52, 22), (54, 24), (56, 35), (60, 81), (66, 45), (70, 91), (72, 127), (74, 129),
-                (77, 20), (79, 10), (81, 60), (85, 106), (91, 70), (95, 116), (97, 135), (99, 145),
-                (102, 4), (104, 2), (106, 85), (110, 31), (116, 95), (120, 41), (122, 149), (124, 147),
-                (127, 72), (129, 74), (131, 49), (135, 97), (141, 47), (145, 99), (147, 124), (149, 122)):
+            for (x, y) in tsai_phase3_orient_edges_tuples:
 
                 state_x = self.state[x]
                 state_y = self.state[y]
                 wing_str = wing_str_map[''.join((state_x, state_y))]
                 wing_tuple = (x, y, state_x, state_y)
 
-                if wing_tuple not in tsai_phase3_orient_edges_555:
-                    tsai_phase3_orient_edges_555[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
+                if wing_tuple not in new_tsai_phase3_orient_edges_555:
+                    new_tsai_phase3_orient_edges_555[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
 
-        log.info("new tsai_phase3_orient_edges_555\n\n%s\n\n" % pformat(tsai_phase3_orient_edges_555))
-        log.info("tsai_phase3_orient_edges_555 has %d entries" % len(tsai_phase3_orient_edges_555))
+        print("new tsai_phase3_orient_edges_555\n\n%s\n\n" % pformat(new_tsai_phase3_orient_edges_555))
+        log.info("new_tsai_phase3_orient_edges_555 has %d entries" % len(new_tsai_phase3_orient_edges_555))
         sys.exit(0)
 
-    def tsai_phase3_orient_edges_state(self, return_hex):
+    def tsai_phase3_orient_edges_state(self):
         state = self.state
-
-        '''
-        result = []
-
-        for (x, y) in (
-            (2, 104), (4, 102), (6, 27), (10, 79), (16, 29), (20, 77), (22, 52), (24, 54),
-            (27, 6), (29, 16), (31, 110), (35, 56), (41, 120), (45, 66), (47, 141), (49, 131),
-            (52, 22), (54, 24), (56, 35), (60, 81), (66, 45), (70, 91), (72, 127), (74, 129),
-            (77, 20), (79, 10), (81, 60), (85, 106), (91, 70), (95, 116), (97, 135), (99, 145),
-            (102, 4), (104, 2), (106, 85), (110, 31), (116, 95), (120, 41), (122, 149), (124, 147),
-            (127, 72), (129, 74), (131, 49), (135, 97), (141, 47), (145, 99), (147, 124), (149, 122)):
-
-            state_x = state[x]
-            state_y = state[y]
-            wing_str = wing_str_map[''.join((state_x, state_y))]
-            high_low = tsai_phase3_orient_edges_555[(x, y, state_x, state_y)]
-
-            if wing_str in edges_to_flip:
-                if high_low == 'U':
-                    high_low = 'D'
-                else:
-                    high_low = 'U'
-
-            if return_hex:
-                high_low = high_low.replace('D', '0').replace('U', '1')
-
-            result.append(high_low)
-        '''
-
-        #for (x, y) in tsai_phase3_orient_edges_tuples:
-        #    state_x = state[x]
-        #    state_y = state[y]
-        #    high_low = tsai_phase3_orient_edges_444[(x, y, state_x, state_y)]
-        #    result.append(high_low)
         result = [tsai_phase3_orient_edges_555[(x, y, state[x], state[y])] for (x, y) in tsai_phase3_orient_edges_tuples]
         result = ''.join(result)
-        result = ''.join(result)
-
-        if return_hex:
-            return "%012x" % int(result, 2)
-        else:
-            return result
+        return result
 
     def tsai_phase3_orient_edges_print(self):
 
@@ -2882,7 +2839,7 @@ class RubiksCube555(RubiksCube):
         self.nuke_corners()
         self.nuke_centers()
 
-        orient_edge_state = list(self.tsai_phase3_orient_edges_state(return_hex=False))
+        orient_edge_state = list(self.tsai_phase3_orient_edges_state())
         orient_edge_state_index = 0
         self.nuke_edges()
 
