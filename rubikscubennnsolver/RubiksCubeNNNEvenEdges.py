@@ -1,7 +1,7 @@
 
 from rubikscubennnsolver import RubiksCube, ImplementThis
-from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_4x4x4
-from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_5x5x5
+from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
+from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 import logging
 import sys
 
@@ -11,9 +11,24 @@ log = logging.getLogger(__name__)
 
 class RubiksCubeNNNEvenEdges(RubiksCube):
 
+    def get_fake_444(self):
+        if self.fake_444 is None:
+            self.fake_444 = RubiksCube444(solved_444, 'URFDLB')
+            self.fake_444.lt_init()
+        else:
+            self.fake_444.re_init()
+        return self.fake_444
+
+    def get_fake_555(self):
+        if self.fake_555 is None:
+            self.fake_555 = RubiksCube555(solved_555, 'URFDLB')
+            self.fake_555.lt_init()
+        else:
+            self.fake_555.re_init()
+        return self.fake_555
+
     def pair_inside_edges_via_444(self):
-        fake_444 = RubiksCube444(solved_4x4x4, 'URFDLB')
-        fake_444.lt_init()
+        fake_444 = self.get_fake_444()
 
         # Fill in the corners so that we can avoid PLL parity when pairing the edges
         start_444 = 0
@@ -68,12 +83,15 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
 
             self.rotate(step)
 
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
+        self.print_cube()
         log.info("%s: Inside edges are paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("\n\n\n\n\n")
 
     def pair_edge_orbit_via_555(self, orbit):
         log.info("%s: pair_edge_orbit_via_555 for %d" % (self, orbit))
-        fake_555 = RubiksCube555(solved_5x5x5, 'URFDLB')
-        fake_555.lt_init()
+        fake_555 = self.get_fake_555()
 
         # Fill in the corners so we can avoid certain types of parity
         start_555 = 0
@@ -170,7 +188,7 @@ class RubiksCubeNNNEvenEdges(RubiksCube):
 
     def group_edges(self):
 
-        if not self.get_non_paired_edges():
+        if self.edges_paired():
             self.solution.append('EDGES_GROUPED')
             return
 

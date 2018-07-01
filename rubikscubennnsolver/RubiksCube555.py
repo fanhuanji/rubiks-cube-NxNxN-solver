@@ -12,15 +12,17 @@ from rubikscubennnsolver.LookupTable import (
     steps_on_same_face_and_layer,
     LookupTable,
     LookupTableCostOnly,
+    LookupTableHashCostOnly,
     LookupTableIDA,
 )
 import itertools
 import logging
+import sys
 
 log = logging.getLogger(__name__)
 
-moves_5x5x5 = moves_4x4x4
-solved_5x5x5 = 'UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB'
+moves_555 = moves_444
+solved_555 = 'UUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBB'
 
 centers_555 = (
     7, 8, 9, 12, 13, 14, 17, 18, 19,
@@ -181,6 +183,46 @@ wing_strs_all = (
 )
 
 
+edges_partner_555 = {
+    2: 104,
+    3: 103,
+    4: 102,
+    6: 27,
+    10: 79,
+    11: 28,
+    15: 78,
+    16: 29,
+    20: 77,
+    22: 52,
+    23: 53,
+    24: 54,
+    31: 110,
+    35: 56,
+    36: 115,
+    40: 61,
+    41: 120,
+    45: 66,
+    81: 60,
+    85: 106,
+    86: 65,
+    90: 111,
+    91: 70,
+    95: 116,
+    127: 72,
+    128: 73,
+    129: 74,
+    131: 49,
+    135: 97,
+    136: 48,
+    140: 98,
+    141: 47,
+    145: 99,
+    147: 124,
+    148: 123,
+    149: 122
+}
+
+
 rotations_24 = (
     (),
     ("y",),
@@ -294,13 +336,10 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
     1 steps has 5 entries (0 percent, 0.00x previous step)
     2 steps has 98 entries (0 percent, 19.60x previous step)
     3 steps has 2,036 entries (0 percent, 20.78x previous step)
-    4 steps has 41,096 entries (0 percent, 20.18x previous step)
-    5 steps has 824,950 entries (0 percent, 20.07x previous step)
-    6 steps has 16,300,291 entries (4 percent, 19.76x previous step)
-    7 steps has 311,709,304 entries (94 percent, 19.12x previous step)
+    4 steps has 41,096 entries (4 percent, 20.18x previous step)
+    5 steps has 824,950 entries (95 percent, 20.07x previous step)
 
-    Total: 328,877,780 entries
-    Average: 6.945019 moves
+    Total: 868,185 entries
     """
 
     def __init__(self, parent):
@@ -309,17 +348,16 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
             parent,
             'lookup-table-5x5x5-step10-UD-centers-stage.txt',
             '3fe000000001ff',
-            moves_5x5x5,
+            moves_555,
             (), # illegal_moves
 
             # prune tables
             (parent.lt_UD_T_centers_stage,
              parent.lt_UD_X_centers_stage),
 
-            #linecount=17168476, # 6-deep
-            #max_depth=6)
-            linecount=328877780, # 7-deep
-            max_depth=7)
+            linecount=868185,
+            max_depth=5,
+            filesize=30386475)
 
     def state(self):
         parent_state = self.parent.state
@@ -329,7 +367,7 @@ class LookupTableIDA555UDCentersStage(LookupTableIDA):
         return self.hex_format % int(result, 2)
 
 
-class LookupTableIDA555LRCentersStage(LookupTable):
+class LookupTable555LRCentersStage(LookupTable):
     """
     lookup-table-5x5x5-step20-LR-centers-stage.txt
     ==============================================
@@ -573,7 +611,7 @@ class LookupTable555TsaiPhase3LFCenters(LookupTable):
         return result
 
 
-class LookupTableULCentersSolve(LookupTable):
+class LookupTableULCentersSolve(LookupTableHashCostOnly):
     """
     This tables solves sides U and L which in turn also solve D and R.  When
     the table was built the Ls were replaced with Us so that we were left with
@@ -600,13 +638,14 @@ class LookupTableULCentersSolve(LookupTable):
     """
 
     def __init__(self, parent):
-        LookupTable.__init__(
+        LookupTableHashCostOnly.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step31-UL-centers-solve.txt',
+            'lookup-table-5x5x5-step31-UL-centers-solve.hash-cost-only.txt',
             '3ffff000000000',
             linecount=24010000,
-            max_depth=13)
+            max_depth=13,
+            bucketcount=48020003)
 
     def state(self):
         parent_state = self.parent.state
@@ -616,7 +655,7 @@ class LookupTableULCentersSolve(LookupTable):
         return self.hex_format % int(result, 2)
 
 
-class LookupTableUFCentersSolve(LookupTable):
+class LookupTableUFCentersSolve(LookupTableHashCostOnly):
     """
     This tables solves sides U and F which in turn also solve D and B.  When
     the table was built the Fs were replaced with Us so that we were left with
@@ -643,13 +682,14 @@ class LookupTableUFCentersSolve(LookupTable):
     """
 
     def __init__(self, parent):
-        LookupTable.__init__(
+        LookupTableHashCostOnly.__init__(
             self,
             parent,
-            'lookup-table-5x5x5-step33-UF-centers-solve.txt',
+            'lookup-table-5x5x5-step33-UF-centers-solve.hash-cost-only.txt',
             '3fe00ff8000000',
             linecount=24010000,
-            max_depth=13)
+            max_depth=13,
+            bucketcount=48020003)
 
     def state(self):
         parent_state = self.parent.state
@@ -661,7 +701,6 @@ class LookupTableUFCentersSolve(LookupTable):
 
 class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
     """
-    Would be 117,649,000,000...I built it 7-deep.
     24,010,000/117,649,000,000 is 0.000204082 so this will be a fast IDA search
 
     lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt
@@ -669,12 +708,11 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
     1 steps has 7 entries (0 percent, 0.00x previous step)
     2 steps has 99 entries (0 percent, 14.14x previous step)
     3 steps has 1,134 entries (0 percent, 11.45x previous step)
-    4 steps has 12,183 entries (0 percent, 10.74x previous step)
-    5 steps has 128,730 entries (0 percent, 10.57x previous step)
-    6 steps has 1,291,295 entries (9 percent, 10.03x previous step)
-    7 steps has 12,250,688 entries (89 percent, 9.49x previous step)
+    4 steps has 12,183 entries (8 percent, 10.74x previous step)
+    5 steps has 128,730 entries (90 percent, 10.57x previous step)
 
-    Total: 13,684,136 entries
+    Total: 142,153 entries
+    Average: 4.90 moves
     """
 
     def __init__(self, parent):
@@ -683,7 +721,7 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
             parent,
             'lookup-table-5x5x5-step30-ULFRBD-centers-solve.txt',
             'UUUUUUUUULLLLLLLLLFFFFFFFFFRRRRRRRRRBBBBBBBBBDDDDDDDDD',
-            moves_5x5x5,
+            moves_555,
 
             # These moves would destroy the staged centers
             ("Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"),
@@ -691,8 +729,9 @@ class LookupTableIDA555ULFRBDCentersSolve(LookupTableIDA):
             # prune tables
             (parent.lt_UL_centers_solve,
              parent.lt_UF_centers_solve),
-            linecount=13684136,
-            max_depth=7)
+            linecount=142153,
+            max_depth=5,
+            filesize=10661475)
 
     def state(self):
         parent_state = self.parent.state
@@ -812,8 +851,7 @@ class LookupTable555StageFirstFourEdges(LookupTable):
         state = self.parent.state[:]
 
         for square_index in wings_555:
-            side = self.parent.get_side_for_index(square_index)
-            partner_index = side.get_wing_partner(square_index)
+            partner_index = edges_partner_555[square_index]
             square_value = state[square_index]
             partner_value = state[partner_index]
             wing_str = ''.join(sorted([square_value, partner_value]))
@@ -862,8 +900,7 @@ class LookupTable555StageSecondFourEdges(LookupTable):
         state = self.parent.state[:]
 
         for square_index in wings_555:
-            side = self.parent.get_side_for_index(square_index)
-            partner_index = side.get_wing_partner(square_index)
+            partner_index = edges_partner_555[square_index]
             square_value = state[square_index]
             partner_value = state[partner_index]
             wing_str = ''.join(sorted([square_value, partner_value]))
@@ -1069,6 +1106,7 @@ class RubiksCube555(RubiksCube):
     - pair edges
     - solve as 3x3x3
     """
+    instantiated = False
 
     def __init__(self, state, order, colormap=None, debug=False):
         RubiksCube.__init__(self, state, order, colormap)
@@ -1076,6 +1114,12 @@ class RubiksCube555(RubiksCube):
         # This will be True when an even cube is using the 555 edge solver
         # to pair an orbit of edges
         self.avoid_pll = False
+
+        if RubiksCube555.instantiated:
+            #raise Exception("Another 5x5x5 instance is being created")
+            log.warning("Another 5x5x5 instance is being created")
+        else:
+            RubiksCube555.instantiated = True
 
         if debug:
             log.setLevel(logging.DEBUG)
@@ -1133,8 +1177,9 @@ class RubiksCube555(RubiksCube):
         self.lt_UD_T_centers_stage = LookupTable555UDTCenterStageCostOnly(self)
         self.lt_UD_X_centers_stage = LookupTable555UDXCenterStageCostOnly(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
+        self.lt_UD_centers_stage.preload_cache()
 
-        self.lt_LR_centers_stage = LookupTableIDA555LRCentersStage(self)
+        self.lt_LR_centers_stage = LookupTable555LRCentersStage(self)
 
         #self.lt_tsai_phase2_edges_orient = LookupTable555TsaiPhase2EdgesOrient(self)
         #self.lt_tsai_phase2_LR_centers = LookupTable555TsaiPhase2LRCenters(self)
@@ -1144,9 +1189,12 @@ class RubiksCube555(RubiksCube):
         self.lt_UL_centers_solve = LookupTableULCentersSolve(self)
         self.lt_UF_centers_solve = LookupTableUFCentersSolve(self)
         self.lt_ULFRB_centers_solve = LookupTableIDA555ULFRBDCentersSolve(self)
+        self.lt_ULFRB_centers_solve.preload_cache()
 
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
+        #self.lt_edges_stage_first_four.preload_cache()
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
+        self.lt_edges_stage_second_four.preload_cache()
         self.lt_edges_pair_last_four = LookupTable555PairLastFourEdges(self)
 
         self.lt_ULFRBD_t_centers_solve = LookupTable555TCenterSolve(self)

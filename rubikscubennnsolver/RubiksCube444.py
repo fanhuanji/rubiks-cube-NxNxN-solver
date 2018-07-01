@@ -8,26 +8,60 @@ from rubikscubennnsolver.LookupTable import (
     LookupTableCostOnly,
     LookupTableIDA,
 )
+from rubikscubennnsolver.RubiksCube444Misc import (
+    low_edges_444,
+)
 import logging
 import sys
 
 log = logging.getLogger(__name__)
 
 
-moves_4x4x4 = ("U", "U'", "U2", "Uw", "Uw'", "Uw2",
-               "L", "L'", "L2", "Lw", "Lw'", "Lw2",
-               "F" , "F'", "F2", "Fw", "Fw'", "Fw2",
-               "R" , "R'", "R2", "Rw", "Rw'", "Rw2",
-               "B" , "B'", "B2", "Bw", "Bw'", "Bw2",
-               "D" , "D'", "D2", "Dw", "Dw'", "Dw2")
+moves_444 = (
+    "U", "U'", "U2", "Uw", "Uw'", "Uw2",
+    "L", "L'", "L2", "Lw", "Lw'", "Lw2",
+    "F" , "F'", "F2", "Fw", "Fw'", "Fw2",
+    "R" , "R'", "R2", "Rw", "Rw'", "Rw2",
+    "B" , "B'", "B2", "Bw", "Bw'", "Bw2",
+    "D" , "D'", "D2", "Dw", "Dw'", "Dw2"
+)
 
-solved_4x4x4 = 'UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB'
+solved_444 = 'UUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBB'
 
-centers_444 = (6, 7, 10, 11, 22, 23, 26, 27, 38, 39, 42, 43, 54, 55, 58, 59, 70, 71, 74, 75, 86, 87, 90, 91)
+centers_444 = (
+    6, 7, 10, 11,
+    22, 23, 26, 27,
+    38, 39, 42, 43,
+    54, 55, 58, 59,
+    70, 71, 74, 75,
+    86, 87, 90, 91
+)
 
-UD_centers_444 = (6, 7, 10, 11, 86, 87, 90, 91)
+UD_centers_444 = (
+    6, 7, 10, 11,
+    86, 87, 90, 91
+)
 
-LR_centers_444 = (22, 23, 26, 27, 54, 55, 58, 59)
+LR_centers_444 = (
+    22, 23, 26, 27,
+    54, 55, 58, 59
+)
+
+UFBD_centers_444 = (
+    6, 7, 10, 10,
+    38, 39, 42, 43,
+    70, 71, 74, 75,
+    86, 87, 90, 91
+)
+
+corners_444 = (
+    1, 4, 13, 16,
+    17, 20, 29, 32,
+    33, 36, 45, 48,
+    49, 52, 61, 64,
+    65, 68, 77, 80,
+    81, 84, 93, 96
+)
 
 edges_444 = (
     2, 3, 5, 8, 9, 12, 14, 15,      # Upper
@@ -35,7 +69,8 @@ edges_444 = (
     34, 35, 37, 40, 41, 44, 46, 47, # Front
     50, 51, 53, 56, 57, 60, 62, 63, # Right
     66, 67, 69, 72, 73, 76, 78, 79, # Back
-    82, 83, 85, 88, 89, 92, 94, 95) # Down
+    82, 83, 85, 88, 89, 92, 94, 95  # Down
+)
 
 wings_444 = (
     2, 3,   # Upper
@@ -51,6 +86,57 @@ wings_444 = (
     88, 92,
     94, 95
 )
+
+edges_partner_444 = {
+    2: 67,
+    3: 66,
+    5: 18,
+    8: 51,
+    9: 19,
+    12: 50,
+    14: 34,
+    15: 35,
+    18: 5,
+    19: 9,
+    21: 72,
+    24: 37,
+    25: 76,
+    28: 41,
+    30: 89,
+    31: 85,
+    34: 14,
+    35: 15,
+    37: 24,
+    40: 53,
+    41: 28,
+    44: 57,
+    46: 82,
+    47: 83,
+    50: 12,
+    51: 8,
+    53: 40,
+    56: 69,
+    57: 44,
+    60: 73,
+    62: 88,
+    63: 92,
+    66: 3,
+    67: 2,
+    69: 56,
+    72: 21,
+    73: 60,
+    76: 25,
+    78: 95,
+    79: 94,
+    82: 46,
+    83: 47,
+    85: 31,
+    88: 62,
+    89: 30,
+    92: 63,
+    94: 79,
+    95: 78
+}
 
 centers_solved_states_444 = set()
 centers_solved_states_444.add('UUUULLLLFFFFRRRRBBBBDDDD')
@@ -83,7 +169,75 @@ def centers_solved_444(state):
         return True
     return False
 
-
+# If all 3 groups of edges have been staged for L4E each of them has
+# 105 possible patterns but only 4 of those patterns are solveablve
+# via w half turns only. 4^3 is 64...below are the 64 of these edge patterns.
+edge_patterns_solveablve_via_half_turns = set((
+    '103524769b8adfcehgjliknm',
+    '10352476a8b9ecfdhgjliknm',
+    '10352476dfce9b8ahgjliknm',
+    '10352476ecfda8b9hgjliknm',
+    '104253769b8adfcehgkiljnm',
+    '10425376a8b9ecfdhgkiljnm',
+    '10425376dfce9b8ahgkiljnm',
+    '10425376ecfda8b9hgkiljnm',
+    '10jlik769b8adfcehg3524nm',
+    '10jlik76a8b9ecfdhg3524nm',
+    '10jlik76dfce9b8ahg3524nm',
+    '10jlik76ecfda8b9hg3524nm',
+    '10kilj769b8adfcehg4253nm',
+    '10kilj76a8b9ecfdhg4253nm',
+    '10kilj76dfce9b8ahg4253nm',
+    '10kilj76ecfda8b9hg4253nm',
+    '673524019b8adfcemnjlikgh',
+    '67352401a8b9ecfdmnjlikgh',
+    '67352401dfce9b8amnjlikgh',
+    '67352401ecfda8b9mnjlikgh',
+    '674253019b8adfcemnkiljgh',
+    '67425301a8b9ecfdmnkiljgh',
+    '67425301dfce9b8amnkiljgh',
+    '67425301ecfda8b9mnkiljgh',
+    '67jlik019b8adfcemn3524gh',
+    '67jlik01a8b9ecfdmn3524gh',
+    '67jlik01dfce9b8amn3524gh',
+    '67jlik01ecfda8b9mn3524gh',
+    '67kilj019b8adfcemn4253gh',
+    '67kilj01a8b9ecfdmn4253gh',
+    '67kilj01dfce9b8amn4253gh',
+    '67kilj01ecfda8b9mn4253gh',
+    'hg3524nm9b8adfce10jlik76',
+    'hg3524nma8b9ecfd10jlik76',
+    'hg3524nmdfce9b8a10jlik76',
+    'hg3524nmecfda8b910jlik76',
+    'hg4253nm9b8adfce10kilj76',
+    'hg4253nma8b9ecfd10kilj76',
+    'hg4253nmdfce9b8a10kilj76',
+    'hg4253nmecfda8b910kilj76',
+    'hgjliknm9b8adfce10352476',
+    'hgjliknma8b9ecfd10352476',
+    'hgjliknmdfce9b8a10352476',
+    'hgjliknmecfda8b910352476',
+    'hgkiljnm9b8adfce10425376',
+    'hgkiljnma8b9ecfd10425376',
+    'hgkiljnmdfce9b8a10425376',
+    'hgkiljnmecfda8b910425376',
+    'mn3524gh9b8adfce67jlik01',
+    'mn3524gha8b9ecfd67jlik01',
+    'mn3524ghdfce9b8a67jlik01',
+    'mn3524ghecfda8b967jlik01',
+    'mn4253gh9b8adfce67kilj01',
+    'mn4253gha8b9ecfd67kilj01',
+    'mn4253ghdfce9b8a67kilj01',
+    'mn4253ghecfda8b967kilj01',
+    'mnjlikgh9b8adfce67352401',
+    'mnjlikgha8b9ecfd67352401',
+    'mnjlikghdfce9b8a67352401',
+    'mnjlikghecfda8b967352401',
+    'mnkiljgh9b8adfce67425301',
+    'mnkiljgha8b9ecfd67425301',
+    'mnkiljghdfce9b8a67425301',
+    'mnkiljghecfda8b967425301',
+))
 
 def get_best_entry(foo):
     # TODO this can only track wings since it is only used by 4x4x4
@@ -229,17 +383,17 @@ lookup-table-4x4x4-step11-UD-centers-stage.txt
 lookup-table-4x4x4-step12-LR-centers-stage.txt
 lookup-table-4x4x4-step13-FB-centers-stage.txt
 ==============================================
-1 steps has 3 entries (0 percent, 0.00x previous step)
-2 steps has 36 entries (0 percent, 12.00x previous step)
-3 steps has 484 entries (0 percent, 13.44x previous step)
-4 steps has 5,408 entries (0 percent, 11.17x previous step)
-5 steps has 48,955 entries (6 percent, 9.05x previous step)
-6 steps has 242,011 entries (32 percent, 4.94x previous step)
-7 steps has 362,453 entries (49 percent, 1.50x previous step)
-8 steps has 75,955 entries (10 percent, 0.21x previous step)
-9 steps has 166 entries (0 percent, 0.00x previous step)
+1 steps has 9 entries (0 percent, 0.00x previous step)
+2 steps has 108 entries (0 percent, 12.00x previous step)
+3 steps has 1,434 entries (0 percent, 13.28x previous step)
+4 steps has 15,210 entries (2 percent, 10.61x previous step)
+5 steps has 126,306 entries (17 percent, 8.30x previous step)
+6 steps has 420,312 entries (57 percent, 3.33x previous step)
+7 steps has 171,204 entries (23 percent, 0.41x previous step)
+8 steps has 888 entries (0 percent, 0.01x previous step)
 
 Total: 735,471 entries
+Average: 6.02 moves
 '''
 class LookupTable444UDCentersStageCostOnly(LookupTableCostOnly):
 
@@ -251,7 +405,8 @@ class LookupTable444UDCentersStageCostOnly(LookupTableCostOnly):
             'lookup-table-4x4x4-step11-UD-centers-stage.cost-only.txt',
             'f0000f',
             linecount=735471,
-            max_depth=9)
+            max_depth=8,
+            filesize=16711681)
 
     def state(self):
         parent_state = self.parent.state
@@ -268,7 +423,8 @@ class LookupTable444LRCentersStageCostOnly(LookupTableCostOnly):
             'lookup-table-4x4x4-step12-LR-centers-stage.cost-only.txt',
             '0f0f00',
             linecount=735471,
-            max_depth=9)
+            max_depth=8,
+            filesize=16711681)
 
     def state(self):
         parent_state = self.parent.state
@@ -285,7 +441,8 @@ class LookupTable444FBCentersStageCostOnly(LookupTableCostOnly):
             'lookup-table-4x4x4-step13-FB-centers-stage.cost-only.txt',
             '00f0f0',
             linecount=735471,
-            max_depth=9)
+            max_depth=8,
+            filesize=16711681)
 
     def state(self):
         parent_state = self.parent.state
@@ -293,19 +450,18 @@ class LookupTable444FBCentersStageCostOnly(LookupTableCostOnly):
         return int(result, 2)
 
 
-
 class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
     """
     lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt
     ==================================================
-    1 steps has 4 entries (0 percent, 0.00x previous step)
-    2 steps has 54 entries (0 percent, 13.50x previous step)
-    3 steps has 726 entries (0 percent, 13.44x previous step)
-    4 steps has 9,300 entries (0 percent, 12.81x previous step)
-    5 steps has 121,407 entries (7 percent, 13.05x previous step)
-    6 steps has 1,586,554 entries (92 percent, 13.07x previous step)
+    1 steps has 24 entries (0 percent, 0.00x previous step)
+    2 steps has 324 entries (0 percent, 13.50x previous step)
+    3 steps has 4,302 entries (0 percent, 13.28x previous step)
+    4 steps has 53,730 entries (7 percent, 12.49x previous step)
+    5 steps has 697,806 entries (92 percent, 12.99x previous step)
 
-    Total: 1,718,045 entries
+    Total: 756,186 entries
+    Average: 4.92 moves
     """
 
     def __init__(self, parent):
@@ -313,8 +469,13 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
             self,
             parent,
             'lookup-table-4x4x4-step10-ULFRBD-centers-stage.txt',
-            'UUUULLLLFFFFLLLLFFFFUUUU',
-            moves_4x4x4,
+            ('FFFFLLLLUUUULLLLUUUUFFFF',
+             'FFFFUUUULLLLUUUULLLLFFFF',
+             'LLLLFFFFUUUUFFFFUUUULLLL',
+             'LLLLUUUUFFFFUUUUFFFFLLLL',
+             'UUUUFFFFLLLLFFFFLLLLUUUU',
+             'UUUULLLLFFFFLLLLFFFFUUUU'),
+            moves_444,
 
             # illegal_moves...ignoring these increases the average solution
             # by less than 1 move but makes the IDA search about 20x faster
@@ -326,8 +487,9 @@ class LookupTableIDA444ULFRBDCentersStage(LookupTableIDA):
             (parent.lt_UD_centers_stage,
              parent.lt_LR_centers_stage,
              parent.lt_FB_centers_stage),
-            linecount=1718045,
-            max_depth=6)
+            linecount=756186,
+            max_depth=5,
+            filesize=34028370)
 
     def state(self):
         parent_state = self.parent.state
@@ -339,19 +501,20 @@ class LookupTable444ULFRBDCentersSolve(LookupTable):
     """
     lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt
     ==================================================
-    1 steps has 96 entries (0 percent, 0.00x previous step)
-    2 steps has 1,008 entries (0 percent, 10.50x previous step)
-    3 steps has 8,208 entries (0 percent, 8.14x previous step)
-    4 steps has 41,712 entries (2 percent, 5.08x previous step)
-    5 steps has 145,560 entries (7 percent, 3.49x previous step)
-    6 steps has 321,576 entries (15 percent, 2.21x previous step)
-    7 steps has 514,896 entries (25 percent, 1.60x previous step)
-    8 steps has 496,560 entries (24 percent, 0.96x previous step)
-    9 steps has 324,096 entries (15 percent, 0.65x previous step)
-    10 steps has 177,408 entries (8 percent, 0.55x previous step)
-    11 steps has 26,880 entries (1 percent, 0.15x previous step)
+    1 steps has 7 entries (0 percent, 0.00x previous step)
+    2 steps has 99 entries (0 percent, 14.14x previous step)
+    3 steps has 996 entries (0 percent, 10.06x previous step)
+    4 steps has 6,477 entries (1 percent, 6.50x previous step)
+    5 steps has 23,540 entries (6 percent, 3.63x previous step)
+    6 steps has 53,537 entries (15 percent, 2.27x previous step)
+    7 steps has 86,464 entries (25 percent, 1.62x previous step)
+    8 steps has 83,240 entries (24 percent, 0.96x previous step)
+    9 steps has 54,592 entries (15 percent, 0.66x previous step)
+    10 steps has 29,568 entries (8 percent, 0.54x previous step)
+    11 steps has 4,480 entries (1 percent, 0.15x previous step)
 
-    Total: 2,058,000 entries
+    Total: 343,000 entries
+    Average: 7.508685 moves
     """
 
     def __init__(self, parent):
@@ -360,8 +523,9 @@ class LookupTable444ULFRBDCentersSolve(LookupTable):
             parent,
             'lookup-table-4x4x4-step30-ULFRBD-centers-solve.txt',
             'UUUULLLLFFFFRRRRBBBBDDDD',
-            linecount=2058000,
-            max_depth=11)
+            linecount=343000,
+            max_depth=11,
+            filesize=21609000)
 
     def state(self):
         parent_state = self.parent.state
@@ -386,7 +550,7 @@ class LookupTable444ULFRBDCentersSolvePairTwoEdges(LookupTableIDA):
             parent,
             'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
             'TBD',
-            moves_4x4x4,
+            moves_444,
             ("Rw", "Rw'", "Lw", "Lw'",
              "Fw", "Fw'", "Bw", "Bw'",
              "Uw", "Uw'", "Dw", "Dw'"),
@@ -398,7 +562,7 @@ class LookupTable444ULFRBDCentersSolvePairTwoEdges(LookupTableIDA):
 
     def state(self):
         state = self.parent.state
-        edges = ''.join([state[square_index] for square_index in wings_444])
+        edges = ''.join([state[square_index] for square_index in edges_444])
         centers = ''.join([state[x] for x in centers_444])
         return centers + edges
 
@@ -410,6 +574,11 @@ class LookupTable444ULFRBDCentersSolvePairTwoEdges(LookupTableIDA):
         if centers_solved_444(state):
             paired_edges_count = 12 - self.parent.get_non_paired_edges_count()
 
+            # Some stats against 50 test cubes
+            # - pairing 1 here averages 62.08 moves and took 1m 11s
+            # - pairing 2 here averages 59.54 moves and took 1m 7s
+            # - pairing 3 here averages 58.54 moves and took 1m 46s
+            # - pairing 4 here averages 58.10 moves and took 10m 26s
             if paired_edges_count >= 2:
 
                 if self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
@@ -446,26 +615,32 @@ class LookupTable444ULFRBDCentersSolveEdgesStage(LookupTableIDA):
             parent,
             'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
             'TBD',
-            moves_4x4x4,
+            moves_444,
             ("Rw", "Rw'", "Lw", "Lw'",
              "Fw", "Fw'", "Bw", "Bw'",
              "Uw", "Uw'", "Dw", "Dw'"),
 
             # prune tables
             (parent.lt_ULFRBD_centers_solve,),
-            linecount=0)
+            linecount=0,
+            max_depth=99)
 
     def state(self):
-        state = edges_recolor_pattern_444(self.parent.state[:])
-
-        edges = ''.join([state[square_index] for square_index in wings_444])
-        centers = ''.join([state[x] for x in centers_444])
+        # I used to compute the edge state here via edges_recolor_pattern_444 but that
+        # is a much larger CPU hit and the only difference it makes is we prune off a
+        # few more branches due to checking for the state in 'explored'.
+        parent_state = self.parent.state
+        centers = ''.join([parent_state[x] for x in centers_444])
+        edges = ''.join([parent_state[x] for x in edges_444])
 
         return centers + edges
 
     def search_complete(self, state, steps_to_here):
 
-        if centers_solved_444(state) and self.parent.solve_all_edges_444(use_bfs=False, apply_steps_if_found=False):
+        if (centers_solved_444(state) and
+            self.parent.edges_possibly_oriented() and
+            self.parent.lt_edges.steps()):
+            #self.parent.solve_all_edges_444(use_bfs=False, apply_steps_if_found=False)):
 
             if self.parent.center_solution_leads_to_oll_parity():
                 self.parent.state = self.original_state[:]
@@ -595,13 +770,28 @@ class LookupTable444Edges(LookupTable):
             '111111111111_10425376a8b9ecfdhgkiljnm',
             linecount=7363591) # 10-deep
             #linecount=63923952) # 11-deep
+            #linecount=58632685) # EO 13-deep
+
+    def state(self):
+        state = edges_recolor_pattern_444(self.parent.state[:])
+        edges_state = ''.join([state[square_index] for square_index in wings_444])
+        signature = get_edges_paired_binary_signature(edges_state)
+        return signature + '_' + edges_state
 
 
 class RubiksCube444(RubiksCube):
 
+    instantiated = False
+
     def __init__(self, state, order, colormap=None, avoid_pll=True, debug=False):
         RubiksCube.__init__(self, state, order, colormap, debug)
         self.avoid_pll = avoid_pll
+
+        if RubiksCube444.instantiated:
+            #raise Exception("Another 4x4x4 instance is being created")
+            log.warning("Another 4x4x4 instance is being created")
+        else:
+            RubiksCube444.instantiated = True
 
         if debug:
             log.setLevel(logging.DEBUG)
@@ -631,20 +821,6 @@ class RubiksCube444(RubiksCube):
         return self._phase
 
     def sanity_check(self):
-        corners = (1, 4, 13, 16,
-                   17, 20, 29, 32,
-                   33, 36, 45, 48,
-                   49, 52, 61, 64,
-                   65, 68, 77, 80,
-                   81, 84, 93, 96)
-
-        centers = (6, 7, 10, 11,
-                   22, 23, 26, 27,
-                   38, 39, 42, 43,
-                   54, 55, 58, 59,
-                   70, 71, 74, 75,
-                   86, 87, 90, 91)
-
         edge_orbit_0 = (2, 3, 8, 12, 15, 14, 9, 5,
                         18, 19, 24, 28, 31, 30, 25, 21,
                         34, 35, 40, 44, 47, 46, 41, 37,
@@ -652,8 +828,8 @@ class RubiksCube444(RubiksCube):
                         66, 67, 72, 76, 79, 78, 73, 69,
                         82, 83, 88, 92, 95, 94, 89, 85)
 
-        self._sanity_check('corners', corners, 4)
-        self._sanity_check('centers', centers, 4)
+        self._sanity_check('corners', corners_444, 4)
+        self._sanity_check('centers', centers_444, 4)
         self._sanity_check('edge-orbit-0', edge_orbit_0, 8)
 
     def lt_init(self):
@@ -675,11 +851,13 @@ class RubiksCube444(RubiksCube):
         # Stage all centers via IDA
         self.lt_ULFRBD_centers_stage = LookupTableIDA444ULFRBDCentersStage(self)
         self.lt_ULFRBD_centers_stage.avoid_oll = True
+        self.lt_ULFRBD_centers_stage.preload_cache()
 
         # =============
         # Phase2 tables
         # =============
         self.lt_ULFRBD_centers_solve = LookupTable444ULFRBDCentersSolve(self)
+        self.lt_ULFRBD_centers_solve.preload_cache()
         self.lt_ULFRBD_centers_solve_pair_two_edges = LookupTable444ULFRBDCentersSolvePairTwoEdges(self)
         #self.lt_ULFRBD_centers_solve_edges_stage = LookupTable444ULFRBDCentersSolveEdgesStage(self)
 
@@ -695,7 +873,6 @@ class RubiksCube444(RubiksCube):
 
         # Stage all centers then solve all centers...averages 18.12 moves
         log.info("%s: Start of Phase1" % self)
-        #self.lt_ULFRBD_centers_stage.ida_all_the_way = True
         self.lt_ULFRBD_centers_stage.solve()
         self.rotate_for_best_centers_solving()
         self.print_cube()
@@ -991,6 +1168,34 @@ class RubiksCube444(RubiksCube):
         log.info("%s: edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.solution.append('EDGES_GROUPED')
 
+    def edges_possibly_oriented(self):
+        """
+        Return True if edges "might" be oriented into high/low groups
+        """
+        state = self.state
+        wing_strs_found = set()
+
+        for (low_edge_index, square_index, partner_index) in low_edges_444:
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = ''.join(sorted([square_value, partner_value]))
+
+            if wing_str in wing_strs_found:
+                return False
+            else:
+                wing_strs_found.add(wing_str)
+
+        return True
+
+    def edges_solveable_via_half_turns(self):
+        state = edges_recolor_pattern_444(self.state[:])
+        edges_pattern = ''.join([state[square_index] for square_index in wings_444])
+
+        if edges_pattern in edge_patterns_solveablve_via_half_turns:
+            return True
+        else:
+            return False
+
 
 def rotate_444_U(cube):
     return [cube[0],cube[13],cube[9],cube[5],cube[1],cube[14],cube[10],cube[6],cube[2],cube[15],cube[11],cube[7],cube[3],cube[16],cube[12],cube[8],cube[4]] + cube[33:37] + cube[21:33] + cube[49:53] + cube[37:49] + cube[65:69] + cube[53:65] + cube[17:21] + cube[69:97]
@@ -1117,6 +1322,34 @@ def rotate_444_z(cube):
 
 def rotate_444_z_prime(cube):
     return [cube[0],cube[52],cube[56],cube[60],cube[64],cube[51],cube[55],cube[59],cube[63],cube[50],cube[54],cube[58],cube[62],cube[49],cube[53],cube[57],cube[61],cube[4],cube[8],cube[12],cube[16],cube[3],cube[7],cube[11],cube[15],cube[2],cube[6],cube[10],cube[14],cube[1],cube[5],cube[9],cube[13],cube[36],cube[40],cube[44],cube[48],cube[35],cube[39],cube[43],cube[47],cube[34],cube[38],cube[42],cube[46],cube[33],cube[37],cube[41],cube[45],cube[84],cube[88],cube[92],cube[96],cube[83],cube[87],cube[91],cube[95],cube[82],cube[86],cube[90],cube[94],cube[81],cube[85],cube[89],cube[93],cube[77],cube[73],cube[69],cube[65],cube[78],cube[74],cube[70],cube[66],cube[79],cube[75],cube[71],cube[67],cube[80],cube[76],cube[72],cube[68],cube[20],cube[24],cube[28],cube[32],cube[19],cube[23],cube[27],cube[31],cube[18],cube[22],cube[26],cube[30],cube[17],cube[21],cube[25],cube[29]]
+
+
+def reflect_x_444(cube):
+    return [cube[0],
+           cube[93], cube[94], cube[95], cube[96],
+           cube[89], cube[90], cube[91], cube[92],
+           cube[85], cube[86], cube[87], cube[88],
+           cube[81], cube[82], cube[83], cube[84],
+           cube[29], cube[30], cube[31], cube[32],
+           cube[25], cube[26], cube[27], cube[28],
+           cube[21], cube[22], cube[23], cube[24],
+           cube[17], cube[18], cube[19], cube[20],
+           cube[45], cube[46], cube[47], cube[48],
+           cube[41], cube[42], cube[43], cube[44],
+           cube[37], cube[38], cube[39], cube[40],
+           cube[33], cube[34], cube[35], cube[36],
+           cube[61], cube[62], cube[63], cube[64],
+           cube[57], cube[58], cube[59], cube[60],
+           cube[53], cube[54], cube[55], cube[56],
+           cube[49], cube[50], cube[51], cube[52],
+           cube[77], cube[78], cube[79], cube[80],
+           cube[73], cube[74], cube[75], cube[76],
+           cube[69], cube[70], cube[71], cube[72],
+           cube[65], cube[66], cube[67], cube[68],
+           cube[13], cube[14], cube[15], cube[16],
+           cube[9], cube[10], cube[11], cube[12],
+           cube[5], cube[6], cube[7], cube[8],
+           cube[1], cube[2], cube[3], cube[4]]
 
 rotate_mapper_444 = {
     "B" : rotate_444_B,

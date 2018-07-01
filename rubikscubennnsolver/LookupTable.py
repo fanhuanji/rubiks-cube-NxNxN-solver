@@ -1,11 +1,13 @@
 #!/usr/bin/env python3
 
 import datetime as dt
-from pprint import pformat
 from rubikscubennnsolver.RubiksSide import SolveError
+from pprint import pformat
+from pyhashxx import hashxx
 from subprocess import call
 import logging
 import os
+import sys
 
 
 log = logging.getLogger(__name__)
@@ -169,7 +171,7 @@ def pretty_time(delta):
 
 class LookupTable(object):
 
-    def __init__(self, parent, filename, state_target, linecount, max_depth=None):
+    def __init__(self, parent, filename, state_target, linecount, max_depth=None, filesize=None):
         self.parent = parent
         self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
         self.filename = filename
@@ -181,15 +183,27 @@ class LookupTable(object):
         self.avoid_oll = False
         self.avoid_pll = False
         self.preloaded_state_set = False
+        self.preloaded_cache = False
         self.ida_all_the_way = False
         self.use_lt_as_prune = False
         self.fh_txt_seek_calls = 0
+        self.cache = {}
+        self.filesize = filesize
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
 
         if 'dummy' not in self.filename:
             assert self.linecount, "%s linecount is %s" % (self, self.linecount)
+
+        # This only happens if a new copy of the lookup table has been checked in...we need to delete
+        # the one we have and download the new one.
+        if os.path.exists(self.filename) and self.filesize is not None and os.path.getsize(self.filename) != self.filesize:
+            log.info("%s: filesize %s does not equal target filesize %s" % (self, os.path.getsize(self.filename), self.filesize))
+            os.remove(self.filename)
+
+            if os.path.exists(self.filename_gz):
+                os.remove(self.filename_gz)
 
         if not os.path.exists(self.filename):
             if not os.path.exists(self.filename_gz):
@@ -250,6 +264,27 @@ class LookupTable(object):
 
         return None
 
+    def preload_cache(self):
+        log.warning("%s: begin preload cache" % self)
+
+        if isinstance(self, LookupTableCostOnly):
+            raise Exception("%s is a CostOnly table, no need to call preload_cache()" % self)
+
+        # Another option here would be to store a list of (state, step) tuples and
+        # then binary search through it. That takes about 1/6 the amount of memory
+        # but would be slower.  I have not measured how much slower.
+        with open(self.filename, 'r') as fh:
+
+            # The bottleneck is the building of the dictionary, moreso that reading from disk.
+            for line in fh:
+                (state, steps) = line.rstrip().split(':')
+                # Store this as a string, not a list.  It takes more than 2x the memory to store steps.split()
+                # For solving a 7x7x7 this is the difference in requiring 3G of RAM vs 7G!!.
+                self.cache[state] = steps
+
+        self.preloaded_cache = True
+        log.warning("{}: end preload cache ({:,} bytes)".format(self, sys.getsizeof(self.cache)))
+
     def steps(self, state_to_find=None):
         """
         Return a list of the steps found in the lookup table for the current cube state
@@ -260,6 +295,13 @@ class LookupTable(object):
         # If we are at one of our state_targets we do not need to do anything
         if state_to_find in self.state_target:
             return None
+
+        if self.preloaded_cache:
+            steps = self.cache.get(state_to_find)
+            if steps:
+                return steps.split()
+            else:
+                return None
 
         line = self.binary_search(state_to_find)
 
@@ -326,25 +368,25 @@ class LookupTable(object):
 
     def heuristic(self):
         pt_state = self.state()
-        pt_steps_cost = self.steps_cost(pt_state)
 
         if pt_state in self.state_target:
-            len_pt_steps = 0
-
-        elif pt_steps_cost:
-            len_pt_steps = pt_steps_cost
-
-        elif self.max_depth:
-            # This is the exception to the rule but some prune tables such
-            # as lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt
-            # are partial tables so use the max_depth of the table +1
-            len_pt_steps = self.max_depth + 1
+            return 0
 
         else:
-            self.parent.print_cube()
-            raise SolveError("%s does not have max_depth and does not have steps for %s, state_width %d" % (self, pt_state, self.state_width))
+            pt_steps_cost = self.steps_cost(pt_state)
 
-        return len_pt_steps
+            if pt_steps_cost:
+                return pt_steps_cost
+
+            elif self.max_depth:
+                # This is the exception to the rule but some prune tables such
+                # as lookup-table-6x6x6-step23-UD-oblique-edge-pairing-LFRB-only.txt
+                # are partial tables so use the max_depth of the table +1
+                return self.max_depth + 1
+
+        self.parent.print_cube()
+        raise SolveError("%s does not have max_depth and does not have steps for %s, state_width %d" % (self, pt_state, self.state_width))
+
 
     def find_edge_entries_with_loose_signature(self, signature_to_find):
         """
@@ -458,7 +500,7 @@ class LookupTable(object):
 
 class LookupTableCostOnly(LookupTable):
 
-    def __init__(self, parent, filename, state_target, linecount, max_depth=None, load_string=True):
+    def __init__(self, parent, filename, state_target, linecount, max_depth=None, load_string=True, filesize=None):
         self.parent = parent
         self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
         self.filename = filename
@@ -470,14 +512,25 @@ class LookupTableCostOnly(LookupTable):
         self.avoid_oll = False
         self.avoid_pll = False
         self.preloaded_state_set = False
+        self.preloaded_cache = False
         self.ida_all_the_way = False
         self.use_lt_as_prune = False
+        self.filesize = filesize
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
 
         if 'dummy' not in self.filename:
             assert self.linecount, "%s linecount is %s" % (self, self.linecount)
+
+        # This only happens if a new copy of the lookup table has been checked in...we need to delete
+        # the one we have and download the new one.
+        if os.path.exists(self.filename) and self.filesize is not None and os.path.getsize(self.filename) != self.filesize:
+            log.info("%s: filesize %s does not equal target filesize %s" % (self, os.path.getsize(self.filename), self.filesize))
+            os.remove(self.filename)
+
+            if os.path.exists(self.filename_gz):
+                os.remove(self.filename_gz)
 
         if not os.path.exists(self.filename):
             if not os.path.exists(self.filename_gz):
@@ -491,11 +544,16 @@ class LookupTableCostOnly(LookupTable):
         self.filename_exists = True
 
         if isinstance(state_target, tuple):
+            self.state_width = len(state_target[0])
             self.state_target = set(state_target)
         elif isinstance(state_target, list):
+            self.state_width = len(state_target[0])
             self.state_target = set(state_target)
         else:
+            self.state_width = len(state_target)
             self.state_target = set((state_target, ))
+
+        self.hex_format = '%' + "0%dx" % self.state_width
 
         self.fh_txt_seek_calls = 0
         self.fh_txt = None
@@ -505,10 +563,13 @@ class LookupTableCostOnly(LookupTable):
         # We do not have to binary_search() though so that cuts way down on the
         # number of reads.
         if load_string:
+
+            log.warning("%s: begin preload cost-only" % self)
             with open(self.filename, 'r') as fh:
                 for line in fh:
                     self.content = line
             self.fh_txt_seek_calls += 1
+            log.warning("{}: end preload cost-only ({:,} bytes)".format(self, sys.getsizeof(self.content)))
         else:
             # 'rb' mode is about 3x faster than 'r' mode
             self.fh_txt = open(self.filename, mode='rb')
@@ -535,10 +596,37 @@ class LookupTableCostOnly(LookupTable):
             return int(self.content[state_to_find], 16)
 
 
+class LookupTableHashCostOnly(LookupTableCostOnly):
+
+    def __init__(self, parent, filename, state_target, linecount, max_depth=None, load_string=True, bucketcount=None):
+        LookupTableCostOnly.__init__(self, parent, filename, state_target, linecount, max_depth, load_string)
+        self.bucketcount = bucketcount
+
+    def steps_cost(self, state_to_find=None):
+
+        if state_to_find is None:
+            state_to_find = self.state()
+
+        # compute the hash_index for state_to_find, look that many bytes into the
+        # file/self.conten and retrieve a single hex character. This hex character
+        # is the number of steps required to solve the corresponding state.
+        hash_raw = hashxx(state_to_find.encode('utf-8'))
+        hash_index = int(hash_raw % self.bucketcount)
+
+        if self.content is None:
+            self.fh_txt.seek(hash_index)
+            result = int(self.fh_txt.read(1).decode('utf-8'), 16)
+            self.fh_txt_seek_calls += 1
+            return result
+
+        else:
+            return int(self.content[hash_index], 16)
+
+
 class LookupTableIDA(LookupTable):
 
-    def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None):
-        LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth)
+    def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None, filesize=None):
+        LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.prune_tables = prune_tables
 
         for x in moves_illegal:
@@ -593,7 +681,6 @@ class LookupTableIDA(LookupTable):
 
     def search_complete(self, state, steps_to_here):
 
-        #log.info("%s: FOO %s" % (self, state))
         if self.ida_all_the_way:
             if state not in self.state_target:
                 return False
@@ -658,8 +745,6 @@ class LookupTableIDA(LookupTable):
         # saves us some disk IO
         if (cost_to_goal <= self.max_depth and
             self.search_complete(lt_state, steps_to_here)):
-            #log.info("%s: IDA found match %d steps in, %s, lt_state %s, f_cost %d (cost_to_here %d, cost_to_goal %d)" %
-            #         (self, len(steps_to_here), ' '.join(steps_to_here), lt_state, f_cost, cost_to_here, cost_to_goal))
             log.info("%s: %d seek calls" % (self, self.fh_txt_seek_calls))
             self.fh_txt_seek_calls = 0
 
@@ -758,7 +843,7 @@ class LookupTableIDA(LookupTable):
         #log.info("%s: ida_stage() state %s vs state_target %s" % (self, state, self.state_target))
 
         # The cube is already in the desired state, nothing to do
-        if state in self.state_target:
+        if state in self.state_target or self.search_complete(state, []):
             log.info("%s: cube is already at the target state %s" % (self, state))
             return True
 
