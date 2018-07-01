@@ -43,6 +43,11 @@ LR_centers_555 = (
     82, 83, 84, 87, 88, 89, 92, 93, 94,
 )
 
+FB_centers_555 = (
+    57, 58, 59, 62, 63, 64, 67, 68, 69,
+    107, 108, 109, 112, 113, 114, 117, 118, 119
+)
+
 edge_orbit_0_555 = (
     2, 4, 10, 20, 24, 22, 16, 6,
     27, 29, 35, 45, 49, 47, 41, 31,
@@ -406,7 +411,7 @@ class LookupTable555LRCentersStage(LookupTable):
         return self.hex_format % int(result, 2)
 
 
-class LookupTable555TsaiPhase2EdgesOrient(LookupTable):
+class LookupTable555TsaiPhase3EdgesOrient(LookupTable):
     """
     lookup-table-5x5x5-step42-edge-orient.txt
     =========================================
@@ -435,10 +440,10 @@ class LookupTable555TsaiPhase2EdgesOrient(LookupTable):
             max_depth=10)
 
     def state(self):
-        return self.parent.tsai_phase2_orient_edges_state(False)
+        return self.parent.tsai_phase3_orient_edges_state(False)
 
 
-class LookupTable555TsaiPhase2LRCenters(LookupTable):
+class LookupTable555TsaiPhase3LRCenters(LookupTable):
     """
     lookup-table-5x5x5-step41-LR-center-stage.txt
     =============================================
@@ -900,7 +905,7 @@ class LookupTable555TsaiPhase2LRCenters(LookupTable):
         return result
 
 
-class LookupTable555TsaiPhase2(LookupTableIDA):
+class LookupTable555TsaiPhase3(LookupTableIDA):
     """
     Stage LR centers and do EO
 
@@ -912,7 +917,6 @@ class LookupTable555TsaiPhase2(LookupTableIDA):
     4 steps has 1,192,104 entries (88 percent, 8.60x previous step)
 
     Total: 1,345,432 entries
-    Average: 3.87 moves
     """
 
     def __init__(self, parent):
@@ -1364,15 +1368,15 @@ class LookupTable555TsaiPhase2(LookupTableIDA):
              "Dw", "Dw'"),
 
             # prune tables
-            (parent.lt_tsai_phase2_edges_orient,
-             parent.lt_tsai_phase2_LR_centers),
+            (parent.lt_tsai_phase3_edges_orient,
+             parent.lt_tsai_phase3_LR_centers),
 
-            linecount=966758,
+            linecount=1345432,
             max_depth=4)
 
     def state(self):
         parent_state = self.parent.state
-        orient_edge_state = self.parent.tsai_phase2_orient_edges_state(return_hex=False)
+        orient_edge_state = self.parent.tsai_phase3_orient_edges_state(return_hex=False)
 
         # Return the state of the edges plus the LR centers
         result = []
@@ -1406,6 +1410,687 @@ class LookupTable555TsaiPhase2(LookupTableIDA):
         result.append(orient_edge_state[29:]) # 95
         result = ''.join(result)
         return result
+
+
+class LookupTable555TsaiPhase4FBCenters(LookupTable):
+    """
+    lookup-table-5x5x5-step51-FB-center-stage.txt
+    =============================================
+    1 steps has 828 entries (16 percent, 0.00x previous step)
+    2 steps has 1,064 entries (21 percent, 1.29x previous step)
+    3 steps has 1,692 entries (34 percent, 1.59x previous step)
+    4 steps has 1,220 entries (24 percent, 0.72x previous step)
+    5 steps has 96 entries (1 percent, 0.08x previous step)
+
+    Total: 4,900 entries
+    Average: 2.73 moves
+    """
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step51-FB-center-stage.txt',
+
+            # There are 432 ways to arrange the centers so that in the future
+            # they can be solved without L L' R R'
+            ('BBBBFBBBBFFFFBFFFF',
+             'BBBBFBBFBFBFFBFFFF',
+             'BBBBFBBFBFFFFBFFBF',
+             'BBBBFBFBFBFBFBFFFF',
+             'BBBBFBFBFFFFFBFBFB',
+             'BBBBFBFFFBBBFBFFFF',
+             'BBBBFBFFFBFBFBFFBF',
+             'BBBBFBFFFFBFFBFBFB',
+             'BBBBFBFFFFFFFBFBBB',
+             'BBBBFFBBBFFFBBFFFF',
+             'BBBBFFBBBFFFFBBFFF',
+             'BBBBFFBFBFBFBBFFFF',
+             'BBBBFFBFBFBFFBBFFF',
+             'BBBBFFBFBFFFBBFFBF',
+             'BBBBFFBFBFFFFBBFBF',
+             'BBBBFFFBFBFBBBFFFF',
+             'BBBBFFFBFBFBFBBFFF',
+             'BBBBFFFBFFFFBBFBFB',
+             'BBBBFFFBFFFFFBBBFB',
+             'BBBBFFFFFBBBBBFFFF',
+             'BBBBFFFFFBBBFBBFFF',
+             'BBBBFFFFFBFBBBFFBF',
+             'BBBBFFFFFBFBFBBFBF',
+             'BBBBFFFFFFBFBBFBFB',
+             'BBBBFFFFFFBFFBBBFB',
+             'BBBBFFFFFFFFBBFBBB',
+             'BBBBFFFFFFFFFBBBBB',
+             'BBBFFBBBBFFFBBFFFF',
+             'BBBFFBBBBFFFFBBFFF',
+             'BBBFFBBFBFBFBBFFFF',
+             'BBBFFBBFBFBFFBBFFF',
+             'BBBFFBBFBFFFBBFFBF',
+             'BBBFFBBFBFFFFBBFBF',
+             'BBBFFBFBFBFBBBFFFF',
+             'BBBFFBFBFBFBFBBFFF',
+             'BBBFFBFBFFFFBBFBFB',
+             'BBBFFBFBFFFFFBBBFB',
+             'BBBFFBFFFBBBBBFFFF',
+             'BBBFFBFFFBBBFBBFFF',
+             'BBBFFBFFFBFBBBFFBF',
+             'BBBFFBFFFBFBFBBFBF',
+             'BBBFFBFFFFBFBBFBFB',
+             'BBBFFBFFFFBFFBBBFB',
+             'BBBFFBFFFFFFBBFBBB',
+             'BBBFFBFFFFFFFBBBBB',
+             'BBBFFFBBBFFFBBBFFF',
+             'BBBFFFBFBFBFBBBFFF',
+             'BBBFFFBFBFFFBBBFBF',
+             'BBBFFFFBFBFBBBBFFF',
+             'BBBFFFFBFFFFBBBBFB',
+             'BBBFFFFFFBBBBBBFFF',
+             'BBBFFFFFFBFBBBBFBF',
+             'BBBFFFFFFFBFBBBBFB',
+             'BBBFFFFFFFFFBBBBBB',
+             'BBFBFBBBFBFFFBFBFF',
+             'BBFBFBBBFFFBFBFFFB',
+             'BBFBFBBFFBBFFBFBFF',
+             'BBFBFBBFFBFFFBFBBF',
+             'BBFBFBBFFFBBFBFFFB',
+             'BBFBFBBFFFFBFBFFBB',
+             'BBFBFBFBBFFBFBFBFF',
+             'BBFBFBFFBFBBFBFBFF',
+             'BBFBFBFFBFFBFBFBBF',
+             'BBFBFFBBFBFFBBFBFF',
+             'BBFBFFBBFBFFFBBBFF',
+             'BBFBFFBBFFFBBBFFFB',
+             'BBFBFFBBFFFBFBBFFB',
+             'BBFBFFBFFBBFBBFBFF',
+             'BBFBFFBFFBBFFBBBFF',
+             'BBFBFFBFFBFFBBFBBF',
+             'BBFBFFBFFBFFFBBBBF',
+             'BBFBFFBFFFBBBBFFFB',
+             'BBFBFFBFFFBBFBBFFB',
+             'BBFBFFBFFFFBBBFFBB',
+             'BBFBFFBFFFFBFBBFBB',
+             'BBFBFFFBBFFBBBFBFF',
+             'BBFBFFFBBFFBFBBBFF',
+             'BBFBFFFFBFBBBBFBFF',
+             'BBFBFFFFBFBBFBBBFF',
+             'BBFBFFFFBFFBBBFBBF',
+             'BBFBFFFFBFFBFBBBBF',
+             'BBFFFBBBFBFFBBFBFF',
+             'BBFFFBBBFBFFFBBBFF',
+             'BBFFFBBBFFFBBBFFFB',
+             'BBFFFBBBFFFBFBBFFB',
+             'BBFFFBBFFBBFBBFBFF',
+             'BBFFFBBFFBBFFBBBFF',
+             'BBFFFBBFFBFFBBFBBF',
+             'BBFFFBBFFBFFFBBBBF',
+             'BBFFFBBFFFBBBBFFFB',
+             'BBFFFBBFFFBBFBBFFB',
+             'BBFFFBBFFFFBBBFFBB',
+             'BBFFFBBFFFFBFBBFBB',
+             'BBFFFBFBBFFBBBFBFF',
+             'BBFFFBFBBFFBFBBBFF',
+             'BBFFFBFFBFBBBBFBFF',
+             'BBFFFBFFBFBBFBBBFF',
+             'BBFFFBFFBFFBBBFBBF',
+             'BBFFFBFFBFFBFBBBBF',
+             'BBFFFFBBFBFFBBBBFF',
+             'BBFFFFBBFFFBBBBFFB',
+             'BBFFFFBFFBBFBBBBFF',
+             'BBFFFFBFFBFFBBBBBF',
+             'BBFFFFBFFFBBBBBFFB',
+             'BBFFFFBFFFFBBBBFBB',
+             'BBFFFFFBBFFBBBBBFF',
+             'BBFFFFFFBFBBBBBBFF',
+             'BBFFFFFFBFFBBBBBBF',
+             'BFBBFBBBBFBFFBFFFF',
+             'BFBBFBBBBFFFFBFFBF',
+             'BFBBFBBFBFBFFBFFBF',
+             'BFBBFBFBFBBBFBFFFF',
+             'BFBBFBFBFBFBFBFFBF',
+             'BFBBFBFBFFBFFBFBFB',
+             'BFBBFBFBFFFFFBFBBB',
+             'BFBBFBFFFBBBFBFFBF',
+             'BFBBFBFFFFBFFBFBBB',
+             'BFBBFFBBBFBFBBFFFF',
+             'BFBBFFBBBFBFFBBFFF',
+             'BFBBFFBBBFFFBBFFBF',
+             'BFBBFFBBBFFFFBBFBF',
+             'BFBBFFBFBFBFBBFFBF',
+             'BFBBFFBFBFBFFBBFBF',
+             'BFBBFFFBFBBBBBFFFF',
+             'BFBBFFFBFBBBFBBFFF',
+             'BFBBFFFBFBFBBBFFBF',
+             'BFBBFFFBFBFBFBBFBF',
+             'BFBBFFFBFFBFBBFBFB',
+             'BFBBFFFBFFBFFBBBFB',
+             'BFBBFFFBFFFFBBFBBB',
+             'BFBBFFFBFFFFFBBBBB',
+             'BFBBFFFFFBBBBBFFBF',
+             'BFBBFFFFFBBBFBBFBF',
+             'BFBBFFFFFFBFBBFBBB',
+             'BFBBFFFFFFBFFBBBBB',
+             'BFBFFBBBBFBFBBFFFF',
+             'BFBFFBBBBFBFFBBFFF',
+             'BFBFFBBBBFFFBBFFBF',
+             'BFBFFBBBBFFFFBBFBF',
+             'BFBFFBBFBFBFBBFFBF',
+             'BFBFFBBFBFBFFBBFBF',
+             'BFBFFBFBFBBBBBFFFF',
+             'BFBFFBFBFBBBFBBFFF',
+             'BFBFFBFBFBFBBBFFBF',
+             'BFBFFBFBFBFBFBBFBF',
+             'BFBFFBFBFFBFBBFBFB',
+             'BFBFFBFBFFBFFBBBFB',
+             'BFBFFBFBFFFFBBFBBB',
+             'BFBFFBFBFFFFFBBBBB',
+             'BFBFFBFFFBBBBBFFBF',
+             'BFBFFBFFFBBBFBBFBF',
+             'BFBFFBFFFFBFBBFBBB',
+             'BFBFFBFFFFBFFBBBBB',
+             'BFBFFFBBBFBFBBBFFF',
+             'BFBFFFBBBFFFBBBFBF',
+             'BFBFFFBFBFBFBBBFBF',
+             'BFBFFFFBFBBBBBBFFF',
+             'BFBFFFFBFBFBBBBFBF',
+             'BFBFFFFBFFBFBBBBFB',
+             'BFBFFFFBFFFFBBBBBB',
+             'BFBFFFFFFBBBBBBFBF',
+             'BFBFFFFFFFBFBBBBBB',
+             'BFFBFBBBFBBFFBFBFF',
+             'BFFBFBBBFBFFFBFBBF',
+             'BFFBFBBBFFBBFBFFFB',
+             'BFFBFBBBFFFBFBFFBB',
+             'BFFBFBBFFBBFFBFBBF',
+             'BFFBFBBFFFBBFBFFBB',
+             'BFFBFBFBBFBBFBFBFF',
+             'BFFBFBFBBFFBFBFBBF',
+             'BFFBFBFFBFBBFBFBBF',
+             'BFFBFFBBFBBFBBFBFF',
+             'BFFBFFBBFBBFFBBBFF',
+             'BFFBFFBBFBFFBBFBBF',
+             'BFFBFFBBFBFFFBBBBF',
+             'BFFBFFBBFFBBBBFFFB',
+             'BFFBFFBBFFBBFBBFFB',
+             'BFFBFFBBFFFBBBFFBB',
+             'BFFBFFBBFFFBFBBFBB',
+             'BFFBFFBFFBBFBBFBBF',
+             'BFFBFFBFFBBFFBBBBF',
+             'BFFBFFBFFFBBBBFFBB',
+             'BFFBFFBFFFBBFBBFBB',
+             'BFFBFFFBBFBBBBFBFF',
+             'BFFBFFFBBFBBFBBBFF',
+             'BFFBFFFBBFFBBBFBBF',
+             'BFFBFFFBBFFBFBBBBF',
+             'BFFBFFFFBFBBBBFBBF',
+             'BFFBFFFFBFBBFBBBBF',
+             'BFFFFBBBFBBFBBFBFF',
+             'BFFFFBBBFBBFFBBBFF',
+             'BFFFFBBBFBFFBBFBBF',
+             'BFFFFBBBFBFFFBBBBF',
+             'BFFFFBBBFFBBBBFFFB',
+             'BFFFFBBBFFBBFBBFFB',
+             'BFFFFBBBFFFBBBFFBB',
+             'BFFFFBBBFFFBFBBFBB',
+             'BFFFFBBFFBBFBBFBBF',
+             'BFFFFBBFFBBFFBBBBF',
+             'BFFFFBBFFFBBBBFFBB',
+             'BFFFFBBFFFBBFBBFBB',
+             'BFFFFBFBBFBBBBFBFF',
+             'BFFFFBFBBFBBFBBBFF',
+             'BFFFFBFBBFFBBBFBBF',
+             'BFFFFBFBBFFBFBBBBF',
+             'BFFFFBFFBFBBBBFBBF',
+             'BFFFFBFFBFBBFBBBBF',
+             'BFFFFFBBFBBFBBBBFF',
+             'BFFFFFBBFBFFBBBBBF',
+             'BFFFFFBBFFBBBBBFFB',
+             'BFFFFFBBFFFBBBBFBB',
+             'BFFFFFBFFBBFBBBBBF',
+             'BFFFFFBFFFBBBBBFBB',
+             'BFFFFFFBBFBBBBBBFF',
+             'BFFFFFFBBFFBBBBBBF',
+             'BFFFFFFFBFBBBBBBBF',
+             'FBBBFBBBFBFFFBFFFB',
+             'FBBBFBBFFBBFFBFFFB',
+             'FBBBFBBFFBFFFBFFBB',
+             'FBBBFBFBBBFFFBFBFF',
+             'FBBBFBFBBFFBFBFFFB',
+             'FBBBFBFFBBBFFBFBFF',
+             'FBBBFBFFBBFFFBFBBF',
+             'FBBBFBFFBFBBFBFFFB',
+             'FBBBFBFFBFFBFBFFBB',
+             'FBBBFFBBFBFFBBFFFB',
+             'FBBBFFBBFBFFFBBFFB',
+             'FBBBFFBFFBBFBBFFFB',
+             'FBBBFFBFFBBFFBBFFB',
+             'FBBBFFBFFBFFBBFFBB',
+             'FBBBFFBFFBFFFBBFBB',
+             'FBBBFFFBBBFFBBFBFF',
+             'FBBBFFFBBBFFFBBBFF',
+             'FBBBFFFBBFFBBBFFFB',
+             'FBBBFFFBBFFBFBBFFB',
+             'FBBBFFFFBBBFBBFBFF',
+             'FBBBFFFFBBBFFBBBFF',
+             'FBBBFFFFBBFFBBFBBF',
+             'FBBBFFFFBBFFFBBBBF',
+             'FBBBFFFFBFBBBBFFFB',
+             'FBBBFFFFBFBBFBBFFB',
+             'FBBBFFFFBFFBBBFFBB',
+             'FBBBFFFFBFFBFBBFBB',
+             'FBBFFBBBFBFFBBFFFB',
+             'FBBFFBBBFBFFFBBFFB',
+             'FBBFFBBFFBBFBBFFFB',
+             'FBBFFBBFFBBFFBBFFB',
+             'FBBFFBBFFBFFBBFFBB',
+             'FBBFFBBFFBFFFBBFBB',
+             'FBBFFBFBBBFFBBFBFF',
+             'FBBFFBFBBBFFFBBBFF',
+             'FBBFFBFBBFFBBBFFFB',
+             'FBBFFBFBBFFBFBBFFB',
+             'FBBFFBFFBBBFBBFBFF',
+             'FBBFFBFFBBBFFBBBFF',
+             'FBBFFBFFBBFFBBFBBF',
+             'FBBFFBFFBBFFFBBBBF',
+             'FBBFFBFFBFBBBBFFFB',
+             'FBBFFBFFBFBBFBBFFB',
+             'FBBFFBFFBFFBBBFFBB',
+             'FBBFFBFFBFFBFBBFBB',
+             'FBBFFFBBFBFFBBBFFB',
+             'FBBFFFBFFBBFBBBFFB',
+             'FBBFFFBFFBFFBBBFBB',
+             'FBBFFFFBBBFFBBBBFF',
+             'FBBFFFFBBFFBBBBFFB',
+             'FBBFFFFFBBBFBBBBFF',
+             'FBBFFFFFBBFFBBBBBF',
+             'FBBFFFFFBFBBBBBFFB',
+             'FBBFFFFFBFFBBBBFBB',
+             'FBFBFBBBBBFBFBFFFF',
+             'FBFBFBBBBFFFFBFBFB',
+             'FBFBFBBFBBBBFBFFFF',
+             'FBFBFBBFBBFBFBFFBF',
+             'FBFBFBBFBFBFFBFBFB',
+             'FBFBFBBFBFFFFBFBBB',
+             'FBFBFBFBFBFBFBFBFB',
+             'FBFBFBFFFBBBFBFBFB',
+             'FBFBFBFFFBFBFBFBBB',
+             'FBFBFFBBBBFBBBFFFF',
+             'FBFBFFBBBBFBFBBFFF',
+             'FBFBFFBBBFFFBBFBFB',
+             'FBFBFFBBBFFFFBBBFB',
+             'FBFBFFBFBBBBBBFFFF',
+             'FBFBFFBFBBBBFBBFFF',
+             'FBFBFFBFBBFBBBFFBF',
+             'FBFBFFBFBBFBFBBFBF',
+             'FBFBFFBFBFBFBBFBFB',
+             'FBFBFFBFBFBFFBBBFB',
+             'FBFBFFBFBFFFBBFBBB',
+             'FBFBFFBFBFFFFBBBBB',
+             'FBFBFFFBFBFBBBFBFB',
+             'FBFBFFFBFBFBFBBBFB',
+             'FBFBFFFFFBBBBBFBFB',
+             'FBFBFFFFFBBBFBBBFB',
+             'FBFBFFFFFBFBBBFBBB',
+             'FBFBFFFFFBFBFBBBBB',
+             'FBFFFBBBBBFBBBFFFF',
+             'FBFFFBBBBBFBFBBFFF',
+             'FBFFFBBBBFFFBBFBFB',
+             'FBFFFBBBBFFFFBBBFB',
+             'FBFFFBBFBBBBBBFFFF',
+             'FBFFFBBFBBBBFBBFFF',
+             'FBFFFBBFBBFBBBFFBF',
+             'FBFFFBBFBBFBFBBFBF',
+             'FBFFFBBFBFBFBBFBFB',
+             'FBFFFBBFBFBFFBBBFB',
+             'FBFFFBBFBFFFBBFBBB',
+             'FBFFFBBFBFFFFBBBBB',
+             'FBFFFBFBFBFBBBFBFB',
+             'FBFFFBFBFBFBFBBBFB',
+             'FBFFFBFFFBBBBBFBFB',
+             'FBFFFBFFFBBBFBBBFB',
+             'FBFFFBFFFBFBBBFBBB',
+             'FBFFFBFFFBFBFBBBBB',
+             'FBFFFFBBBBFBBBBFFF',
+             'FBFFFFBBBFFFBBBBFB',
+             'FBFFFFBFBBBBBBBFFF',
+             'FBFFFFBFBBFBBBBFBF',
+             'FBFFFFBFBFBFBBBBFB',
+             'FBFFFFBFBFFFBBBBBB',
+             'FBFFFFFBFBFBBBBBFB',
+             'FBFFFFFFFBBBBBBBFB',
+             'FBFFFFFFFBFBBBBBBB',
+             'FFBBFBBBFBBFFBFFFB',
+             'FFBBFBBBFBFFFBFFBB',
+             'FFBBFBBFFBBFFBFFBB',
+             'FFBBFBFBBBBFFBFBFF',
+             'FFBBFBFBBBFFFBFBBF',
+             'FFBBFBFBBFBBFBFFFB',
+             'FFBBFBFBBFFBFBFFBB',
+             'FFBBFBFFBBBFFBFBBF',
+             'FFBBFBFFBFBBFBFFBB',
+             'FFBBFFBBFBBFBBFFFB',
+             'FFBBFFBBFBBFFBBFFB',
+             'FFBBFFBBFBFFBBFFBB',
+             'FFBBFFBBFBFFFBBFBB',
+             'FFBBFFBFFBBFBBFFBB',
+             'FFBBFFBFFBBFFBBFBB',
+             'FFBBFFFBBBBFBBFBFF',
+             'FFBBFFFBBBBFFBBBFF',
+             'FFBBFFFBBBFFBBFBBF',
+             'FFBBFFFBBBFFFBBBBF',
+             'FFBBFFFBBFBBBBFFFB',
+             'FFBBFFFBBFBBFBBFFB',
+             'FFBBFFFBBFFBBBFFBB',
+             'FFBBFFFBBFFBFBBFBB',
+             'FFBBFFFFBBBFBBFBBF',
+             'FFBBFFFFBBBFFBBBBF',
+             'FFBBFFFFBFBBBBFFBB',
+             'FFBBFFFFBFBBFBBFBB',
+             'FFBFFBBBFBBFBBFFFB',
+             'FFBFFBBBFBBFFBBFFB',
+             'FFBFFBBBFBFFBBFFBB',
+             'FFBFFBBBFBFFFBBFBB',
+             'FFBFFBBFFBBFBBFFBB',
+             'FFBFFBBFFBBFFBBFBB',
+             'FFBFFBFBBBBFBBFBFF',
+             'FFBFFBFBBBBFFBBBFF',
+             'FFBFFBFBBBFFBBFBBF',
+             'FFBFFBFBBBFFFBBBBF',
+             'FFBFFBFBBFBBBBFFFB',
+             'FFBFFBFBBFBBFBBFFB',
+             'FFBFFBFBBFFBBBFFBB',
+             'FFBFFBFBBFFBFBBFBB',
+             'FFBFFBFFBBBFBBFBBF',
+             'FFBFFBFFBBBFFBBBBF',
+             'FFBFFBFFBFBBBBFFBB',
+             'FFBFFBFFBFBBFBBFBB',
+             'FFBFFFBBFBBFBBBFFB',
+             'FFBFFFBBFBFFBBBFBB',
+             'FFBFFFBFFBBFBBBFBB',
+             'FFBFFFFBBBBFBBBBFF',
+             'FFBFFFFBBBFFBBBBBF',
+             'FFBFFFFBBFBBBBBFFB',
+             'FFBFFFFBBFFBBBBFBB',
+             'FFBFFFFFBBBFBBBBBF',
+             'FFBFFFFFBFBBBBBFBB',
+             'FFFBFBBBBBBBFBFFFF',
+             'FFFBFBBBBBFBFBFFBF',
+             'FFFBFBBBBFBFFBFBFB',
+             'FFFBFBBBBFFFFBFBBB',
+             'FFFBFBBFBBBBFBFFBF',
+             'FFFBFBBFBFBFFBFBBB',
+             'FFFBFBFBFBBBFBFBFB',
+             'FFFBFBFBFBFBFBFBBB',
+             'FFFBFBFFFBBBFBFBBB',
+             'FFFBFFBBBBBBBBFFFF',
+             'FFFBFFBBBBBBFBBFFF',
+             'FFFBFFBBBBFBBBFFBF',
+             'FFFBFFBBBBFBFBBFBF',
+             'FFFBFFBBBFBFBBFBFB',
+             'FFFBFFBBBFBFFBBBFB',
+             'FFFBFFBBBFFFBBFBBB',
+             'FFFBFFBBBFFFFBBBBB',
+             'FFFBFFBFBBBBBBFFBF',
+             'FFFBFFBFBBBBFBBFBF',
+             'FFFBFFBFBFBFBBFBBB',
+             'FFFBFFBFBFBFFBBBBB',
+             'FFFBFFFBFBBBBBFBFB',
+             'FFFBFFFBFBBBFBBBFB',
+             'FFFBFFFBFBFBBBFBBB',
+             'FFFBFFFBFBFBFBBBBB',
+             'FFFBFFFFFBBBBBFBBB',
+             'FFFBFFFFFBBBFBBBBB',
+             'FFFFFBBBBBBBBBFFFF',
+             'FFFFFBBBBBBBFBBFFF',
+             'FFFFFBBBBBFBBBFFBF',
+             'FFFFFBBBBBFBFBBFBF',
+             'FFFFFBBBBFBFBBFBFB',
+             'FFFFFBBBBFBFFBBBFB',
+             'FFFFFBBBBFFFBBFBBB',
+             'FFFFFBBBBFFFFBBBBB',
+             'FFFFFBBFBBBBBBFFBF',
+             'FFFFFBBFBBBBFBBFBF',
+             'FFFFFBBFBFBFBBFBBB',
+             'FFFFFBBFBFBFFBBBBB',
+             'FFFFFBFBFBBBBBFBFB',
+             'FFFFFBFBFBBBFBBBFB',
+             'FFFFFBFBFBFBBBFBBB',
+             'FFFFFBFBFBFBFBBBBB',
+             'FFFFFBFFFBBBBBFBBB',
+             'FFFFFBFFFBBBFBBBBB',
+             'FFFFFFBBBBBBBBBFFF',
+             'FFFFFFBBBBFBBBBFBF',
+             'FFFFFFBBBFBFBBBBFB',
+             'FFFFFFBBBFFFBBBBBB',
+             'FFFFFFBFBBBBBBBFBF',
+             'FFFFFFBFBFBFBBBBBB',
+             'FFFFFFFBFBBBBBBBFB',
+             'FFFFFFFBFBFBBBBBBB',
+             'FFFFFFFFFBBBBBBBBB'),
+
+            linecount=4900,
+            max_depth=5)
+
+    def state(self):
+        parent_state = self.parent.state
+        result = ''.join([parent_state[x] for x in FB_centers_555])
+        return result
+
+
+edges_recolor_tuples_555 = (
+    ('0', 2, 104), # upper
+    ('1', 4, 102),
+    ('2', 6, 27),
+    ('3', 10, 79),
+    ('4', 16, 29),
+    ('5', 20, 77),
+    ('6', 22, 52),
+    ('7', 24, 54),
+
+    ('8', 31, 110), # left
+    ('9', 35, 56),
+    ('a', 41, 120),
+    ('b', 45, 66),
+
+    ('c', 81, 60), # right
+    ('d', 85, 106),
+    ('e', 91, 70),
+    ('f', 95, 116),
+
+    ('g', 127, 72), # down
+    ('h', 129, 74),
+    ('i', 131, 49),
+    ('j', 135, 97),
+    ('k', 141, 47),
+    ('l', 145, 99),
+    ('m', 147, 124),
+    ('n', 149, 122)
+)
+
+midges_recolor_tuples_555 = (
+    ('o', 3, 103), # upper
+    ('p', 11, 28),
+    ('q', 15, 78),
+    ('r', 23, 53),
+
+    ('s', 36, 115), # left
+    ('t', 40, 61),
+
+    ('u', 86, 65),  # right
+    ('v', 90, 111),
+
+    ('w', 128, 73), # down
+    ('x', 136, 48),
+    ('y', 140, 98),
+    ('z', 148, 123)
+)
+
+
+def edges_recolor_555(state):
+    midges_map = {
+        'BD': None,
+        'BL': None,
+        'BR': None,
+        'BU': None,
+        'DF': None,
+        'DL': None,
+        'DR': None,
+        'FL': None,
+        'FR': None,
+        'FU': None,
+        'LU': None,
+        'RU': None
+    }
+
+    for (edge_index, square_index, partner_index) in midges_recolor_tuples_555:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+        wing_str = ''.join(sorted([square_value, partner_value]))
+        midges_map[wing_str] = edge_index
+
+        # We need to indicate which way the midge is rotated.  If the square_index contains
+        # U, D, L, or R use the uppercase of the edge_index, if not use the lowercase of the
+        # edge_index.
+        if square_value == 'U':
+            state[square_index] = edge_index.upper()
+            state[partner_index] = edge_index.upper()
+        elif partner_value == 'U':
+            state[square_index] = edge_index
+            state[partner_index] = edge_index
+        elif square_value == 'D':
+            state[square_index] = edge_index.upper()
+            state[partner_index] = edge_index.upper()
+        elif partner_value == 'D':
+            state[square_index] = edge_index
+            state[partner_index] = edge_index
+        elif square_value == 'L':
+            state[square_index] = edge_index.upper()
+            state[partner_index] = edge_index.upper()
+        elif partner_value == 'L':
+            state[square_index] = edge_index
+            state[partner_index] = edge_index
+        elif square_value == 'R':
+            state[square_index] = edge_index.upper()
+            state[partner_index] = edge_index.upper()
+        elif partner_value == 'R':
+            state[square_index] = edge_index
+            state[partner_index] = edge_index
+
+        elif square_value == 'x' or partner_value == 'x':
+            state[square_index] = 'x'
+            state[partner_index] = 'x'
+        else:
+            raise Exception("We should not be here")
+
+    # Where is the midge for each high/low wing?
+    for (edge_index, square_index, partner_index) in edges_recolor_tuples_555:
+        square_value = state[square_index]
+        partner_value = state[partner_index]
+
+        if square_value == 'x' or partner_value == 'x':
+            pass
+        else:
+            high_low = tsai_phase4_orient_edges_555[(square_index, partner_index, square_value, partner_value)]
+            wing_str = ''.join(sorted([square_value, partner_value]))
+
+            # If this is a high wing use the uppercase of the midge edge_index
+            if high_low == 'U':
+                state[square_index] = midges_map[wing_str].upper()
+                state[partner_index] = midges_map[wing_str].upper()
+
+            # If this is a low wing use the lowercase of the midge edge_index
+            elif high_low == 'D':
+                state[square_index] = midges_map[wing_str]
+                state[partner_index] = midges_map[wing_str]
+
+            else:
+                raise Exception("(%s, %s, %s, %) high_low is %s" % (square_index, partner_index, square_value, partner_value, high_low))
+
+    return ''.join(state)
+
+
+class LookupTable555TsaiPhase4XPlaneEdges(LookupTable):
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step52-x-plane-edges-stage.txt',
+            'TBD',
+            # dwalton fix this
+            linecount=0,
+            max_depth=99)
+
+    def state(self):
+        # dwalton here now
+        parent_state = self.parent.state
+        state = edges_recolor_555(self.parent.state[:])
+
+        edges = ''.join((
+            state[2], state[3], state[4],
+            state[6], state[11], state[16],
+            state[10], state[15], state[20],
+            state[22], state[23], state[24],
+            state[31], state[36], state[41],
+            state[35], state[40], state[45],
+            state[81], state[86], state[91],
+            state[85], state[90], state[95],
+            state[127], state[128], state[129],
+            state[131], state[136], state[141],
+            state[135], state[140], state[145],
+            state[147], state[148], state[149]
+        ))
+
+        return edges
+
+
+class LookupTable555TsaiPhase4(LookupTableIDA):
+    """
+    """
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-4x4x4-step60-tsai-phase2-dummy.txt',
+            'TBD',
+            moves_555,
+
+            # illegal moves
+            ("Rw", "Rw'",
+             "Lw", "Lw'",
+             "Fw", "Fw'",
+             "Bw", "Bw'",
+             "Uw", "Uw'",
+             "Dw", "Dw'"
+             "L", "L'",
+             "R", "R'"),
+
+            # prune tables
+            (parent.lt_tsai_phase4_FB_centers,
+             parent.lt_tsai_phase4_x_plane_edges),
+
+            linecount=0,
+            max_depth=99)
+
+    def state(self):
+        return self.parent.lt_tsai_phase4_FB_centers.state() + self.parent.lt_tsai_phase4_x_plane_edges.state()
+
+    def search_complete(self, state, steps_to_here):
+
+        if (self.parent.lt_tsai_phase4_FB_centers.state() in self.parent.lt_tsai_phase4_FB_centers.state_target and
+            self.parent.lt_tsai_phase4_x_plane_edges.state() in self.parent.lt_tsai_phase4_x_plane_edges.state_target):
+
+            # rotate_xxx() is very fast but it does not append the
+            # steps to the solution so put the cube back in original state
+            # and execute the steps via a normal rotate() call
+            self.parent.state = self.original_state[:]
+            self.parent.solution = self.original_solution[:]
+
+            for step in steps_to_here:
+                self.parent.rotate(step)
+
+            return True
+        else:
+            return False
 
 
 class LookupTableULCentersSolve(LookupTableHashCostOnly):
@@ -1600,7 +2285,7 @@ def LR_edges_recolor_pattern_555(state):
         square_value = state[square_index]
         partner_value = state[partner_index]
 
-        high_low = tsai_phase2_orient_edges_555[(square_index, partner_index, square_value, partner_value)]
+        high_low = tsai_phase3_orient_edges_555[(square_index, partner_index, square_value, partner_value)]
         wing_str = ''.join(sorted([square_value, partner_value]))
 
         # If this is a high wing use the uppercase of the midge edge_index
@@ -1854,7 +2539,7 @@ class LookupTable555TCenterSolve(LookupTable):
         return result
 
 
-tsai_phase2_orient_edges_tuples = (
+tsai_phase3_orient_edges_tuples = (
     (2, 104), (4, 102), (6, 27), (10, 79), (16, 29), (20, 77), (22, 52), (24, 54),
     (27, 6), (29, 16), (31, 110), (35, 56), (41, 120), (45, 66), (47, 141), (49, 131),
     (52, 22), (54, 24), (56, 35), (60, 81), (66, 45), (70, 91), (72, 127), (74, 129),
@@ -2115,7 +2800,7 @@ class RubiksCube555(RubiksCube):
         assert result in ('U', 'D')
         return result
 
-    def build_tsai_phase2_orient_edges_555(self):
+    def build_tsai_phase3_orient_edges_555(self):
         state = self.state
 
         for x in range(1000000):
@@ -2136,14 +2821,14 @@ class RubiksCube555(RubiksCube):
                 wing_str = wing_str_map[''.join((state_x, state_y))]
                 wing_tuple = (x, y, state_x, state_y)
 
-                if wing_tuple not in tsai_phase2_orient_edges_555:
-                    tsai_phase2_orient_edges_555[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
+                if wing_tuple not in tsai_phase3_orient_edges_555:
+                    tsai_phase3_orient_edges_555[wing_tuple] = self.high_low_state(x, y, state_x, state_y, wing_str)
 
-        log.info("new tsai_phase2_orient_edges_555\n\n%s\n\n" % pformat(tsai_phase2_orient_edges_555))
-        log.info("tsai_phase2_orient_edges_555 has %d entries" % len(tsai_phase2_orient_edges_555))
+        log.info("new tsai_phase3_orient_edges_555\n\n%s\n\n" % pformat(tsai_phase3_orient_edges_555))
+        log.info("tsai_phase3_orient_edges_555 has %d entries" % len(tsai_phase3_orient_edges_555))
         sys.exit(0)
 
-    def tsai_phase2_orient_edges_state(self, return_hex):
+    def tsai_phase3_orient_edges_state(self, return_hex):
         state = self.state
 
         '''
@@ -2160,7 +2845,7 @@ class RubiksCube555(RubiksCube):
             state_x = state[x]
             state_y = state[y]
             wing_str = wing_str_map[''.join((state_x, state_y))]
-            high_low = tsai_phase2_orient_edges_555[(x, y, state_x, state_y)]
+            high_low = tsai_phase3_orient_edges_555[(x, y, state_x, state_y)]
 
             if wing_str in edges_to_flip:
                 if high_low == 'U':
@@ -2174,12 +2859,12 @@ class RubiksCube555(RubiksCube):
             result.append(high_low)
         '''
 
-        #for (x, y) in tsai_phase2_orient_edges_tuples:
+        #for (x, y) in tsai_phase3_orient_edges_tuples:
         #    state_x = state[x]
         #    state_y = state[y]
-        #    high_low = tsai_phase2_orient_edges_444[(x, y, state_x, state_y)]
+        #    high_low = tsai_phase3_orient_edges_444[(x, y, state_x, state_y)]
         #    result.append(high_low)
-        result = [tsai_phase2_orient_edges_555[(x, y, state[x], state[y])] for (x, y) in tsai_phase2_orient_edges_tuples]
+        result = [tsai_phase3_orient_edges_555[(x, y, state[x], state[y])] for (x, y) in tsai_phase3_orient_edges_tuples]
         result = ''.join(result)
         result = ''.join(result)
 
@@ -2188,7 +2873,7 @@ class RubiksCube555(RubiksCube):
         else:
             return result
 
-    def tsai_phase2_orient_edges_print(self):
+    def tsai_phase3_orient_edges_print(self):
 
         # save cube state
         original_state = self.state[:]
@@ -2197,7 +2882,7 @@ class RubiksCube555(RubiksCube):
         self.nuke_corners()
         self.nuke_centers()
 
-        orient_edge_state = list(self.tsai_phase2_orient_edges_state(return_hex=False))
+        orient_edge_state = list(self.tsai_phase3_orient_edges_state(return_hex=False))
         orient_edge_state_index = 0
         self.nuke_edges()
 
@@ -2512,7 +3197,7 @@ class RubiksCube555(RubiksCube):
         self.solution.append('EDGES_GROUPED')
 
 
-tsai_phase2_orient_edges_555 = {
+tsai_phase3_orient_edges_555 = {
     (2, 104, 'B', 'D'): 'D',
     (2, 104, 'B', 'L'): 'D',
     (2, 104, 'B', 'R'): 'D',
@@ -4181,12 +4866,17 @@ class RubiksCubeTsai555(RubiksCube555):
 
         self.lt_LR_centers_stage = LookupTable555LRCentersStage(self)
 
-        self.lt_tsai_phase2_edges_orient = LookupTable555TsaiPhase2EdgesOrient(self)
-        self.lt_tsai_phase2_LR_centers = LookupTable555TsaiPhase2LRCenters(self)
-        self.lt_tsai_phase2 = LookupTable555TsaiPhase2(self)
-        self.lt_tsai_phase2_edges_orient.preload_cache()
-        self.lt_tsai_phase2_LR_centers.preload_cache()
-        self.lt_tsai_phase2.preload_cache()
+        self.lt_tsai_phase3_edges_orient = LookupTable555TsaiPhase3EdgesOrient(self)
+        self.lt_tsai_phase3_LR_centers = LookupTable555TsaiPhase3LRCenters(self)
+        self.lt_tsai_phase3 = LookupTable555TsaiPhase3(self)
+        self.lt_tsai_phase3_edges_orient.preload_cache()
+        self.lt_tsai_phase3_LR_centers.preload_cache()
+        self.lt_tsai_phase3.preload_cache()
+
+        self.lt_tsai_phase4_FB_centers = LookupTable555TsaiPhase4FBCenters(self)
+        self.lt_tsai_phase4_x_plane_edges = LookupTable555TsaiPhase4XPlaneEdges(self)
+        self.lt_tsai_phase4 = LookupTable555TsaiPhase4(self)
+        self.lt_tsai_phase4_FB_centers.preload_cache()
 
     def group_centers_guts(self):
         self.lt_init()
@@ -4194,33 +4884,25 @@ class RubiksCubeTsai555(RubiksCube555):
         self.group_centers_stage_UD()
         self.group_centers_stage_LR()
 
-        # dwalton
-        # Test prune tables
-        #self.lt_tsai_phase2_edges_orient.solve()
-        #self.lt_tsai_phase2_LR_centers.solve()
+        # Test the prune tables
+        #self.lt_tsai_phase3_edges_orient.solve()
+        #self.lt_tsai_phase3_LR_centers.solve()
         #self.print_cube()
-        #self.tsai_phase2_orient_edges_print()
+        #self.tsai_phase3_orient_edges_print()
         #log.info("%d steps in" % self.get_solution_len_minus_rotates(self.solution))
-
-        # All centers are staged, solve them and pair the edges
-        log.info("%s: Start of tsai Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        self.lt_tsai_phase2.solve()
-        self.print_cube()
-        self.tsai_phase2_orient_edges_print()
-        log.info("%s: End of tsai Phase2, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        sys.exit(0)
-
-        # Test prune tables
-        self.lt_tsai_phase3_LF_centers.solve()
-        self.print_cube()
-        log.info("%d steps in" % self.get_solution_len_minus_rotates(self.solution))
-        #log.info("kociemba: %s" % self.get_kociemba_string(True))
-        sys.exit(0)
 
         log.info("%s: Start of tsai Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.lt_tsai_phase3.solve()
         self.print_cube()
+        self.tsai_phase3_orient_edges_print()
         log.info("%s: End of tsai Phase3, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        # Test the prune tables
+        self.lt_tsai_phase4_FB_centers.solve()
+        self.lt_tsai_phase4_x_plane_edges.solve()
+        self.print_cube()
+        log.info("%d steps in" % self.get_solution_len_minus_rotates(self.solution))
+        sys.exit(0)
 
 
 def rotate_555_U(cube):
@@ -4396,6 +5078,1162 @@ rotate_mapper_555 = {
 
 def rotate_555(cube, step):
     return rotate_mapper_555[step](cube)
+
+
+tsai_phase4_orient_edges_555 = {
+    (2, 104, 'B', 'D'): 'D',
+    (2, 104, 'B', 'L'): 'D',
+    (2, 104, 'B', 'R'): 'D',
+    (2, 104, 'B', 'U'): 'D',
+    (2, 104, 'D', 'B'): 'U',
+    (2, 104, 'D', 'F'): 'U',
+    (2, 104, 'D', 'L'): 'U',
+    (2, 104, 'D', 'R'): 'U',
+    (2, 104, 'F', 'D'): 'D',
+    (2, 104, 'F', 'L'): 'D',
+    (2, 104, 'F', 'R'): 'D',
+    (2, 104, 'F', 'U'): 'D',
+    (2, 104, 'L', 'B'): 'U',
+    (2, 104, 'L', 'D'): 'D',
+    (2, 104, 'L', 'F'): 'U',
+    (2, 104, 'L', 'U'): 'D',
+    (2, 104, 'R', 'B'): 'U',
+    (2, 104, 'R', 'D'): 'D',
+    (2, 104, 'R', 'F'): 'U',
+    (2, 104, 'R', 'U'): 'D',
+    (2, 104, 'U', 'B'): 'U',
+    (2, 104, 'U', 'F'): 'U',
+    (2, 104, 'U', 'L'): 'U',
+    (2, 104, 'U', 'R'): 'U',
+    (4, 102, 'B', 'D'): 'U',
+    (4, 102, 'B', 'L'): 'U',
+    (4, 102, 'B', 'R'): 'U',
+    (4, 102, 'B', 'U'): 'U',
+    (4, 102, 'D', 'B'): 'D',
+    (4, 102, 'D', 'F'): 'D',
+    (4, 102, 'D', 'L'): 'D',
+    (4, 102, 'D', 'R'): 'D',
+    (4, 102, 'F', 'D'): 'U',
+    (4, 102, 'F', 'L'): 'U',
+    (4, 102, 'F', 'R'): 'U',
+    (4, 102, 'F', 'U'): 'U',
+    (4, 102, 'L', 'B'): 'D',
+    (4, 102, 'L', 'D'): 'U',
+    (4, 102, 'L', 'F'): 'D',
+    (4, 102, 'L', 'U'): 'U',
+    (4, 102, 'R', 'B'): 'D',
+    (4, 102, 'R', 'D'): 'U',
+    (4, 102, 'R', 'F'): 'D',
+    (4, 102, 'R', 'U'): 'U',
+    (4, 102, 'U', 'B'): 'D',
+    (4, 102, 'U', 'F'): 'D',
+    (4, 102, 'U', 'L'): 'D',
+    (4, 102, 'U', 'R'): 'D',
+    (6, 27, 'B', 'D'): 'U',
+    (6, 27, 'B', 'L'): 'U',
+    (6, 27, 'B', 'R'): 'U',
+    (6, 27, 'B', 'U'): 'U',
+    (6, 27, 'D', 'B'): 'D',
+    (6, 27, 'D', 'F'): 'D',
+    (6, 27, 'D', 'L'): 'D',
+    (6, 27, 'D', 'R'): 'D',
+    (6, 27, 'F', 'D'): 'U',
+    (6, 27, 'F', 'L'): 'U',
+    (6, 27, 'F', 'R'): 'U',
+    (6, 27, 'F', 'U'): 'U',
+    (6, 27, 'L', 'B'): 'D',
+    (6, 27, 'L', 'D'): 'U',
+    (6, 27, 'L', 'F'): 'D',
+    (6, 27, 'L', 'U'): 'U',
+    (6, 27, 'R', 'B'): 'D',
+    (6, 27, 'R', 'D'): 'U',
+    (6, 27, 'R', 'F'): 'D',
+    (6, 27, 'R', 'U'): 'U',
+    (6, 27, 'U', 'B'): 'D',
+    (6, 27, 'U', 'F'): 'D',
+    (6, 27, 'U', 'L'): 'D',
+    (6, 27, 'U', 'R'): 'D',
+    (10, 79, 'B', 'D'): 'D',
+    (10, 79, 'B', 'L'): 'D',
+    (10, 79, 'B', 'R'): 'D',
+    (10, 79, 'B', 'U'): 'D',
+    (10, 79, 'D', 'B'): 'U',
+    (10, 79, 'D', 'F'): 'U',
+    (10, 79, 'D', 'L'): 'U',
+    (10, 79, 'D', 'R'): 'U',
+    (10, 79, 'F', 'D'): 'D',
+    (10, 79, 'F', 'L'): 'D',
+    (10, 79, 'F', 'R'): 'D',
+    (10, 79, 'F', 'U'): 'D',
+    (10, 79, 'L', 'B'): 'U',
+    (10, 79, 'L', 'D'): 'D',
+    (10, 79, 'L', 'F'): 'U',
+    (10, 79, 'L', 'U'): 'D',
+    (10, 79, 'R', 'B'): 'U',
+    (10, 79, 'R', 'D'): 'D',
+    (10, 79, 'R', 'F'): 'U',
+    (10, 79, 'R', 'U'): 'D',
+    (10, 79, 'U', 'B'): 'U',
+    (10, 79, 'U', 'F'): 'U',
+    (10, 79, 'U', 'L'): 'U',
+    (10, 79, 'U', 'R'): 'U',
+    (16, 29, 'B', 'D'): 'D',
+    (16, 29, 'B', 'L'): 'D',
+    (16, 29, 'B', 'R'): 'D',
+    (16, 29, 'B', 'U'): 'D',
+    (16, 29, 'D', 'B'): 'U',
+    (16, 29, 'D', 'F'): 'U',
+    (16, 29, 'D', 'L'): 'U',
+    (16, 29, 'D', 'R'): 'U',
+    (16, 29, 'F', 'D'): 'D',
+    (16, 29, 'F', 'L'): 'D',
+    (16, 29, 'F', 'R'): 'D',
+    (16, 29, 'F', 'U'): 'D',
+    (16, 29, 'L', 'B'): 'U',
+    (16, 29, 'L', 'D'): 'D',
+    (16, 29, 'L', 'F'): 'U',
+    (16, 29, 'L', 'U'): 'D',
+    (16, 29, 'R', 'B'): 'U',
+    (16, 29, 'R', 'D'): 'D',
+    (16, 29, 'R', 'F'): 'U',
+    (16, 29, 'R', 'U'): 'D',
+    (16, 29, 'U', 'B'): 'U',
+    (16, 29, 'U', 'F'): 'U',
+    (16, 29, 'U', 'L'): 'U',
+    (16, 29, 'U', 'R'): 'U',
+    (20, 77, 'B', 'D'): 'U',
+    (20, 77, 'B', 'L'): 'U',
+    (20, 77, 'B', 'R'): 'U',
+    (20, 77, 'B', 'U'): 'U',
+    (20, 77, 'D', 'B'): 'D',
+    (20, 77, 'D', 'F'): 'D',
+    (20, 77, 'D', 'L'): 'D',
+    (20, 77, 'D', 'R'): 'D',
+    (20, 77, 'F', 'D'): 'U',
+    (20, 77, 'F', 'L'): 'U',
+    (20, 77, 'F', 'R'): 'U',
+    (20, 77, 'F', 'U'): 'U',
+    (20, 77, 'L', 'B'): 'D',
+    (20, 77, 'L', 'D'): 'U',
+    (20, 77, 'L', 'F'): 'D',
+    (20, 77, 'L', 'U'): 'U',
+    (20, 77, 'R', 'B'): 'D',
+    (20, 77, 'R', 'D'): 'U',
+    (20, 77, 'R', 'F'): 'D',
+    (20, 77, 'R', 'U'): 'U',
+    (20, 77, 'U', 'B'): 'D',
+    (20, 77, 'U', 'F'): 'D',
+    (20, 77, 'U', 'L'): 'D',
+    (20, 77, 'U', 'R'): 'D',
+    (22, 52, 'B', 'D'): 'U',
+    (22, 52, 'B', 'L'): 'U',
+    (22, 52, 'B', 'R'): 'U',
+    (22, 52, 'B', 'U'): 'U',
+    (22, 52, 'D', 'B'): 'D',
+    (22, 52, 'D', 'F'): 'D',
+    (22, 52, 'D', 'L'): 'D',
+    (22, 52, 'D', 'R'): 'D',
+    (22, 52, 'F', 'D'): 'U',
+    (22, 52, 'F', 'L'): 'U',
+    (22, 52, 'F', 'R'): 'U',
+    (22, 52, 'F', 'U'): 'U',
+    (22, 52, 'L', 'B'): 'D',
+    (22, 52, 'L', 'D'): 'U',
+    (22, 52, 'L', 'F'): 'D',
+    (22, 52, 'L', 'U'): 'U',
+    (22, 52, 'R', 'B'): 'D',
+    (22, 52, 'R', 'D'): 'U',
+    (22, 52, 'R', 'F'): 'D',
+    (22, 52, 'R', 'U'): 'U',
+    (22, 52, 'U', 'B'): 'D',
+    (22, 52, 'U', 'F'): 'D',
+    (22, 52, 'U', 'L'): 'D',
+    (22, 52, 'U', 'R'): 'D',
+    (24, 54, 'B', 'D'): 'D',
+    (24, 54, 'B', 'L'): 'D',
+    (24, 54, 'B', 'R'): 'D',
+    (24, 54, 'B', 'U'): 'D',
+    (24, 54, 'D', 'B'): 'U',
+    (24, 54, 'D', 'F'): 'U',
+    (24, 54, 'D', 'L'): 'U',
+    (24, 54, 'D', 'R'): 'U',
+    (24, 54, 'F', 'D'): 'D',
+    (24, 54, 'F', 'L'): 'D',
+    (24, 54, 'F', 'R'): 'D',
+    (24, 54, 'F', 'U'): 'D',
+    (24, 54, 'L', 'B'): 'U',
+    (24, 54, 'L', 'D'): 'D',
+    (24, 54, 'L', 'F'): 'U',
+    (24, 54, 'L', 'U'): 'D',
+    (24, 54, 'R', 'B'): 'U',
+    (24, 54, 'R', 'D'): 'D',
+    (24, 54, 'R', 'F'): 'U',
+    (24, 54, 'R', 'U'): 'D',
+    (24, 54, 'U', 'B'): 'U',
+    (24, 54, 'U', 'F'): 'U',
+    (24, 54, 'U', 'L'): 'U',
+    (24, 54, 'U', 'R'): 'U',
+    (27, 6, 'B', 'D'): 'D',
+    (27, 6, 'B', 'L'): 'D',
+    (27, 6, 'B', 'R'): 'D',
+    (27, 6, 'B', 'U'): 'D',
+    (27, 6, 'D', 'B'): 'U',
+    (27, 6, 'D', 'F'): 'U',
+    (27, 6, 'D', 'L'): 'U',
+    (27, 6, 'D', 'R'): 'U',
+    (27, 6, 'F', 'D'): 'D',
+    (27, 6, 'F', 'L'): 'D',
+    (27, 6, 'F', 'R'): 'D',
+    (27, 6, 'F', 'U'): 'D',
+    (27, 6, 'L', 'B'): 'U',
+    (27, 6, 'L', 'D'): 'D',
+    (27, 6, 'L', 'F'): 'U',
+    (27, 6, 'L', 'U'): 'D',
+    (27, 6, 'R', 'B'): 'U',
+    (27, 6, 'R', 'D'): 'D',
+    (27, 6, 'R', 'F'): 'U',
+    (27, 6, 'R', 'U'): 'D',
+    (27, 6, 'U', 'B'): 'U',
+    (27, 6, 'U', 'F'): 'U',
+    (27, 6, 'U', 'L'): 'U',
+    (27, 6, 'U', 'R'): 'U',
+    (29, 16, 'B', 'D'): 'U',
+    (29, 16, 'B', 'L'): 'U',
+    (29, 16, 'B', 'R'): 'U',
+    (29, 16, 'B', 'U'): 'U',
+    (29, 16, 'D', 'B'): 'D',
+    (29, 16, 'D', 'F'): 'D',
+    (29, 16, 'D', 'L'): 'D',
+    (29, 16, 'D', 'R'): 'D',
+    (29, 16, 'F', 'D'): 'U',
+    (29, 16, 'F', 'L'): 'U',
+    (29, 16, 'F', 'R'): 'U',
+    (29, 16, 'F', 'U'): 'U',
+    (29, 16, 'L', 'B'): 'D',
+    (29, 16, 'L', 'D'): 'U',
+    (29, 16, 'L', 'F'): 'D',
+    (29, 16, 'L', 'U'): 'U',
+    (29, 16, 'R', 'B'): 'D',
+    (29, 16, 'R', 'D'): 'U',
+    (29, 16, 'R', 'F'): 'D',
+    (29, 16, 'R', 'U'): 'U',
+    (29, 16, 'U', 'B'): 'D',
+    (29, 16, 'U', 'F'): 'D',
+    (29, 16, 'U', 'L'): 'D',
+    (29, 16, 'U', 'R'): 'D',
+    (31, 110, 'B', 'D'): 'U',
+    (31, 110, 'B', 'L'): 'U',
+    (31, 110, 'B', 'R'): 'U',
+    (31, 110, 'B', 'U'): 'U',
+    (31, 110, 'D', 'B'): 'D',
+    (31, 110, 'D', 'F'): 'D',
+    (31, 110, 'D', 'L'): 'D',
+    (31, 110, 'D', 'R'): 'D',
+    (31, 110, 'F', 'D'): 'U',
+    (31, 110, 'F', 'L'): 'U',
+    (31, 110, 'F', 'R'): 'U',
+    (31, 110, 'F', 'U'): 'U',
+    (31, 110, 'L', 'B'): 'D',
+    (31, 110, 'L', 'D'): 'U',
+    (31, 110, 'L', 'F'): 'D',
+    (31, 110, 'L', 'U'): 'U',
+    (31, 110, 'R', 'B'): 'D',
+    (31, 110, 'R', 'D'): 'U',
+    (31, 110, 'R', 'F'): 'D',
+    (31, 110, 'R', 'U'): 'U',
+    (31, 110, 'U', 'B'): 'D',
+    (31, 110, 'U', 'F'): 'D',
+    (31, 110, 'U', 'L'): 'D',
+    (31, 110, 'U', 'R'): 'D',
+    (35, 56, 'B', 'D'): 'D',
+    (35, 56, 'B', 'L'): 'D',
+    (35, 56, 'B', 'R'): 'D',
+    (35, 56, 'B', 'U'): 'D',
+    (35, 56, 'D', 'B'): 'U',
+    (35, 56, 'D', 'F'): 'U',
+    (35, 56, 'D', 'L'): 'U',
+    (35, 56, 'D', 'R'): 'U',
+    (35, 56, 'F', 'D'): 'D',
+    (35, 56, 'F', 'L'): 'D',
+    (35, 56, 'F', 'R'): 'D',
+    (35, 56, 'F', 'U'): 'D',
+    (35, 56, 'L', 'B'): 'U',
+    (35, 56, 'L', 'D'): 'D',
+    (35, 56, 'L', 'F'): 'U',
+    (35, 56, 'L', 'U'): 'D',
+    (35, 56, 'R', 'B'): 'U',
+    (35, 56, 'R', 'D'): 'D',
+    (35, 56, 'R', 'F'): 'U',
+    (35, 56, 'R', 'U'): 'D',
+    (35, 56, 'U', 'B'): 'U',
+    (35, 56, 'U', 'F'): 'U',
+    (35, 56, 'U', 'L'): 'U',
+    (35, 56, 'U', 'R'): 'U',
+    (41, 120, 'B', 'D'): 'D',
+    (41, 120, 'B', 'L'): 'D',
+    (41, 120, 'B', 'R'): 'D',
+    (41, 120, 'B', 'U'): 'D',
+    (41, 120, 'D', 'B'): 'U',
+    (41, 120, 'D', 'F'): 'U',
+    (41, 120, 'D', 'L'): 'U',
+    (41, 120, 'D', 'R'): 'U',
+    (41, 120, 'F', 'D'): 'D',
+    (41, 120, 'F', 'L'): 'D',
+    (41, 120, 'F', 'R'): 'D',
+    (41, 120, 'F', 'U'): 'D',
+    (41, 120, 'L', 'B'): 'U',
+    (41, 120, 'L', 'D'): 'D',
+    (41, 120, 'L', 'F'): 'U',
+    (41, 120, 'L', 'U'): 'D',
+    (41, 120, 'R', 'B'): 'U',
+    (41, 120, 'R', 'D'): 'D',
+    (41, 120, 'R', 'F'): 'U',
+    (41, 120, 'R', 'U'): 'D',
+    (41, 120, 'U', 'B'): 'U',
+    (41, 120, 'U', 'F'): 'U',
+    (41, 120, 'U', 'L'): 'U',
+    (41, 120, 'U', 'R'): 'U',
+    (45, 66, 'B', 'D'): 'U',
+    (45, 66, 'B', 'L'): 'U',
+    (45, 66, 'B', 'R'): 'U',
+    (45, 66, 'B', 'U'): 'U',
+    (45, 66, 'D', 'B'): 'D',
+    (45, 66, 'D', 'F'): 'D',
+    (45, 66, 'D', 'L'): 'D',
+    (45, 66, 'D', 'R'): 'D',
+    (45, 66, 'F', 'D'): 'U',
+    (45, 66, 'F', 'L'): 'U',
+    (45, 66, 'F', 'R'): 'U',
+    (45, 66, 'F', 'U'): 'U',
+    (45, 66, 'L', 'B'): 'D',
+    (45, 66, 'L', 'D'): 'U',
+    (45, 66, 'L', 'F'): 'D',
+    (45, 66, 'L', 'U'): 'U',
+    (45, 66, 'R', 'B'): 'D',
+    (45, 66, 'R', 'D'): 'U',
+    (45, 66, 'R', 'F'): 'D',
+    (45, 66, 'R', 'U'): 'U',
+    (45, 66, 'U', 'B'): 'D',
+    (45, 66, 'U', 'F'): 'D',
+    (45, 66, 'U', 'L'): 'D',
+    (45, 66, 'U', 'R'): 'D',
+    (47, 141, 'B', 'D'): 'U',
+    (47, 141, 'B', 'L'): 'U',
+    (47, 141, 'B', 'R'): 'U',
+    (47, 141, 'B', 'U'): 'U',
+    (47, 141, 'D', 'B'): 'D',
+    (47, 141, 'D', 'F'): 'D',
+    (47, 141, 'D', 'L'): 'D',
+    (47, 141, 'D', 'R'): 'D',
+    (47, 141, 'F', 'D'): 'U',
+    (47, 141, 'F', 'L'): 'U',
+    (47, 141, 'F', 'R'): 'U',
+    (47, 141, 'F', 'U'): 'U',
+    (47, 141, 'L', 'B'): 'D',
+    (47, 141, 'L', 'D'): 'U',
+    (47, 141, 'L', 'F'): 'D',
+    (47, 141, 'L', 'U'): 'U',
+    (47, 141, 'R', 'B'): 'D',
+    (47, 141, 'R', 'D'): 'U',
+    (47, 141, 'R', 'F'): 'D',
+    (47, 141, 'R', 'U'): 'U',
+    (47, 141, 'U', 'B'): 'D',
+    (47, 141, 'U', 'F'): 'D',
+    (47, 141, 'U', 'L'): 'D',
+    (47, 141, 'U', 'R'): 'D',
+    (49, 131, 'B', 'D'): 'D',
+    (49, 131, 'B', 'L'): 'D',
+    (49, 131, 'B', 'R'): 'D',
+    (49, 131, 'B', 'U'): 'D',
+    (49, 131, 'D', 'B'): 'U',
+    (49, 131, 'D', 'F'): 'U',
+    (49, 131, 'D', 'L'): 'U',
+    (49, 131, 'D', 'R'): 'U',
+    (49, 131, 'F', 'D'): 'D',
+    (49, 131, 'F', 'L'): 'D',
+    (49, 131, 'F', 'R'): 'D',
+    (49, 131, 'F', 'U'): 'D',
+    (49, 131, 'L', 'B'): 'U',
+    (49, 131, 'L', 'D'): 'D',
+    (49, 131, 'L', 'F'): 'U',
+    (49, 131, 'L', 'U'): 'D',
+    (49, 131, 'R', 'B'): 'U',
+    (49, 131, 'R', 'D'): 'D',
+    (49, 131, 'R', 'F'): 'U',
+    (49, 131, 'R', 'U'): 'D',
+    (49, 131, 'U', 'B'): 'U',
+    (49, 131, 'U', 'F'): 'U',
+    (49, 131, 'U', 'L'): 'U',
+    (49, 131, 'U', 'R'): 'U',
+    (52, 22, 'B', 'D'): 'D',
+    (52, 22, 'B', 'L'): 'D',
+    (52, 22, 'B', 'R'): 'D',
+    (52, 22, 'B', 'U'): 'D',
+    (52, 22, 'D', 'B'): 'U',
+    (52, 22, 'D', 'F'): 'U',
+    (52, 22, 'D', 'L'): 'U',
+    (52, 22, 'D', 'R'): 'U',
+    (52, 22, 'F', 'D'): 'D',
+    (52, 22, 'F', 'L'): 'D',
+    (52, 22, 'F', 'R'): 'D',
+    (52, 22, 'F', 'U'): 'D',
+    (52, 22, 'L', 'B'): 'U',
+    (52, 22, 'L', 'D'): 'D',
+    (52, 22, 'L', 'F'): 'U',
+    (52, 22, 'L', 'U'): 'D',
+    (52, 22, 'R', 'B'): 'U',
+    (52, 22, 'R', 'D'): 'D',
+    (52, 22, 'R', 'F'): 'U',
+    (52, 22, 'R', 'U'): 'D',
+    (52, 22, 'U', 'B'): 'U',
+    (52, 22, 'U', 'F'): 'U',
+    (52, 22, 'U', 'L'): 'U',
+    (52, 22, 'U', 'R'): 'U',
+    (54, 24, 'B', 'D'): 'U',
+    (54, 24, 'B', 'L'): 'U',
+    (54, 24, 'B', 'R'): 'U',
+    (54, 24, 'B', 'U'): 'U',
+    (54, 24, 'D', 'B'): 'D',
+    (54, 24, 'D', 'F'): 'D',
+    (54, 24, 'D', 'L'): 'D',
+    (54, 24, 'D', 'R'): 'D',
+    (54, 24, 'F', 'D'): 'U',
+    (54, 24, 'F', 'L'): 'U',
+    (54, 24, 'F', 'R'): 'U',
+    (54, 24, 'F', 'U'): 'U',
+    (54, 24, 'L', 'B'): 'D',
+    (54, 24, 'L', 'D'): 'U',
+    (54, 24, 'L', 'F'): 'D',
+    (54, 24, 'L', 'U'): 'U',
+    (54, 24, 'R', 'B'): 'D',
+    (54, 24, 'R', 'D'): 'U',
+    (54, 24, 'R', 'F'): 'D',
+    (54, 24, 'R', 'U'): 'U',
+    (54, 24, 'U', 'B'): 'D',
+    (54, 24, 'U', 'F'): 'D',
+    (54, 24, 'U', 'L'): 'D',
+    (54, 24, 'U', 'R'): 'D',
+    (56, 35, 'B', 'D'): 'U',
+    (56, 35, 'B', 'L'): 'U',
+    (56, 35, 'B', 'R'): 'U',
+    (56, 35, 'B', 'U'): 'U',
+    (56, 35, 'D', 'B'): 'D',
+    (56, 35, 'D', 'F'): 'D',
+    (56, 35, 'D', 'L'): 'D',
+    (56, 35, 'D', 'R'): 'D',
+    (56, 35, 'F', 'D'): 'U',
+    (56, 35, 'F', 'L'): 'U',
+    (56, 35, 'F', 'R'): 'U',
+    (56, 35, 'F', 'U'): 'U',
+    (56, 35, 'L', 'B'): 'D',
+    (56, 35, 'L', 'D'): 'U',
+    (56, 35, 'L', 'F'): 'D',
+    (56, 35, 'L', 'U'): 'U',
+    (56, 35, 'R', 'B'): 'D',
+    (56, 35, 'R', 'D'): 'U',
+    (56, 35, 'R', 'F'): 'D',
+    (56, 35, 'R', 'U'): 'U',
+    (56, 35, 'U', 'B'): 'D',
+    (56, 35, 'U', 'F'): 'D',
+    (56, 35, 'U', 'L'): 'D',
+    (56, 35, 'U', 'R'): 'D',
+    (60, 81, 'B', 'D'): 'D',
+    (60, 81, 'B', 'L'): 'D',
+    (60, 81, 'B', 'R'): 'D',
+    (60, 81, 'B', 'U'): 'D',
+    (60, 81, 'D', 'B'): 'U',
+    (60, 81, 'D', 'F'): 'U',
+    (60, 81, 'D', 'L'): 'U',
+    (60, 81, 'D', 'R'): 'U',
+    (60, 81, 'F', 'D'): 'D',
+    (60, 81, 'F', 'L'): 'D',
+    (60, 81, 'F', 'R'): 'D',
+    (60, 81, 'F', 'U'): 'D',
+    (60, 81, 'L', 'B'): 'U',
+    (60, 81, 'L', 'D'): 'D',
+    (60, 81, 'L', 'F'): 'U',
+    (60, 81, 'L', 'U'): 'D',
+    (60, 81, 'R', 'B'): 'U',
+    (60, 81, 'R', 'D'): 'D',
+    (60, 81, 'R', 'F'): 'U',
+    (60, 81, 'R', 'U'): 'D',
+    (60, 81, 'U', 'B'): 'U',
+    (60, 81, 'U', 'F'): 'U',
+    (60, 81, 'U', 'L'): 'U',
+    (60, 81, 'U', 'R'): 'U',
+    (66, 45, 'B', 'D'): 'D',
+    (66, 45, 'B', 'L'): 'D',
+    (66, 45, 'B', 'R'): 'D',
+    (66, 45, 'B', 'U'): 'D',
+    (66, 45, 'D', 'B'): 'U',
+    (66, 45, 'D', 'F'): 'U',
+    (66, 45, 'D', 'L'): 'U',
+    (66, 45, 'D', 'R'): 'U',
+    (66, 45, 'F', 'D'): 'D',
+    (66, 45, 'F', 'L'): 'D',
+    (66, 45, 'F', 'R'): 'D',
+    (66, 45, 'F', 'U'): 'D',
+    (66, 45, 'L', 'B'): 'U',
+    (66, 45, 'L', 'D'): 'D',
+    (66, 45, 'L', 'F'): 'U',
+    (66, 45, 'L', 'U'): 'D',
+    (66, 45, 'R', 'B'): 'U',
+    (66, 45, 'R', 'D'): 'D',
+    (66, 45, 'R', 'F'): 'U',
+    (66, 45, 'R', 'U'): 'D',
+    (66, 45, 'U', 'B'): 'U',
+    (66, 45, 'U', 'F'): 'U',
+    (66, 45, 'U', 'L'): 'U',
+    (66, 45, 'U', 'R'): 'U',
+    (70, 91, 'B', 'D'): 'U',
+    (70, 91, 'B', 'L'): 'U',
+    (70, 91, 'B', 'R'): 'U',
+    (70, 91, 'B', 'U'): 'U',
+    (70, 91, 'D', 'B'): 'D',
+    (70, 91, 'D', 'F'): 'D',
+    (70, 91, 'D', 'L'): 'D',
+    (70, 91, 'D', 'R'): 'D',
+    (70, 91, 'F', 'D'): 'U',
+    (70, 91, 'F', 'L'): 'U',
+    (70, 91, 'F', 'R'): 'U',
+    (70, 91, 'F', 'U'): 'U',
+    (70, 91, 'L', 'B'): 'D',
+    (70, 91, 'L', 'D'): 'U',
+    (70, 91, 'L', 'F'): 'D',
+    (70, 91, 'L', 'U'): 'U',
+    (70, 91, 'R', 'B'): 'D',
+    (70, 91, 'R', 'D'): 'U',
+    (70, 91, 'R', 'F'): 'D',
+    (70, 91, 'R', 'U'): 'U',
+    (70, 91, 'U', 'B'): 'D',
+    (70, 91, 'U', 'F'): 'D',
+    (70, 91, 'U', 'L'): 'D',
+    (70, 91, 'U', 'R'): 'D',
+    (72, 127, 'B', 'D'): 'U',
+    (72, 127, 'B', 'L'): 'U',
+    (72, 127, 'B', 'R'): 'U',
+    (72, 127, 'B', 'U'): 'U',
+    (72, 127, 'D', 'B'): 'D',
+    (72, 127, 'D', 'F'): 'D',
+    (72, 127, 'D', 'L'): 'D',
+    (72, 127, 'D', 'R'): 'D',
+    (72, 127, 'F', 'D'): 'U',
+    (72, 127, 'F', 'L'): 'U',
+    (72, 127, 'F', 'R'): 'U',
+    (72, 127, 'F', 'U'): 'U',
+    (72, 127, 'L', 'B'): 'D',
+    (72, 127, 'L', 'D'): 'U',
+    (72, 127, 'L', 'F'): 'D',
+    (72, 127, 'L', 'U'): 'U',
+    (72, 127, 'R', 'B'): 'D',
+    (72, 127, 'R', 'D'): 'U',
+    (72, 127, 'R', 'F'): 'D',
+    (72, 127, 'R', 'U'): 'U',
+    (72, 127, 'U', 'B'): 'D',
+    (72, 127, 'U', 'F'): 'D',
+    (72, 127, 'U', 'L'): 'D',
+    (72, 127, 'U', 'R'): 'D',
+    (74, 129, 'B', 'D'): 'D',
+    (74, 129, 'B', 'L'): 'D',
+    (74, 129, 'B', 'R'): 'D',
+    (74, 129, 'B', 'U'): 'D',
+    (74, 129, 'D', 'B'): 'U',
+    (74, 129, 'D', 'F'): 'U',
+    (74, 129, 'D', 'L'): 'U',
+    (74, 129, 'D', 'R'): 'U',
+    (74, 129, 'F', 'D'): 'D',
+    (74, 129, 'F', 'L'): 'D',
+    (74, 129, 'F', 'R'): 'D',
+    (74, 129, 'F', 'U'): 'D',
+    (74, 129, 'L', 'B'): 'U',
+    (74, 129, 'L', 'D'): 'D',
+    (74, 129, 'L', 'F'): 'U',
+    (74, 129, 'L', 'U'): 'D',
+    (74, 129, 'R', 'B'): 'U',
+    (74, 129, 'R', 'D'): 'D',
+    (74, 129, 'R', 'F'): 'U',
+    (74, 129, 'R', 'U'): 'D',
+    (74, 129, 'U', 'B'): 'U',
+    (74, 129, 'U', 'F'): 'U',
+    (74, 129, 'U', 'L'): 'U',
+    (74, 129, 'U', 'R'): 'U',
+    (77, 20, 'B', 'D'): 'D',
+    (77, 20, 'B', 'L'): 'D',
+    (77, 20, 'B', 'R'): 'D',
+    (77, 20, 'B', 'U'): 'D',
+    (77, 20, 'D', 'B'): 'U',
+    (77, 20, 'D', 'F'): 'U',
+    (77, 20, 'D', 'L'): 'U',
+    (77, 20, 'D', 'R'): 'U',
+    (77, 20, 'F', 'D'): 'D',
+    (77, 20, 'F', 'L'): 'D',
+    (77, 20, 'F', 'R'): 'D',
+    (77, 20, 'F', 'U'): 'D',
+    (77, 20, 'L', 'B'): 'U',
+    (77, 20, 'L', 'D'): 'D',
+    (77, 20, 'L', 'F'): 'U',
+    (77, 20, 'L', 'U'): 'D',
+    (77, 20, 'R', 'B'): 'U',
+    (77, 20, 'R', 'D'): 'D',
+    (77, 20, 'R', 'F'): 'U',
+    (77, 20, 'R', 'U'): 'D',
+    (77, 20, 'U', 'B'): 'U',
+    (77, 20, 'U', 'F'): 'U',
+    (77, 20, 'U', 'L'): 'U',
+    (77, 20, 'U', 'R'): 'U',
+    (79, 10, 'B', 'D'): 'U',
+    (79, 10, 'B', 'L'): 'U',
+    (79, 10, 'B', 'R'): 'U',
+    (79, 10, 'B', 'U'): 'U',
+    (79, 10, 'D', 'B'): 'D',
+    (79, 10, 'D', 'F'): 'D',
+    (79, 10, 'D', 'L'): 'D',
+    (79, 10, 'D', 'R'): 'D',
+    (79, 10, 'F', 'D'): 'U',
+    (79, 10, 'F', 'L'): 'U',
+    (79, 10, 'F', 'R'): 'U',
+    (79, 10, 'F', 'U'): 'U',
+    (79, 10, 'L', 'B'): 'D',
+    (79, 10, 'L', 'D'): 'U',
+    (79, 10, 'L', 'F'): 'D',
+    (79, 10, 'L', 'U'): 'U',
+    (79, 10, 'R', 'B'): 'D',
+    (79, 10, 'R', 'D'): 'U',
+    (79, 10, 'R', 'F'): 'D',
+    (79, 10, 'R', 'U'): 'U',
+    (79, 10, 'U', 'B'): 'D',
+    (79, 10, 'U', 'F'): 'D',
+    (79, 10, 'U', 'L'): 'D',
+    (79, 10, 'U', 'R'): 'D',
+    (81, 60, 'B', 'D'): 'U',
+    (81, 60, 'B', 'L'): 'U',
+    (81, 60, 'B', 'R'): 'U',
+    (81, 60, 'B', 'U'): 'U',
+    (81, 60, 'D', 'B'): 'D',
+    (81, 60, 'D', 'F'): 'D',
+    (81, 60, 'D', 'L'): 'D',
+    (81, 60, 'D', 'R'): 'D',
+    (81, 60, 'F', 'D'): 'U',
+    (81, 60, 'F', 'L'): 'U',
+    (81, 60, 'F', 'R'): 'U',
+    (81, 60, 'F', 'U'): 'U',
+    (81, 60, 'L', 'B'): 'D',
+    (81, 60, 'L', 'D'): 'U',
+    (81, 60, 'L', 'F'): 'D',
+    (81, 60, 'L', 'U'): 'U',
+    (81, 60, 'R', 'B'): 'D',
+    (81, 60, 'R', 'D'): 'U',
+    (81, 60, 'R', 'F'): 'D',
+    (81, 60, 'R', 'U'): 'U',
+    (81, 60, 'U', 'B'): 'D',
+    (81, 60, 'U', 'F'): 'D',
+    (81, 60, 'U', 'L'): 'D',
+    (81, 60, 'U', 'R'): 'D',
+    (85, 106, 'B', 'D'): 'D',
+    (85, 106, 'B', 'L'): 'D',
+    (85, 106, 'B', 'R'): 'D',
+    (85, 106, 'B', 'U'): 'D',
+    (85, 106, 'D', 'B'): 'U',
+    (85, 106, 'D', 'F'): 'U',
+    (85, 106, 'D', 'L'): 'U',
+    (85, 106, 'D', 'R'): 'U',
+    (85, 106, 'F', 'D'): 'D',
+    (85, 106, 'F', 'L'): 'D',
+    (85, 106, 'F', 'R'): 'D',
+    (85, 106, 'F', 'U'): 'D',
+    (85, 106, 'L', 'B'): 'U',
+    (85, 106, 'L', 'D'): 'D',
+    (85, 106, 'L', 'F'): 'U',
+    (85, 106, 'L', 'U'): 'D',
+    (85, 106, 'R', 'B'): 'U',
+    (85, 106, 'R', 'D'): 'D',
+    (85, 106, 'R', 'F'): 'U',
+    (85, 106, 'R', 'U'): 'D',
+    (85, 106, 'U', 'B'): 'U',
+    (85, 106, 'U', 'F'): 'U',
+    (85, 106, 'U', 'L'): 'U',
+    (85, 106, 'U', 'R'): 'U',
+    (91, 70, 'B', 'D'): 'D',
+    (91, 70, 'B', 'L'): 'D',
+    (91, 70, 'B', 'R'): 'D',
+    (91, 70, 'B', 'U'): 'D',
+    (91, 70, 'D', 'B'): 'U',
+    (91, 70, 'D', 'F'): 'U',
+    (91, 70, 'D', 'L'): 'U',
+    (91, 70, 'D', 'R'): 'U',
+    (91, 70, 'F', 'D'): 'D',
+    (91, 70, 'F', 'L'): 'D',
+    (91, 70, 'F', 'R'): 'D',
+    (91, 70, 'F', 'U'): 'D',
+    (91, 70, 'L', 'B'): 'U',
+    (91, 70, 'L', 'D'): 'D',
+    (91, 70, 'L', 'F'): 'U',
+    (91, 70, 'L', 'U'): 'D',
+    (91, 70, 'R', 'B'): 'U',
+    (91, 70, 'R', 'D'): 'D',
+    (91, 70, 'R', 'F'): 'U',
+    (91, 70, 'R', 'U'): 'D',
+    (91, 70, 'U', 'B'): 'U',
+    (91, 70, 'U', 'F'): 'U',
+    (91, 70, 'U', 'L'): 'U',
+    (91, 70, 'U', 'R'): 'U',
+    (95, 116, 'B', 'D'): 'U',
+    (95, 116, 'B', 'L'): 'U',
+    (95, 116, 'B', 'R'): 'U',
+    (95, 116, 'B', 'U'): 'U',
+    (95, 116, 'D', 'B'): 'D',
+    (95, 116, 'D', 'F'): 'D',
+    (95, 116, 'D', 'L'): 'D',
+    (95, 116, 'D', 'R'): 'D',
+    (95, 116, 'F', 'D'): 'U',
+    (95, 116, 'F', 'L'): 'U',
+    (95, 116, 'F', 'R'): 'U',
+    (95, 116, 'F', 'U'): 'U',
+    (95, 116, 'L', 'B'): 'D',
+    (95, 116, 'L', 'D'): 'U',
+    (95, 116, 'L', 'F'): 'D',
+    (95, 116, 'L', 'U'): 'U',
+    (95, 116, 'R', 'B'): 'D',
+    (95, 116, 'R', 'D'): 'U',
+    (95, 116, 'R', 'F'): 'D',
+    (95, 116, 'R', 'U'): 'U',
+    (95, 116, 'U', 'B'): 'D',
+    (95, 116, 'U', 'F'): 'D',
+    (95, 116, 'U', 'L'): 'D',
+    (95, 116, 'U', 'R'): 'D',
+    (97, 135, 'B', 'D'): 'U',
+    (97, 135, 'B', 'L'): 'U',
+    (97, 135, 'B', 'R'): 'U',
+    (97, 135, 'B', 'U'): 'U',
+    (97, 135, 'D', 'B'): 'D',
+    (97, 135, 'D', 'F'): 'D',
+    (97, 135, 'D', 'L'): 'D',
+    (97, 135, 'D', 'R'): 'D',
+    (97, 135, 'F', 'D'): 'U',
+    (97, 135, 'F', 'L'): 'U',
+    (97, 135, 'F', 'R'): 'U',
+    (97, 135, 'F', 'U'): 'U',
+    (97, 135, 'L', 'B'): 'D',
+    (97, 135, 'L', 'D'): 'U',
+    (97, 135, 'L', 'F'): 'D',
+    (97, 135, 'L', 'U'): 'U',
+    (97, 135, 'R', 'B'): 'D',
+    (97, 135, 'R', 'D'): 'U',
+    (97, 135, 'R', 'F'): 'D',
+    (97, 135, 'R', 'U'): 'U',
+    (97, 135, 'U', 'B'): 'D',
+    (97, 135, 'U', 'F'): 'D',
+    (97, 135, 'U', 'L'): 'D',
+    (97, 135, 'U', 'R'): 'D',
+    (99, 145, 'B', 'D'): 'D',
+    (99, 145, 'B', 'L'): 'D',
+    (99, 145, 'B', 'R'): 'D',
+    (99, 145, 'B', 'U'): 'D',
+    (99, 145, 'D', 'B'): 'U',
+    (99, 145, 'D', 'F'): 'U',
+    (99, 145, 'D', 'L'): 'U',
+    (99, 145, 'D', 'R'): 'U',
+    (99, 145, 'F', 'D'): 'D',
+    (99, 145, 'F', 'L'): 'D',
+    (99, 145, 'F', 'R'): 'D',
+    (99, 145, 'F', 'U'): 'D',
+    (99, 145, 'L', 'B'): 'U',
+    (99, 145, 'L', 'D'): 'D',
+    (99, 145, 'L', 'F'): 'U',
+    (99, 145, 'L', 'U'): 'D',
+    (99, 145, 'R', 'B'): 'U',
+    (99, 145, 'R', 'D'): 'D',
+    (99, 145, 'R', 'F'): 'U',
+    (99, 145, 'R', 'U'): 'D',
+    (99, 145, 'U', 'B'): 'U',
+    (99, 145, 'U', 'F'): 'U',
+    (99, 145, 'U', 'L'): 'U',
+    (99, 145, 'U', 'R'): 'U',
+    (102, 4, 'B', 'D'): 'D',
+    (102, 4, 'B', 'L'): 'D',
+    (102, 4, 'B', 'R'): 'D',
+    (102, 4, 'B', 'U'): 'D',
+    (102, 4, 'D', 'B'): 'U',
+    (102, 4, 'D', 'F'): 'U',
+    (102, 4, 'D', 'L'): 'U',
+    (102, 4, 'D', 'R'): 'U',
+    (102, 4, 'F', 'D'): 'D',
+    (102, 4, 'F', 'L'): 'D',
+    (102, 4, 'F', 'R'): 'D',
+    (102, 4, 'F', 'U'): 'D',
+    (102, 4, 'L', 'B'): 'U',
+    (102, 4, 'L', 'D'): 'D',
+    (102, 4, 'L', 'F'): 'U',
+    (102, 4, 'L', 'U'): 'D',
+    (102, 4, 'R', 'B'): 'U',
+    (102, 4, 'R', 'D'): 'D',
+    (102, 4, 'R', 'F'): 'U',
+    (102, 4, 'R', 'U'): 'D',
+    (102, 4, 'U', 'B'): 'U',
+    (102, 4, 'U', 'F'): 'U',
+    (102, 4, 'U', 'L'): 'U',
+    (102, 4, 'U', 'R'): 'U',
+    (104, 2, 'B', 'D'): 'U',
+    (104, 2, 'B', 'L'): 'U',
+    (104, 2, 'B', 'R'): 'U',
+    (104, 2, 'B', 'U'): 'U',
+    (104, 2, 'D', 'B'): 'D',
+    (104, 2, 'D', 'F'): 'D',
+    (104, 2, 'D', 'L'): 'D',
+    (104, 2, 'D', 'R'): 'D',
+    (104, 2, 'F', 'D'): 'U',
+    (104, 2, 'F', 'L'): 'U',
+    (104, 2, 'F', 'R'): 'U',
+    (104, 2, 'F', 'U'): 'U',
+    (104, 2, 'L', 'B'): 'D',
+    (104, 2, 'L', 'D'): 'U',
+    (104, 2, 'L', 'F'): 'D',
+    (104, 2, 'L', 'U'): 'U',
+    (104, 2, 'R', 'B'): 'D',
+    (104, 2, 'R', 'D'): 'U',
+    (104, 2, 'R', 'F'): 'D',
+    (104, 2, 'R', 'U'): 'U',
+    (104, 2, 'U', 'B'): 'D',
+    (104, 2, 'U', 'F'): 'D',
+    (104, 2, 'U', 'L'): 'D',
+    (104, 2, 'U', 'R'): 'D',
+    (106, 85, 'B', 'D'): 'U',
+    (106, 85, 'B', 'L'): 'U',
+    (106, 85, 'B', 'R'): 'U',
+    (106, 85, 'B', 'U'): 'U',
+    (106, 85, 'D', 'B'): 'D',
+    (106, 85, 'D', 'F'): 'D',
+    (106, 85, 'D', 'L'): 'D',
+    (106, 85, 'D', 'R'): 'D',
+    (106, 85, 'F', 'D'): 'U',
+    (106, 85, 'F', 'L'): 'U',
+    (106, 85, 'F', 'R'): 'U',
+    (106, 85, 'F', 'U'): 'U',
+    (106, 85, 'L', 'B'): 'D',
+    (106, 85, 'L', 'D'): 'U',
+    (106, 85, 'L', 'F'): 'D',
+    (106, 85, 'L', 'U'): 'U',
+    (106, 85, 'R', 'B'): 'D',
+    (106, 85, 'R', 'D'): 'U',
+    (106, 85, 'R', 'F'): 'D',
+    (106, 85, 'R', 'U'): 'U',
+    (106, 85, 'U', 'B'): 'D',
+    (106, 85, 'U', 'F'): 'D',
+    (106, 85, 'U', 'L'): 'D',
+    (106, 85, 'U', 'R'): 'D',
+    (110, 31, 'B', 'D'): 'D',
+    (110, 31, 'B', 'L'): 'D',
+    (110, 31, 'B', 'R'): 'D',
+    (110, 31, 'B', 'U'): 'D',
+    (110, 31, 'D', 'B'): 'U',
+    (110, 31, 'D', 'F'): 'U',
+    (110, 31, 'D', 'L'): 'U',
+    (110, 31, 'D', 'R'): 'U',
+    (110, 31, 'F', 'D'): 'D',
+    (110, 31, 'F', 'L'): 'D',
+    (110, 31, 'F', 'R'): 'D',
+    (110, 31, 'F', 'U'): 'D',
+    (110, 31, 'L', 'B'): 'U',
+    (110, 31, 'L', 'D'): 'D',
+    (110, 31, 'L', 'F'): 'U',
+    (110, 31, 'L', 'U'): 'D',
+    (110, 31, 'R', 'B'): 'U',
+    (110, 31, 'R', 'D'): 'D',
+    (110, 31, 'R', 'F'): 'U',
+    (110, 31, 'R', 'U'): 'D',
+    (110, 31, 'U', 'B'): 'U',
+    (110, 31, 'U', 'F'): 'U',
+    (110, 31, 'U', 'L'): 'U',
+    (110, 31, 'U', 'R'): 'U',
+    (116, 95, 'B', 'D'): 'D',
+    (116, 95, 'B', 'L'): 'D',
+    (116, 95, 'B', 'R'): 'D',
+    (116, 95, 'B', 'U'): 'D',
+    (116, 95, 'D', 'B'): 'U',
+    (116, 95, 'D', 'F'): 'U',
+    (116, 95, 'D', 'L'): 'U',
+    (116, 95, 'D', 'R'): 'U',
+    (116, 95, 'F', 'D'): 'D',
+    (116, 95, 'F', 'L'): 'D',
+    (116, 95, 'F', 'R'): 'D',
+    (116, 95, 'F', 'U'): 'D',
+    (116, 95, 'L', 'B'): 'U',
+    (116, 95, 'L', 'D'): 'D',
+    (116, 95, 'L', 'F'): 'U',
+    (116, 95, 'L', 'U'): 'D',
+    (116, 95, 'R', 'B'): 'U',
+    (116, 95, 'R', 'D'): 'D',
+    (116, 95, 'R', 'F'): 'U',
+    (116, 95, 'R', 'U'): 'D',
+    (116, 95, 'U', 'B'): 'U',
+    (116, 95, 'U', 'F'): 'U',
+    (116, 95, 'U', 'L'): 'U',
+    (116, 95, 'U', 'R'): 'U',
+    (120, 41, 'B', 'D'): 'U',
+    (120, 41, 'B', 'L'): 'U',
+    (120, 41, 'B', 'R'): 'U',
+    (120, 41, 'B', 'U'): 'U',
+    (120, 41, 'D', 'B'): 'D',
+    (120, 41, 'D', 'F'): 'D',
+    (120, 41, 'D', 'L'): 'D',
+    (120, 41, 'D', 'R'): 'D',
+    (120, 41, 'F', 'D'): 'U',
+    (120, 41, 'F', 'L'): 'U',
+    (120, 41, 'F', 'R'): 'U',
+    (120, 41, 'F', 'U'): 'U',
+    (120, 41, 'L', 'B'): 'D',
+    (120, 41, 'L', 'D'): 'U',
+    (120, 41, 'L', 'F'): 'D',
+    (120, 41, 'L', 'U'): 'U',
+    (120, 41, 'R', 'B'): 'D',
+    (120, 41, 'R', 'D'): 'U',
+    (120, 41, 'R', 'F'): 'D',
+    (120, 41, 'R', 'U'): 'U',
+    (120, 41, 'U', 'B'): 'D',
+    (120, 41, 'U', 'F'): 'D',
+    (120, 41, 'U', 'L'): 'D',
+    (120, 41, 'U', 'R'): 'D',
+    (122, 149, 'B', 'D'): 'U',
+    (122, 149, 'B', 'L'): 'U',
+    (122, 149, 'B', 'R'): 'U',
+    (122, 149, 'B', 'U'): 'U',
+    (122, 149, 'D', 'B'): 'D',
+    (122, 149, 'D', 'F'): 'D',
+    (122, 149, 'D', 'L'): 'D',
+    (122, 149, 'D', 'R'): 'D',
+    (122, 149, 'F', 'D'): 'U',
+    (122, 149, 'F', 'L'): 'U',
+    (122, 149, 'F', 'R'): 'U',
+    (122, 149, 'F', 'U'): 'U',
+    (122, 149, 'L', 'B'): 'D',
+    (122, 149, 'L', 'D'): 'U',
+    (122, 149, 'L', 'F'): 'D',
+    (122, 149, 'L', 'U'): 'U',
+    (122, 149, 'R', 'B'): 'D',
+    (122, 149, 'R', 'D'): 'U',
+    (122, 149, 'R', 'F'): 'D',
+    (122, 149, 'R', 'U'): 'U',
+    (122, 149, 'U', 'B'): 'D',
+    (122, 149, 'U', 'F'): 'D',
+    (122, 149, 'U', 'L'): 'D',
+    (122, 149, 'U', 'R'): 'D',
+    (124, 147, 'B', 'D'): 'D',
+    (124, 147, 'B', 'L'): 'D',
+    (124, 147, 'B', 'R'): 'D',
+    (124, 147, 'B', 'U'): 'D',
+    (124, 147, 'D', 'B'): 'U',
+    (124, 147, 'D', 'F'): 'U',
+    (124, 147, 'D', 'L'): 'U',
+    (124, 147, 'D', 'R'): 'U',
+    (124, 147, 'F', 'D'): 'D',
+    (124, 147, 'F', 'L'): 'D',
+    (124, 147, 'F', 'R'): 'D',
+    (124, 147, 'F', 'U'): 'D',
+    (124, 147, 'L', 'B'): 'U',
+    (124, 147, 'L', 'D'): 'D',
+    (124, 147, 'L', 'F'): 'U',
+    (124, 147, 'L', 'U'): 'D',
+    (124, 147, 'R', 'B'): 'U',
+    (124, 147, 'R', 'D'): 'D',
+    (124, 147, 'R', 'F'): 'U',
+    (124, 147, 'R', 'U'): 'D',
+    (124, 147, 'U', 'B'): 'U',
+    (124, 147, 'U', 'F'): 'U',
+    (124, 147, 'U', 'L'): 'U',
+    (124, 147, 'U', 'R'): 'U',
+    (127, 72, 'B', 'D'): 'D',
+    (127, 72, 'B', 'L'): 'D',
+    (127, 72, 'B', 'R'): 'D',
+    (127, 72, 'B', 'U'): 'D',
+    (127, 72, 'D', 'B'): 'U',
+    (127, 72, 'D', 'F'): 'U',
+    (127, 72, 'D', 'L'): 'U',
+    (127, 72, 'D', 'R'): 'U',
+    (127, 72, 'F', 'D'): 'D',
+    (127, 72, 'F', 'L'): 'D',
+    (127, 72, 'F', 'R'): 'D',
+    (127, 72, 'F', 'U'): 'D',
+    (127, 72, 'L', 'B'): 'U',
+    (127, 72, 'L', 'D'): 'D',
+    (127, 72, 'L', 'F'): 'U',
+    (127, 72, 'L', 'U'): 'D',
+    (127, 72, 'R', 'B'): 'U',
+    (127, 72, 'R', 'D'): 'D',
+    (127, 72, 'R', 'F'): 'U',
+    (127, 72, 'R', 'U'): 'D',
+    (127, 72, 'U', 'B'): 'U',
+    (127, 72, 'U', 'F'): 'U',
+    (127, 72, 'U', 'L'): 'U',
+    (127, 72, 'U', 'R'): 'U',
+    (129, 74, 'B', 'D'): 'U',
+    (129, 74, 'B', 'L'): 'U',
+    (129, 74, 'B', 'R'): 'U',
+    (129, 74, 'B', 'U'): 'U',
+    (129, 74, 'D', 'B'): 'D',
+    (129, 74, 'D', 'F'): 'D',
+    (129, 74, 'D', 'L'): 'D',
+    (129, 74, 'D', 'R'): 'D',
+    (129, 74, 'F', 'D'): 'U',
+    (129, 74, 'F', 'L'): 'U',
+    (129, 74, 'F', 'R'): 'U',
+    (129, 74, 'F', 'U'): 'U',
+    (129, 74, 'L', 'B'): 'D',
+    (129, 74, 'L', 'D'): 'U',
+    (129, 74, 'L', 'F'): 'D',
+    (129, 74, 'L', 'U'): 'U',
+    (129, 74, 'R', 'B'): 'D',
+    (129, 74, 'R', 'D'): 'U',
+    (129, 74, 'R', 'F'): 'D',
+    (129, 74, 'R', 'U'): 'U',
+    (129, 74, 'U', 'B'): 'D',
+    (129, 74, 'U', 'F'): 'D',
+    (129, 74, 'U', 'L'): 'D',
+    (129, 74, 'U', 'R'): 'D',
+    (131, 49, 'B', 'D'): 'U',
+    (131, 49, 'B', 'L'): 'U',
+    (131, 49, 'B', 'R'): 'U',
+    (131, 49, 'B', 'U'): 'U',
+    (131, 49, 'D', 'B'): 'D',
+    (131, 49, 'D', 'F'): 'D',
+    (131, 49, 'D', 'L'): 'D',
+    (131, 49, 'D', 'R'): 'D',
+    (131, 49, 'F', 'D'): 'U',
+    (131, 49, 'F', 'L'): 'U',
+    (131, 49, 'F', 'R'): 'U',
+    (131, 49, 'F', 'U'): 'U',
+    (131, 49, 'L', 'B'): 'D',
+    (131, 49, 'L', 'D'): 'U',
+    (131, 49, 'L', 'F'): 'D',
+    (131, 49, 'L', 'U'): 'U',
+    (131, 49, 'R', 'B'): 'D',
+    (131, 49, 'R', 'D'): 'U',
+    (131, 49, 'R', 'F'): 'D',
+    (131, 49, 'R', 'U'): 'U',
+    (131, 49, 'U', 'B'): 'D',
+    (131, 49, 'U', 'F'): 'D',
+    (131, 49, 'U', 'L'): 'D',
+    (131, 49, 'U', 'R'): 'D',
+    (135, 97, 'B', 'D'): 'D',
+    (135, 97, 'B', 'L'): 'D',
+    (135, 97, 'B', 'R'): 'D',
+    (135, 97, 'B', 'U'): 'D',
+    (135, 97, 'D', 'B'): 'U',
+    (135, 97, 'D', 'F'): 'U',
+    (135, 97, 'D', 'L'): 'U',
+    (135, 97, 'D', 'R'): 'U',
+    (135, 97, 'F', 'D'): 'D',
+    (135, 97, 'F', 'L'): 'D',
+    (135, 97, 'F', 'R'): 'D',
+    (135, 97, 'F', 'U'): 'D',
+    (135, 97, 'L', 'B'): 'U',
+    (135, 97, 'L', 'D'): 'D',
+    (135, 97, 'L', 'F'): 'U',
+    (135, 97, 'L', 'U'): 'D',
+    (135, 97, 'R', 'B'): 'U',
+    (135, 97, 'R', 'D'): 'D',
+    (135, 97, 'R', 'F'): 'U',
+    (135, 97, 'R', 'U'): 'D',
+    (135, 97, 'U', 'B'): 'U',
+    (135, 97, 'U', 'F'): 'U',
+    (135, 97, 'U', 'L'): 'U',
+    (135, 97, 'U', 'R'): 'U',
+    (141, 47, 'B', 'D'): 'D',
+    (141, 47, 'B', 'L'): 'D',
+    (141, 47, 'B', 'R'): 'D',
+    (141, 47, 'B', 'U'): 'D',
+    (141, 47, 'D', 'B'): 'U',
+    (141, 47, 'D', 'F'): 'U',
+    (141, 47, 'D', 'L'): 'U',
+    (141, 47, 'D', 'R'): 'U',
+    (141, 47, 'F', 'D'): 'D',
+    (141, 47, 'F', 'L'): 'D',
+    (141, 47, 'F', 'R'): 'D',
+    (141, 47, 'F', 'U'): 'D',
+    (141, 47, 'L', 'B'): 'U',
+    (141, 47, 'L', 'D'): 'D',
+    (141, 47, 'L', 'F'): 'U',
+    (141, 47, 'L', 'U'): 'D',
+    (141, 47, 'R', 'B'): 'U',
+    (141, 47, 'R', 'D'): 'D',
+    (141, 47, 'R', 'F'): 'U',
+    (141, 47, 'R', 'U'): 'D',
+    (141, 47, 'U', 'B'): 'U',
+    (141, 47, 'U', 'F'): 'U',
+    (141, 47, 'U', 'L'): 'U',
+    (141, 47, 'U', 'R'): 'U',
+    (145, 99, 'B', 'D'): 'U',
+    (145, 99, 'B', 'L'): 'U',
+    (145, 99, 'B', 'R'): 'U',
+    (145, 99, 'B', 'U'): 'U',
+    (145, 99, 'D', 'B'): 'D',
+    (145, 99, 'D', 'F'): 'D',
+    (145, 99, 'D', 'L'): 'D',
+    (145, 99, 'D', 'R'): 'D',
+    (145, 99, 'F', 'D'): 'U',
+    (145, 99, 'F', 'L'): 'U',
+    (145, 99, 'F', 'R'): 'U',
+    (145, 99, 'F', 'U'): 'U',
+    (145, 99, 'L', 'B'): 'D',
+    (145, 99, 'L', 'D'): 'U',
+    (145, 99, 'L', 'F'): 'D',
+    (145, 99, 'L', 'U'): 'U',
+    (145, 99, 'R', 'B'): 'D',
+    (145, 99, 'R', 'D'): 'U',
+    (145, 99, 'R', 'F'): 'D',
+    (145, 99, 'R', 'U'): 'U',
+    (145, 99, 'U', 'B'): 'D',
+    (145, 99, 'U', 'F'): 'D',
+    (145, 99, 'U', 'L'): 'D',
+    (145, 99, 'U', 'R'): 'D',
+    (147, 124, 'B', 'D'): 'U',
+    (147, 124, 'B', 'L'): 'U',
+    (147, 124, 'B', 'R'): 'U',
+    (147, 124, 'B', 'U'): 'U',
+    (147, 124, 'D', 'B'): 'D',
+    (147, 124, 'D', 'F'): 'D',
+    (147, 124, 'D', 'L'): 'D',
+    (147, 124, 'D', 'R'): 'D',
+    (147, 124, 'F', 'D'): 'U',
+    (147, 124, 'F', 'L'): 'U',
+    (147, 124, 'F', 'R'): 'U',
+    (147, 124, 'F', 'U'): 'U',
+    (147, 124, 'L', 'B'): 'D',
+    (147, 124, 'L', 'D'): 'U',
+    (147, 124, 'L', 'F'): 'D',
+    (147, 124, 'L', 'U'): 'U',
+    (147, 124, 'R', 'B'): 'D',
+    (147, 124, 'R', 'D'): 'U',
+    (147, 124, 'R', 'F'): 'D',
+    (147, 124, 'R', 'U'): 'U',
+    (147, 124, 'U', 'B'): 'D',
+    (147, 124, 'U', 'F'): 'D',
+    (147, 124, 'U', 'L'): 'D',
+    (147, 124, 'U', 'R'): 'D',
+    (149, 122, 'B', 'D'): 'D',
+    (149, 122, 'B', 'L'): 'D',
+    (149, 122, 'B', 'R'): 'D',
+    (149, 122, 'B', 'U'): 'D',
+    (149, 122, 'D', 'B'): 'U',
+    (149, 122, 'D', 'F'): 'U',
+    (149, 122, 'D', 'L'): 'U',
+    (149, 122, 'D', 'R'): 'U',
+    (149, 122, 'F', 'D'): 'D',
+    (149, 122, 'F', 'L'): 'D',
+    (149, 122, 'F', 'R'): 'D',
+    (149, 122, 'F', 'U'): 'D',
+    (149, 122, 'L', 'B'): 'U',
+    (149, 122, 'L', 'D'): 'D',
+    (149, 122, 'L', 'F'): 'U',
+    (149, 122, 'L', 'U'): 'D',
+    (149, 122, 'R', 'B'): 'U',
+    (149, 122, 'R', 'D'): 'D',
+    (149, 122, 'R', 'F'): 'U',
+    (149, 122, 'R', 'U'): 'D',
+    (149, 122, 'U', 'B'): 'U',
+    (149, 122, 'U', 'F'): 'U',
+    (149, 122, 'U', 'L'): 'U',
+    (149, 122, 'U', 'R'): 'U'
+}
 
 
 if __name__ == '__main__':
