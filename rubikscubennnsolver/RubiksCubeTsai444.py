@@ -246,7 +246,7 @@ class LookupTable444TsaiPhase2Edges(LookupTable):
             max_depth=8)
 
     def state(self):
-        return self.parent.tsai_phase2_orient_edges_state([], return_hex=False)
+        return self.parent.tsai_phase2_orient_edges_state(return_hex=False)
 
 
 class LookupTable444TsaiPhase2EdgesLRCenters(LookupTableHashCostOnly):
@@ -317,7 +317,7 @@ class LookupTable444TsaiPhase2EdgesLRCenters(LookupTableHashCostOnly):
         # DUUDDUUD
         # UDDUUDDU
         parent_state = self.parent.state
-        edges = self.parent.tsai_phase2_orient_edges_state([], return_hex=False)
+        edges = self.parent.tsai_phase2_orient_edges_state(return_hex=False)
         U_edges = edges[0:8]
         L_edges = ''.join(edges[8:16])
         F_edges = edges[16:24]
@@ -703,32 +703,15 @@ class RubiksCubeTsai444(RubiksCube444):
         # For non-tsai it is always used
         self.lt_edges = LookupTable444Edges(self)
 
-    def tsai_phase2_orient_edges_state(self, edges_to_flip, return_hex):
+    def tsai_phase2_orient_edges_state(self, return_hex):
         state = self.state
 
-        if edges_to_flip:
-            result = []
-            for (x, y) in tsai_phase2_orient_edges_tuples:
-                state_x = state[x]
-                state_y = state[y]
-                high_low = tsai_phase2_orient_edges_444[(x, y, state_x, state_y)]
-                wing_str = tsai_phase2_orient_edges_wing_str_map[''.join((state_x, state_y))]
-
-                if wing_str in edges_to_flip:
-                    if high_low == 'U':
-                        high_low = 'D'
-                    else:
-                        high_low = 'U'
-
-                result.append(high_low)
-        else:
-            #for (x, y) in tsai_phase2_orient_edges_tuples:
-            #    state_x = state[x]
-            #    state_y = state[y]
-            #    high_low = tsai_phase2_orient_edges_444[(x, y, state_x, state_y)]
-            #    result.append(high_low)
-            result = [tsai_phase2_orient_edges_444[(x, y, state[x], state[y])] for (x, y) in tsai_phase2_orient_edges_tuples]
-
+        #for (x, y) in tsai_phase2_orient_edges_tuples:
+        #    state_x = state[x]
+        #    state_y = state[y]
+        #    high_low = tsai_phase2_orient_edges_444[(x, y, state_x, state_y)]
+        #    result.append(high_low)
+        result = [tsai_phase2_orient_edges_444[(x, y, state[x], state[y])] for (x, y) in tsai_phase2_orient_edges_tuples]
         result = ''.join(result)
 
         if return_hex:
@@ -746,7 +729,7 @@ class RubiksCubeTsai444(RubiksCube444):
         self.nuke_corners()
         self.nuke_centers()
 
-        orient_edge_state = list(self.tsai_phase2_orient_edges_state(self.edge_mapping, return_hex=False))
+        orient_edge_state = list(self.tsai_phase2_orient_edges_state(return_hex=False))
         orient_edge_state_index = 0
         for side in list(self.sides.values()):
             for square_index in side.edge_pos:

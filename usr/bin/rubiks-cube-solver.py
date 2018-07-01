@@ -290,8 +290,12 @@ try:
         else:
             cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
     elif size == 5:
-        from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
-        cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
+        if args.tsai:
+            from rubikscubennnsolver.RubiksCube555 import RubiksCubeTsai555, solved_555
+            cube = RubiksCubeTsai555(args.state, args.order, args.colormap, args.debug)
+        else:
+            from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
+            cube = RubiksCube555(args.state, args.order, args.colormap, args.debug)
     elif size == 6:
         from rubikscubennnsolver.RubiksCube666 import RubiksCube666
         cube = RubiksCube666(args.state, args.order, args.colormap, args.debug)
