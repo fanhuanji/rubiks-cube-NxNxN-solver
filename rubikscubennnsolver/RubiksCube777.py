@@ -2,8 +2,14 @@
 from rubikscubennnsolver.RubiksCubeNNNOddEdges import RubiksCubeNNNOddEdges
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
 from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_666, moves_666
+from rubikscubennnsolver.RubiksCube777Misc import (
+    state_targets_step30,
+    state_targets_step31,
+    state_targets_step32,
+)
 from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, LookupTableHashCostOnly
 import logging
+import math
 import sys
 
 log = logging.getLogger(__name__)
@@ -11,84 +17,203 @@ log = logging.getLogger(__name__)
 moves_777 = moves_666
 solved_777 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 
-step80_centers_777 = (
-    # Left
-        59, 60, 61,
-    65, 66, 67, 68, 69,
-    72, 73, 74, 75, 76,
-    79, 80, 81, 82, 83,
-        87, 88, 89,
-
-    # Right
-    157, 158, 159,
-    163, 164, 165, 166, 167,
-    170, 171, 172, 173, 174,
-    177, 178, 179, 180, 181,
-    185, 186, 187,
-)
-
-step81_centers_777 = (
-    # Left
-        59,
-        66, 67, 68, 69,
-        73, 74, 75,
-    79, 80, 81, 82,
-                89,
-
-    # Right
-         157,
-         164, 165, 166, 167,
-         171, 172, 173,
-    177, 178, 179, 180,
-                   187,
+centers_777 = (
+    9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, # Upper
+    58, 59, 60, 61, 62, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 86, 87, 88, 89, 90, # Left
+    107, 108, 109, 110, 111, 114, 115, 116, 117, 118, 121, 122, 123, 124, 125, 128, 129, 130, 131, 132, 135, 136, 137, 138, 139, # Front
+    156, 157, 158, 159, 160, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 184, 185, 186, 187, 188, # Right
+    205, 206, 207, 208, 209, 212, 213, 214, 215, 216, 219, 220, 221, 222, 223, 226, 227, 228, 229, 230, 233, 234, 235, 236, 237, # Back
+    254, 255, 256, 257, 258, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 275, 276, 277, 278, 279, 282, 283, 284, 285, 286, # Down
 )
 
 
-step90_centers_777 = (
-    # Left
-        59, 60, 61,
-    65, 66, 67, 68, 69,
-    72, 73, 74, 75, 76,
-    79, 80, 81, 82, 83,
-        87, 88, 89,
+class LookupTable777UDOutsideObliqueEdgePairingLeftOnly(LookupTable):
+    """
+    24!/(8!*16!) is 735,471
 
-    # Front
-         108, 109, 110,
-    114, 115, 116, 117, 118,
-    121, 122, 123, 124, 125,
-    128, 129, 130, 131, 132,
-         136, 137, 138,
+    lookup-table-7x7x7-step01-UD-oblique-edges-stage-left.txt
+    =========================================================
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 82 entries (0 percent, 16.40x previous step)
+    3 steps has 1,198 entries (0 percent, 14.61x previous step)
+    4 steps has 13,818 entries (1 percent, 11.53x previous step)
+    5 steps has 115,638 entries (15 percent, 8.37x previous step)
+    6 steps has 399,478 entries (54 percent, 3.45x previous step)
+    7 steps has 204,612 entries (27 percent, 0.51x previous step)
+    8 steps has 640 entries (0 percent, 0.00x previous step)
 
-    # Right
-    157, 158, 159,
-    163, 164, 165, 166, 167,
-    170, 171, 172, 173, 174,
-    177, 178, 179, 180, 181,
-    185, 186, 187,
+    Total: 735,471 entries
+    Average: 6.08 moves
+    """
 
-    # Back
-         206, 207, 208,
-    212, 213, 214, 215, 216,
-    219, 220, 221, 222, 223,
-    226, 227, 228, 229, 230,
-         234, 235, 236,
-)
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step01-UD-oblique-edges-stage-left.txt',
+            'f0000f',
+            linecount=735471,
+            max_depth=8,
+            filesize=6619239,
+        )
 
-step91_centers_777 = (
-    # Front
-         108,
-         115, 116, 117, 118,
-         122, 123, 124,
-    128, 129, 130, 131,
-                   138,
 
-    # Back
-         206,
-         213, 214, 215, 216,
-         220, 221, 222,
-    226, 227, 228, 229,
-                   236,
-)
+class LookupTable777UDOutsideObliqueEdgePairingRightOnly(LookupTable):
+    """
+    24!/(8!*16!) is 735,471
+
+    lookup-table-7x7x7-step02-UD-oblique-edges-stage-right.txt
+    ==========================================================
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 82 entries (0 percent, 16.40x previous step)
+    3 steps has 1,198 entries (0 percent, 14.61x previous step)
+    4 steps has 13,818 entries (1 percent, 11.53x previous step)
+    5 steps has 115,638 entries (15 percent, 8.37x previous step)
+    6 steps has 399,478 entries (54 percent, 3.45x previous step)
+    7 steps has 204,612 entries (27 percent, 0.51x previous step)
+    8 steps has 640 entries (0 percent, 0.00x previous step)
+
+    Total: 735,471 entries
+    Average: 6.08 moves
+    """
+
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step02-UD-oblique-edges-stage-right.txt',
+            'f0000f',
+            linecount=735471,
+            max_depth=8,
+            filesize=6619239,
+        )
+
+
+class LookupTableIDA777UDOutsideObliqueEdgePairing(LookupTableIDA):
+    """
+    lookup-table-7x7x7-step00-UD-oblique-edges-stage.txt
+    ====================================================
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 82 entries (0 percent, 16.40x previous step)
+    3 steps has 1,434 entries (0 percent, 17.49x previous step)
+    4 steps has 24,198 entries (0 percent, 16.87x previous step)
+    5 steps has 405,916 entries (5 percent, 16.77x previous step)
+    6 steps has 6,839,392 entries (94 percent, 16.85x previous step)
+
+    Total: 7,271,027 entries
+    """
+
+    outside_oblique_edges_777 = (
+        10, 12, 16, 20, 30, 34, 38, 40, # Upper
+        59, 61, 65, 69, 79, 83, 87, 89, # Left
+        108, 110, 114, 118, 128, 132, 136, 138, # Front
+        157, 159, 163, 167, 177, 181, 185, 187, # Right
+        206, 208, 212, 216, 226, 230, 234, 236, # Back
+        255, 257, 261, 265, 275, 279, 283, 285, # Down
+    )
+
+    left_oblique_edge_777 = (
+        10, 20, 30, 40, # Upper
+        59, 69, 79, 89, # Left
+        108, 118, 128, 138, # Front
+        157, 167, 177, 187, # Right
+        206, 216, 226, 236, # Back
+        255, 265, 275, 285, # Down
+    )
+
+    right_oblique_edge_777 = (
+        12, 16, 34, 38, # Upper
+        61, 65, 83, 87, # Left
+        110, 114, 132, 136, # Front
+        159, 163, 181, 185, # Right
+        208, 212, 230, 234, # Back
+        257, 261, 279, 283, # Down
+    )
+
+    set_left_oblique_edge_777 = set(left_oblique_edge_777)
+    set_right_oblique_edge_777 = set(right_oblique_edge_777)
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step00-UD-oblique-edges-stage.txt',
+            'ff00000000ff',
+            moves_777,
+
+            # do not mess up UD 5x5x5 centers
+            ("3Rw", "3Rw'",
+             "3Lw", "3Lw'",
+             "3Fw", "3Fw'",
+             "3Bw", "3Bw'"
+            ),
+
+            # prune tables
+            (parent.lt_UD_outside_oblique_edge_pairing_left_only,
+             parent.lt_UD_outside_oblique_edge_pairing_right_only),
+
+            linecount=7271027,
+            max_depth=6,
+            filesize=130878486)
+
+    def recolor(self):
+        log.info("%s: recolor (custom)" % self)
+        #self.parent.print_cube()
+        self.parent.nuke_corners()
+        self.parent.nuke_edges()
+
+        for x in centers_777:
+            if x in self.outside_oblique_edges_777:
+                if self.parent.state[x] == 'U' or self.parent.state[x] == 'D':
+                    self.parent.state[x] = 'U'
+                else:
+                    self.parent.state[x] = 'x'
+            else:
+                self.parent.state[x] = '.'
+        #self.parent.print_cube()
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        left_state = 0
+        right_state = 0
+        lt_state = 0
+
+        set_left_oblique_edge_777 = self.set_left_oblique_edge_777
+        set_right_oblique_edge_777 = self.set_right_oblique_edge_777
+
+        for x in self.outside_oblique_edges_777:
+
+            if x in set_left_oblique_edge_777:
+                if parent_state[x] == 'U':
+                    left_state = left_state | 0x1
+                    lt_state = lt_state | 0x1
+                left_state = left_state << 1
+
+            if x in set_right_oblique_edge_777:
+                if parent_state[x] == 'U':
+                    right_state = right_state | 0x1
+                    lt_state = lt_state | 0x1
+                right_state = right_state << 1
+
+            lt_state = lt_state << 1
+
+        left_state = left_state >> 1
+        right_state = right_state >> 1
+        lt_state = lt_state >> 1
+
+        # convert to hex format
+        left_state = self.parent.lt_UD_outside_oblique_edge_pairing_left_only.hex_format % left_state
+        right_state = self.parent.lt_UD_outside_oblique_edge_pairing_right_only.hex_format % right_state
+        lt_state = self.hex_format % lt_state
+
+        cost_to_goal = max(
+             self.parent.lt_UD_outside_oblique_edge_pairing_left_only.heuristic(left_state),
+             self.parent.lt_UD_outside_oblique_edge_pairing_right_only.heuristic(right_state),
+        )
+
+        #log.info("%s: lt_state %s, left_state %s, right_state %s, cost_to_goal %d" %
+        #    (self, lt_state, left_state, right_state, cost_to_goal))
+        return (lt_state, cost_to_goal)
 
 
 class LookupTable777UDObliqueEdgePairingMiddleOnly(LookupTable):
@@ -119,60 +244,9 @@ class LookupTable777UDObliqueEdgePairingMiddleOnly(LookupTable):
             'lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt',
             '462000000000000462',
             linecount=735471,
-            max_depth=11)
-
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Upper
-            'x', parent_state[11], 'x',
-            'x', 'x',
-            parent_state[23], parent_state[27],
-            'x', 'x',
-            'x', parent_state[39], 'x',
-
-            # Left
-            'x', parent_state[60], 'x',
-            'x', 'x',
-            parent_state[72], parent_state[76],
-            'x', 'x',
-            'x', parent_state[88], 'x',
-
-            # Front
-            'x', parent_state[109], 'x',
-            'x', 'x',
-            parent_state[121], parent_state[125],
-            'x', 'x',
-            'x', parent_state[137], 'x',
-
-            # Right
-            'x', parent_state[158], 'x',
-            'x', 'x',
-            parent_state[170], parent_state[174],
-            'x', 'x',
-            'x', parent_state[186], 'x',
-
-            # Back
-            'x', parent_state[207], 'x',
-            'x', 'x',
-            parent_state[219], parent_state[223],
-            'x', 'x',
-            'x', parent_state[235], 'x',
-
-            # Down
-            'x', parent_state[256], 'x',
-            'x', 'x',
-            parent_state[268], parent_state[272],
-            'x', 'x',
-            'x', parent_state[284], 'x'
-        ]
-
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
+            max_depth=11,
+            filesize=16180362,
+        )
 
 
 class LookupTable777UDObliqueEdgePairingLeftOnly(LookupTable):
@@ -203,60 +277,9 @@ class LookupTable777UDObliqueEdgePairingLeftOnly(LookupTable):
             'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt',
             '891000000000000891',
             linecount=735471,
-            max_depth=11)
-
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Upper
-            parent_state[10], 'x', 'x',
-            'x', parent_state[20],
-            'x', 'x',
-            parent_state[30], 'x',
-            'x', 'x', parent_state[40],
-
-            # Left
-            parent_state[59], 'x', 'x',
-            'x', parent_state[69],
-            'x', 'x',
-            parent_state[79], 'x',
-            'x', 'x', parent_state[89],
-
-            # Front
-            parent_state[108], 'x', 'x',
-            'x', parent_state[118],
-            'x', 'x',
-            parent_state[128], 'x',
-            'x', 'x', parent_state[138],
-
-            # Right
-            parent_state[157], 'x', 'x',
-            'x', parent_state[167],
-            'x', 'x',
-            parent_state[177], 'x',
-            'x', 'x', parent_state[187],
-
-            # Back
-            parent_state[206], 'x', 'x',
-            'x', parent_state[216],
-            'x', 'x',
-            parent_state[226], 'x',
-            'x', 'x', parent_state[236],
-
-            # Down
-            parent_state[255], 'x', 'x',
-            'x', parent_state[265],
-            'x', 'x',
-            parent_state[275], 'x',
-            'x', 'x', parent_state[285]
-        ]
-
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
+            max_depth=11,
+            filesize=15444891,
+        )
 
 
 class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
@@ -264,7 +287,7 @@ class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
     24!/(8!*16!) is 735,471
 
     lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt
-    =================================================================
+    ================================================================
     1 steps has 5 entries (0 percent, 0.00x previous step)
     2 steps has 66 entries (0 percent, 13.20x previous step)
     3 steps has 850 entries (0 percent, 12.88x previous step)
@@ -287,79 +310,71 @@ class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
             'lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt',
             '30c00000000000030c',
             linecount=735471,
-            max_depth=11)
-
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Upper
-            'x', 'x', parent_state[12],
-            parent_state[16], 'x',
-            'x', 'x',
-            'x', parent_state[34],
-            parent_state[38], 'x', 'x',
-
-            # Left
-            'x', 'x', parent_state[61],
-            parent_state[65], 'x',
-            'x', 'x',
-            'x', parent_state[83],
-            parent_state[87], 'x', 'x',
-
-            # Front
-            'x', 'x', parent_state[110],
-            parent_state[114], 'x',
-            'x', 'x',
-            'x', parent_state[132],
-            parent_state[136], 'x', 'x',
-
-            # Right
-            'x', 'x', parent_state[159],
-            parent_state[163], 'x',
-            'x', 'x',
-            'x', parent_state[181],
-            parent_state[185], 'x', 'x',
-
-            # Back
-            'x', 'x', parent_state[208],
-            parent_state[212], 'x',
-            'x', 'x',
-            'x', parent_state[230],
-            parent_state[234], 'x', 'x',
-
-            # Down
-            'x', 'x', parent_state[257],
-            parent_state[261], 'x',
-            'x', 'x',
-            'x', parent_state[279],
-            parent_state[283], 'x', 'x',
-        ]
-
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
+            max_depth=11,
+            filesize=15444891,
+        )
 
 
 class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
     """
-    This is 5-deep...6-deep has 5 million entries which takes too much memory to preload
+    This is 6-deep...this table is odd because it "locks" the outside UD oblique
+    edges together which results in these weird move counts per level.
 
     lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt
     =====================================================
-    1 steps has 4 entries (0 percent, 0.00x previous step)
-    2 steps has 67 entries (0 percent, 16.75x previous step)
-    3 steps has 916 entries (0 percent, 13.67x previous step)
-    4 steps has 10,132 entries (2 percent, 11.06x previous step)
-    5 steps has 92,068 entries (24 percent, 9.09x previous step)
-    6 steps has 229,615 entries (60 percent, 2.49x previous step)
-    7 steps has 46,431 entries (12 percent, 0.20x previous step)
-    8 steps has 790 entries (0 percent, 0.02x previous step)
+    1 steps has 5 entries (0 percent, 0.00x previous step)
+    2 steps has 66 entries (0 percent, 13.20x previous step)
+    3 steps has 916 entries (0 percent, 13.88x previous step)
+    4 steps has 10,132 entries (0 percent, 11.06x previous step)
+    5 steps has 92,070 entries (1 percent, 9.09x previous step)
+    6 steps has 558,950 entries (9 percent, 6.07x previous step)
+    7 steps has 3,861,635 entries (64 percent, 6.91x previous step)
+    8 steps has 1,365,844 entries (22 percent, 0.35x previous step)
+    9 steps has 71,797 entries (1 percent, 0.05x previous step)
+    10 steps has 158 entries (0 percent, 0.00x previous step)
 
-    Total: 380,023 entries
+    Total: 5,961,573 entries
     """
+
+    oblique_edges_777 = (
+        10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40, # Upper
+        59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89, # Left
+        108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138, # Front
+        157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187, # Right
+        206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236, # Back
+        255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285, # Down
+    )
+
+    left_oblique_edge_777 = (
+        10, 20, 30, 40, # Upper
+        59, 69, 79, 89, # Left
+        108, 118, 128, 138, # Front
+        157, 167, 177, 187, # Right
+        206, 216, 226, 236, # Back
+        255, 265, 275, 285, # Down
+    )
+
+    middle_oblique_edge_777 = (
+        11, 23, 27, 39, # Upper
+        60, 72, 76, 88, # Left
+        109, 121, 125, 137, # Front
+        158, 170, 174, 186, # Right
+        207, 219, 223, 235, # Back
+        256, 268, 272, 284, # Down
+    )
+
+    right_oblique_edge_777 = (
+        12, 16, 34, 38, # Upper
+        61, 65, 83, 87, # Left
+        110, 114, 132, 136, # Front
+        159, 163, 181, 185, # Right
+        208, 212, 230, 234, # Back
+        257, 261, 279, 283, # Down
+    )
+
+    set_left_oblique_edge_777 = set(left_oblique_edge_777)
+    set_middle_oblique_edge_777 = set(middle_oblique_edge_777)
+    set_right_oblique_edge_777 = set(right_oblique_edge_777)
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
@@ -377,798 +392,1147 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
              parent.lt_UD_oblique_edge_pairing_left_only,
              parent.lt_UD_oblique_edge_pairing_right_only),
 
-            linecount=380023,
-            max_depth=5,
-            filesize=21661311)
+            linecount=5961573,
+            max_depth=6,
+            filesize=399425391,
+        )
 
-    def state(self):
+    def recolor(self):
+        log.info("%s: recolor (custom)" % self)
+        #self.parent.print_cube()
+        self.parent.nuke_corners()
+        self.parent.nuke_edges()
+
+        for x in centers_777:
+            if x in self.oblique_edges_777:
+                if self.parent.state[x] == 'U' or self.parent.state[x] == 'D':
+                    self.parent.state[x] = 'U'
+                else:
+                    self.parent.state[x] = 'x'
+            else:
+                self.parent.state[x] = '.'
+        #self.parent.print_cube()
+
+    def ida_heuristic(self):
         parent_state = self.parent.state
+        left_state = 0
+        middle_state = 0
+        right_state = 0
+        lt_state = 0
 
-        result = [
-            # Upper
-            parent_state[10], parent_state[11], parent_state[12],
-            parent_state[16], parent_state[20],
-            parent_state[23], parent_state[27],
-            parent_state[30], parent_state[34],
-            parent_state[38], parent_state[39], parent_state[40],
+        set_left_oblique_edge_777 = self.set_left_oblique_edge_777
+        set_middle_oblique_edge_777 = self.set_middle_oblique_edge_777
+        set_right_oblique_edge_777 = self.set_right_oblique_edge_777
 
-            # Left
-            parent_state[59], parent_state[60], parent_state[61],
-            parent_state[65], parent_state[69],
-            parent_state[72], parent_state[76],
-            parent_state[79], parent_state[83],
-            parent_state[87], parent_state[88], parent_state[89],
+        for x in self.oblique_edges_777:
 
-            # Front
-            parent_state[108], parent_state[109], parent_state[110],
-            parent_state[114], parent_state[118],
-            parent_state[121], parent_state[125],
-            parent_state[128], parent_state[132],
-            parent_state[136], parent_state[137], parent_state[138],
+            if parent_state[x] == 'U':
+                if x in set_left_oblique_edge_777:
+                    left_state = left_state | 0x1
 
-            # Right
-            parent_state[157], parent_state[158], parent_state[159],
-            parent_state[163], parent_state[167],
-            parent_state[170], parent_state[174],
-            parent_state[177], parent_state[181],
-            parent_state[185], parent_state[186], parent_state[187],
+                elif x in set_middle_oblique_edge_777:
+                    middle_state = middle_state | 0x1
 
-            # Back
-            parent_state[206], parent_state[207], parent_state[208],
-            parent_state[212], parent_state[216],
-            parent_state[219], parent_state[223],
-            parent_state[226], parent_state[230],
-            parent_state[234], parent_state[235], parent_state[236],
+                elif x in set_right_oblique_edge_777:
+                    right_state = right_state | 0x1
 
-            # Down
-            parent_state[255], parent_state[256], parent_state[257],
-            parent_state[261], parent_state[265],
-            parent_state[268], parent_state[272],
-            parent_state[275], parent_state[279],
-            parent_state[283], parent_state[284], parent_state[285],
-        ]
+                lt_state = lt_state | 0x1
 
-        result = ['1' if x in ('U', 'D') else '0' for x in result]
-        result = ''.join(result)
+            left_state = left_state << 1
+            middle_state = middle_state << 1
+            right_state = right_state << 1
+            lt_state = lt_state << 1
 
-        # Convert to hex
-        return self.hex_format % int(result, 2)
+        left_state = left_state >> 1
+        middle_state = middle_state >> 1
+        right_state = right_state >> 1
+        lt_state = lt_state >> 1
+
+        # convert to hex format
+        left_state = self.parent.lt_UD_oblique_edge_pairing_left_only.hex_format % left_state
+        middle_state = self.parent.lt_UD_oblique_edge_pairing_middle_only.hex_format % middle_state
+        right_state = self.parent.lt_UD_oblique_edge_pairing_right_only.hex_format % right_state
+        lt_state = self.hex_format % lt_state
+
+        cost_to_goal = max(
+             self.parent.lt_UD_oblique_edge_pairing_left_only.heuristic(left_state),
+             self.parent.lt_UD_oblique_edge_pairing_middle_only.heuristic(middle_state),
+             self.parent.lt_UD_oblique_edge_pairing_right_only.heuristic(right_state),
+        )
+
+        #log.info("%s: lt_state %s, left_state %s, middle_state %s, right_state %s, cost_to_goal %d" %
+        #    (self, lt_state, left_state, middle_state, right_state, cost_to_goal))
+        return (lt_state, cost_to_goal)
 
 
-class LookupTable777LRObliqueEdgePairingMiddleOnly(LookupTable):
+class LookupTable777LRLeftRightObliqueEdgePairing(LookupTableHashCostOnly):
     """
-    lookup-table-7x7x7-step21-LR-oblique-edge-pairing-middle-only.txt
-    =================================================================
-    1 steps has 2 entries (0 percent, 0.00x previous step)
-    2 steps has 26 entries (0 percent, 13.00x previous step)
-    3 steps has 190 entries (1 percent, 7.31x previous step)
-    4 steps has 612 entries (4 percent, 3.22x previous step)
-    5 steps has 1,513 entries (11 percent, 2.47x previous step)
-    6 steps has 3,370 entries (26 percent, 2.23x previous step)
-    7 steps has 4,066 entries (31 percent, 1.21x previous step)
-    8 steps has 2,258 entries (17 percent, 0.56x previous step)
-    9 steps has 803 entries (6 percent, 0.36x previous step)
-    10 steps has 30 entries (0 percent, 0.04x previous step)
+    lookup-table-7x7x7-step31-stage-lr-oblique-edges.txt
+    ====================================================
+    1 steps has 45,158 entries (0 percent, 0.00x previous step)
+    2 steps has 293,056 entries (0 percent, 6.49x previous step)
+    3 steps has 2,056,784 entries (1 percent, 7.02x previous step)
+    4 steps has 11,562,716 entries (6 percent, 5.62x previous step)
+    5 steps has 43,269,568 entries (26 percent, 3.74x previous step)
+    6 steps has 75,723,092 entries (45 percent, 1.75x previous step)
+    7 steps has 31,697,280 entries (19 percent, 0.42x previous step)
+    8 steps has 983,238 entries (0 percent, 0.03x previous step)
+    9 steps has 5,992 entries (0 percent, 0.01x previous step)
+    10 steps has 16 entries (0 percent, 0.00x previous step)
 
-    Total: 12,870 entries
+    Total: 165,636,900 entries
+    Average: 5.76 moves
     """
 
     def __init__(self, parent):
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step31-stage-lr-oblique-edges.hash-cost-only.txt',
+            state_targets_step31,
+            linecount=165636900,
+            max_depth=10,
+            bucketcount=165636907,
+            filesize=165636908)
+
+        '''
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-7x7x7-step21-LR-oblique-edge-pairing-middle-only.txt',
-            '462000462000',
-            linecount=12870,
+            'lookup-table-7x7x7-step31-stage-lr-oblique-edges.txt',
+            state_targets_step31,
+            linecount=165636900,
             max_depth=10)
-
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Left
-            'x', parent_state[60], 'x',
-            'x', 'x',
-            parent_state[72], parent_state[76],
-            'x', 'x',
-            'x', parent_state[88], 'x',
-
-            # Front
-            'x', parent_state[109], 'x',
-            'x', 'x',
-            parent_state[121], parent_state[125],
-            'x', 'x',
-            'x', parent_state[137], 'x',
-
-            # Right
-            'x', parent_state[158], 'x',
-            'x', 'x',
-            parent_state[170], parent_state[174],
-            'x', 'x',
-            'x', parent_state[186], 'x',
-
-            # Back
-            'x', parent_state[207], 'x',
-            'x', 'x',
-            parent_state[219], parent_state[223],
-            'x', 'x',
-            'x', parent_state[235], 'x'
-        ]
-
-        result = ['1' if x in ('L', 'R') else '0' for x in result]
-        result = ''.join(result)
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
+        '''
 
 
-class LookupTable777LRObliqueEdgePairingLeftOnly(LookupTable):
+class LookupTable777LRLeftMiddleObliqueEdgePairing(LookupTableHashCostOnly):
     """
-    lookup-table-7x7x7-step22-LR-oblique-edge-pairing-left-only.txt
-    ===============================================================
-    1 steps has 2 entries (0 percent, 0.00x previous step)
-    2 steps has 26 entries (0 percent, 13.00x previous step)
-    3 steps has 210 entries (1 percent, 8.08x previous step)
-    4 steps has 722 entries (5 percent, 3.44x previous step)
-    5 steps has 1,752 entries (13 percent, 2.43x previous step)
-    6 steps has 4,033 entries (31 percent, 2.30x previous step)
-    7 steps has 4,014 entries (31 percent, 1.00x previous step)
-    8 steps has 1,977 entries (15 percent, 0.49x previous step)
-    9 steps has 134 entries (1 percent, 0.07x previous step)
-
-    Total: 12,870 entries
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step22-LR-oblique-edge-pairing-left-only.txt',
-            '891000891000',
-            linecount=12870,
-            max_depth=9)
-
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Left
-            parent_state[59], 'x', 'x',
-            'x', parent_state[69],
-            'x', 'x',
-            parent_state[79], 'x',
-            'x', 'x', parent_state[89],
-
-            # Front
-            parent_state[108], 'x', 'x',
-            'x', parent_state[118],
-            'x', 'x',
-            parent_state[128], 'x',
-            'x', 'x', parent_state[138],
-
-            # Right
-            parent_state[157], 'x', 'x',
-            'x', parent_state[167],
-            'x', 'x',
-            parent_state[177], 'x',
-            'x', 'x', parent_state[187],
-
-            # Back
-            parent_state[206], 'x', 'x',
-            'x', parent_state[216],
-            'x', 'x',
-            parent_state[226], 'x',
-            'x', 'x', parent_state[236]
-        ]
-
-        result = ['1' if x in ('L', 'R') else '0' for x in result]
-        result = ''.join(result)
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
-
-
-class LookupTable777LRObliqueEdgePairingRightOnly(LookupTable):
-    """
-    lookup-table-7x7x7-step23-LR-oblique-edge-pairing-right-only.txt
+    lookup-table-7x7x7-step32-stage-lr-left-middle-oblique-edges.txt
     ================================================================
-    1 steps has 2 entries (0 percent, 0.00x previous step)
-    2 steps has 26 entries (0 percent, 13.00x previous step)
-    3 steps has 210 entries (1 percent, 8.08x previous step)
-    4 steps has 722 entries (5 percent, 3.44x previous step)
-    5 steps has 1,752 entries (13 percent, 2.43x previous step)
-    6 steps has 4,033 entries (31 percent, 2.30x previous step)
-    7 steps has 4,014 entries (31 percent, 1.00x previous step)
-    8 steps has 1,977 entries (15 percent, 0.49x previous step)
-    9 steps has 134 entries (1 percent, 0.07x previous step)
+    1 steps has 60,390 entries (0 percent, 0.00x previous step)
+    2 steps has 504,512 entries (0 percent, 8.35x previous step)
+    3 steps has 3,164,712 entries (1 percent, 6.27x previous step)
+    4 steps has 14,547,152 entries (8 percent, 4.60x previous step)
+    5 steps has 39,862,724 entries (24 percent, 2.74x previous step)
+    6 steps has 59,903,328 entries (36 percent, 1.50x previous step)
+    7 steps has 38,877,292 entries (23 percent, 0.65x previous step)
+    8 steps has 8,224,240 entries (4 percent, 0.21x previous step)
+    9 steps has 486,440 entries (0 percent, 0.06x previous step)
+    10 steps has 6,102 entries (0 percent, 0.01x previous step)
+    11 steps has 8 entries (0 percent, 0.00x previous step)
 
-    Total: 12,870 entries
+    Total: 165,636,900 entries
+    Average: 5.86 moves
     """
 
     def __init__(self, parent):
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step32-stage-lr-left-middle-oblique-edges.hash-cost-only.txt',
+            state_targets_step32,
+            linecount=165636900,
+            max_depth=11,
+            bucketcount=165636907,
+            filesize=165636908)
+
+        '''
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-7x7x7-step23-LR-oblique-edge-pairing-right-only.txt',
-            '30c00030c000',
-            linecount=12870,
-            max_depth=9)
-
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Left
-            'x', 'x', parent_state[61],
-            parent_state[65], 'x',
-            'x', 'x',
-            'x', parent_state[83],
-            parent_state[87], 'x', 'x',
-
-            # Front
-            'x', 'x', parent_state[110],
-            parent_state[114], 'x',
-            'x', 'x',
-            'x', parent_state[132],
-            parent_state[136], 'x', 'x',
-
-            # Right
-            'x', 'x', parent_state[159],
-            parent_state[163], 'x',
-            'x', 'x',
-            'x', parent_state[181],
-            parent_state[185], 'x', 'x',
-
-            # Back
-            'x', 'x', parent_state[208],
-            parent_state[212], 'x',
-            'x', 'x',
-            'x', parent_state[230],
-            parent_state[234], 'x', 'x'
-        ]
-
-        result = ['1' if x in ('L', 'R') else '0' for x in result]
-        result = ''.join(result)
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
+            'lookup-table-7x7x7-step32-stage-lr-left-middle-oblique-edges.txt',
+            state_targets_step32,
+            linecount=165636900,
+            max_depth=11)
+        '''
 
 
 class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
     """
-    7-deep
+    lookup-table-7x7x7-step30-stage-lr-oblique-edges.txt
+    ====================================================
+    1 steps has 77,446 entries (0 percent, 0.00x previous step)
+    2 steps has 831,520 entries (8 percent, 10.74x previous step)
+    3 steps has 9,010,776 entries (90 percent, 10.84x previous step)
 
-    lookup-table-7x7x7-step20-LR-oblique-edge-pairing.txt
-    =====================================================
-    1 steps has 2 entries (0 percent, 0.00x previous step)
-    2 steps has 26 entries (0 percent, 13.00x previous step)
-    3 steps has 214 entries (0 percent, 8.23x previous step)
-    4 steps has 806 entries (0 percent, 3.77x previous step)
-    5 steps has 3,006 entries (0 percent, 3.73x previous step)
-    6 steps has 15,985 entries (1 percent, 5.32x previous step)
-    7 steps has 86,859 entries (9 percent, 5.43x previous step)
-    8 steps has 452,115 entries (48 percent, 5.21x previous step)
-    9 steps has 326,228 entries (35 percent, 0.72x previous step)
-    10 steps has 43,770 entries (4 percent, 0.13x previous step)
-    11 steps has 846 entries (0 percent, 0.02x previous step)
-
-    Total: 929,857 entries
-    Average: 8.31 moves
+    Total: 9,919,742 entries
     """
+    LFRB_oblique_edges_777 = (
+        59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89, # Left
+        108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138, # Front
+        157, 158, 159, 163, 167, 170, 174, 177, 181, 185, 186, 187, # Right
+        206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236, # Back
+    )
+
+    LFRB_left_middle_oblique_edges_777 = (
+        59, 60, 69, 72, 76, 79, 88, 89, # Left
+        108, 109, 118, 121, 125, 128, 137, 138, # Front
+        157, 158, 167, 170, 174, 177, 186, 187, # Right
+        206, 207, 216, 219, 223, 226, 235, 236, # Back
+    )
+
+    LFRB_left_right_oblique_edges_777 = (
+        59, 61, 65, 69, 79, 83, 87, 89, # Left
+        108, 110, 114, 118, 128, 132, 136, 138, # Front
+        157, 159, 163, 167, 177, 181, 185, 187, # Right
+        206, 208, 212, 216, 226, 230, 234, 236, # Back
+    )
+
+    set_LFRB_left_right_oblique_edges_777 = set(LFRB_left_right_oblique_edges_777)
+    set_LFRB_left_middle_oblique_edges_777 = set(LFRB_left_middle_oblique_edges_777)
+
+    heuristic_stats = {
+        (0, 0): 1,
+        (0, 1): 3,
+        (0, 2): 3,
+        (0, 3): 4,
+        (0, 4): 5,
+        (0, 5): 7,
+        (0, 6): 8,
+        (1, 0): 2,
+        (1, 1): 2,
+        (1, 2): 4,
+        (1, 3): 4,
+        (1, 4): 5,
+        (1, 5): 7,
+        (1, 6): 9,
+        (1, 7): 10,
+        (2, 0): 3,
+        (2, 1): 3,
+        (2, 2): 3,
+        (2, 3): 4,
+        (2, 4): 5,
+        (2, 5): 8,
+        (2, 6): 9,
+        (2, 7): 9,
+        (2, 8): 12,
+        (3, 0): 4,
+        (3, 1): 4,
+        (3, 2): 4,
+        (3, 3): 4,
+        (3, 4): 5,
+        (3, 5): 8,
+        (3, 6): 9,
+        (3, 7): 9,
+        (3, 8): 11,
+        (4, 0): 5,
+        (4, 1): 5,
+        (4, 2): 5,
+        (4, 3): 5,
+        (4, 3): 6,
+        (4, 4): 5,
+        (4, 5): 8,
+        (4, 6): 9,
+        (4, 7): 10,
+        (4, 8): 10,
+        (4, 9): 13,
+        (5, 0): 7,
+        (5, 1): 8,
+        (5, 2): 6,
+        (5, 3): 7,
+        (5, 4): 8,
+        (5, 5): 7,
+        (5, 6): 9,
+        (5, 7): 9,
+        (5, 8): 10,
+        (5, 9): 10,
+        (6, 1): 9,
+        (6, 2): 8,
+        (6, 3): 9,
+        (6, 4): 9,
+        (6, 5): 9,
+        (6, 6): 8,
+        (6, 7): 10,
+        (6, 8): 11,
+        (6, 9): 12,
+        (7, 2): 10,
+        (7, 3): 9,
+        (7, 4): 10,
+        (7, 5): 10,
+        (7, 6): 9,
+        (7, 7): 9,
+        (7, 8): 9,
+        (8, 4): 11,
+        (8, 5): 11,
+        (8, 6): 10,
+        (8, 7): 13,
+        (8, 8): 12
+    }
+
+    # The stats above are all median values from solving 5000 7x7x7 cubes. Experimenting
+    # shows that subtracting 1 from all of those speeds up some searches a good bit (from
+    # 2m down to 5s).
+    #heuristic_stats_error = 1
 
     def __init__(self, parent):
         LookupTableIDA.__init__(
             self,
             parent,
-            'lookup-table-7x7x7-step20-LR-oblique-edge-pairing.txt',
-            'fff000fff000',
+            'lookup-table-7x7x7-step30-stage-lr-oblique-edges.txt',
+            state_targets_step30,
             moves_777,
 
-            ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", # do not mess up UD 5x5x5 centers
-             "Rw",  "Rw'",  "Lw",  "Lw'",  "Fw",  "Fw'",  "Bw",  "Bw'", # do not mess up UD oblique edges
-             "3Uw", "3Uw'", "3Dw", "3Dw'"),
+            ("3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged inner-x-centers
+             "3Lw", "3Lw'", "3Rw", "3Rw'",
+             "3Fw", "3Fw'", "3Bw", "3Bw'",
+             "Rw", "Rw'", "Lw", "Lw'",     # do not mess up staged UD oblique pairs
+             "Fw", "Fw'", "Bw", "Bw'"),
 
             # prune tables
-            (parent.lt_LR_oblique_edge_pairing_middle_only,
-             parent.lt_LR_oblique_edge_pairing_left_only,
-             parent.lt_LR_oblique_edge_pairing_right_only),
+            (parent.lt_LR_left_right_oblique_edge_pairing,
+             parent.lt_LR_left_middle_oblique_edge_pairing,
+            ),
 
-            linecount=929857,
+            linecount=9919742,
+            max_depth=3,
+            filesize=178555356,
+        )
+
+    def recolor(self):
+        log.info("%s: recolor (custom)" % self)
+        #self.parent.print_cube()
+        self.parent.nuke_corners()
+        self.parent.nuke_edges()
+
+        for x in centers_777:
+            if x in self.LFRB_oblique_edges_777:
+                if self.parent.state[x] == 'L' or self.parent.state[x] == 'R':
+                    self.parent.state[x] = 'L'
+                else:
+                    self.parent.state[x] = 'x'
+            else:
+                self.parent.state[x] = '.'
+        #self.parent.print_cube()
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        left_middle_state = 0
+        left_right_state = 0
+        lt_state = 0
+
+        set_LFRB_left_right_oblique_edges_777 = self.set_LFRB_left_right_oblique_edges_777
+        set_LFRB_left_middle_oblique_edges_777 = self.set_LFRB_left_middle_oblique_edges_777
+
+        for x in self.LFRB_oblique_edges_777:
+            x_state = parent_state[x]
+
+            if x in set_LFRB_left_right_oblique_edges_777:
+                if x_state == 'L':
+                    left_right_state = left_right_state | 0x1
+                left_right_state = left_right_state << 1
+
+            if x in set_LFRB_left_middle_oblique_edges_777:
+                if x_state == 'L':
+                    left_middle_state = left_middle_state | 0x1
+                left_middle_state = left_middle_state << 1
+
+            if x_state == 'L':
+                lt_state = lt_state | 0x1
+            lt_state = lt_state << 1
+
+        left_middle_state = left_middle_state >> 1
+        left_right_state = left_right_state >> 1
+        lt_state = lt_state >> 1
+
+        # convert to hex format
+        left_right_state = self.parent.lt_LR_left_right_oblique_edge_pairing.hex_format % left_right_state
+        left_middle_state = self.parent.lt_LR_left_middle_oblique_edge_pairing.hex_format % left_middle_state
+        lt_state = self.hex_format % lt_state
+
+        left_right_cost = self.parent.lt_LR_left_right_oblique_edge_pairing.heuristic(left_right_state)
+        left_middle_cost = self.parent.lt_LR_left_middle_oblique_edge_pairing.heuristic(left_middle_state)
+
+        cost_to_goal = self.heuristic_stats.get((left_right_cost, left_middle_cost))
+
+        if cost_to_goal is None:
+            cost_to_goal = max(left_right_cost, left_middle_cost)
+
+        return (lt_state, cost_to_goal)
+
+
+#class LookupTable777Step41(LookupTable):
+class LookupTable777Step41(LookupTableHashCostOnly):
+    """
+    lookup-table-7x7x7-step41.txt
+    =============================
+    1 steps has 226 entries (0 percent, 0.00x previous step)
+    2 steps has 1,433 entries (0 percent, 6.34x previous step)
+    3 steps has 8,986 entries (0 percent, 6.27x previous step)
+    4 steps has 54,072 entries (0 percent, 6.02x previous step)
+    5 steps has 290,610 entries (1 percent, 5.37x previous step)
+    6 steps has 1,339,251 entries (5 percent, 4.61x previous step)
+    7 steps has 4,706,248 entries (19 percent, 3.51x previous step)
+    8 steps has 9,659,696 entries (40 percent, 2.05x previous step)
+    9 steps has 7,031,230 entries (29 percent, 0.73x previous step)
+    10 steps has 907,920 entries (3 percent, 0.13x previous step)
+    11 steps has 10,296 entries (0 percent, 0.01x previous step)
+    12 steps has 32 entries (0 percent, 0.00x previous step)
+
+    Total: 24,010,000 entries
+    Average: 8.01 moves
+    """
+
+    state_targets = (
+        'LLLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRRR',
+        'LLLLLLRLLLLLLLRLLRRLRRRRRRRLRRRRRR',
+        'LLLLLLRLLLLLLLRLLRRRRRRLRRRRRRRLRR',
+        'LLRLLLLLLLRLLLLLLRRLRRRRRRRLRRRRRR',
+        'LLRLLLLLLLRLLLLLLRRRRRRLRRRRRRRLRR',
+        'LLRLLLRLLLRLLLRLLRRLRRRLRRRLRRRLRR',
+        'LRLLLRLLLRLLLRLLRLRRLRRRLRRRLRRRLR',
+        'LRLLLRLLLRLLLRLLRRLRRRLRRRLRRRLRRL',
+        'LRLLLRRLLRLLLRRLRLRLLRRRLRRLLRRRLR',
+        'LRLLLRRLLRLLLRRLRLRRLRRLLRRRLRRLLR',
+        'LRLLLRRLLRLLLRRLRRLLRRLRRRLLRRLRRL',
+        'LRLLLRRLLRLLLRRLRRLRRRLLRRLRRRLLRL',
+        'LRRLLRLLLRRLLRLLRLRLLRRRLRRLLRRRLR',
+        'LRRLLRLLLRRLLRLLRLRRLRRLLRRRLRRLLR',
+        'LRRLLRLLLRRLLRLLRRLLRRLRRRLLRRLRRL',
+        'LRRLLRLLLRRLLRLLRRLRRRLLRRLRRRLLRL',
+        'LRRLLRRLLRRLLRRLRLRLLRRLLRRLLRRLLR',
+        'LRRLLRRLLRRLLRRLRRLLRRLLRRLLRRLLRL',
+        'RLLRLLLRLLLRLLLRLLRRLRRRLRRRLRRRLR',
+        'RLLRLLLRLLLRLLLRLRLRRRLRRRLRRRLRRL',
+        'RLLRLLRRLLLRLLRRLLRLLRRRLRRLLRRRLR',
+        'RLLRLLRRLLLRLLRRLLRRLRRLLRRRLRRLLR',
+        'RLLRLLRRLLLRLLRRLRLLRRLRRRLLRRLRRL',
+        'RLLRLLRRLLLRLLRRLRLRRRLLRRLRRRLLRL',
+        'RLRRLLLRLLRRLLLRLLRLLRRRLRRLLRRRLR',
+        'RLRRLLLRLLRRLLLRLLRRLRRLLRRRLRRLLR',
+        'RLRRLLLRLLRRLLLRLRLLRRLRRRLLRRLRRL',
+        'RLRRLLLRLLRRLLLRLRLRRRLLRRLRRRLLRL',
+        'RLRRLLRRLLRRLLRRLLRLLRRLLRRLLRRLLR',
+        'RLRRLLRRLLRRLLRRLRLLRRLLRRLLRRLLRL',
+        'RRLRLRLRLRLRLRLRRLLRLRLRLRLRLRLRLL',
+        'RRLRLRRRLRLRLRRRRLLLLRLRLRLLLRLRLL',
+        'RRLRLRRRLRLRLRRRRLLRLRLLLRLRLRLLLL',
+        'RRRRLRLRLRRRLRLRRLLLLRLRLRLLLRLRLL',
+        'RRRRLRLRLRRRLRLRRLLRLRLLLRLRLRLLLL',
+        'RRRRLRRRLRRRLRRRRLLLLRLLLRLLLRLLLL'
+    )
+
+    def __init__(self, parent):
+        '''
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step41.txt',
+            self.state_targets,
+            linecount=24010000,
+            max_depth=12,
+            filesize=2064860000)
+        '''
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step41.hash-cost-only.txt',
+            self.state_targets,
+            linecount=24010000,
+            max_depth=12,
+            bucketcount=24010031,
+            filesize=24010032)
+
+
+#class LookupTable777Step42(LookupTable):
+class LookupTable777Step42(LookupTableHashCostOnly):
+    """
+    lookup-table-7x7x7-step42.txt
+    =============================
+    1 steps has 250 entries (0 percent, 0.00x previous step)
+    2 steps has 1,845 entries (0 percent, 7.38x previous step)
+    3 steps has 12,756 entries (0 percent, 6.91x previous step)
+    4 steps has 82,273 entries (0 percent, 6.45x previous step)
+    5 steps has 468,727 entries (1 percent, 5.70x previous step)
+    6 steps has 2,158,967 entries (8 percent, 4.61x previous step)
+    7 steps has 6,972,890 entries (29 percent, 3.23x previous step)
+    8 steps has 10,557,164 entries (43 percent, 1.51x previous step)
+    9 steps has 3,640,612 entries (15 percent, 0.34x previous step)
+    10 steps has 114,304 entries (0 percent, 0.03x previous step)
+    11 steps has 212 entries (0 percent, 0.00x previous step)
+
+    Total: 24,010,000 entries
+    Average: 7.62 moves
+    """
+
+    state_targets = (
+        'LLLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRRR',
+        'LLLLLRLLLRLLLRLLLRRRLRRRLRRRLRRRRR',
+        'LLLLLRLLLRLLLRLLLRRRRRLRRRLRRRLRRR',
+        'LLLRLLLRLLLRLLLLLRRRLRRRLRRRLRRRRR',
+        'LLLRLLLRLLLRLLLLLRRRRRLRRRLRRRLRRR',
+        'LLLRLRLRLRLRLRLLLRRRLRLRLRLRLRLRRR',
+        'LLRLLLLLLLRLLLLLRLRRRRRLRRRRRRRLRR',
+        'LLRLLLLLLLRLLLLLRRRLRRRRRRRLRRRRRL',
+        'LLRLLRLLLRRLLRLLRLRRLRRLLRRRLRRLRR',
+        'LLRLLRLLLRRLLRLLRLRRRRLLRRLRRRLLRR',
+        'LLRLLRLLLRRLLRLLRRRLLRRRLRRLLRRRRL',
+        'LLRLLRLLLRRLLRLLRRRLRRLRRRLLRRLRRL',
+        'LLRRLLLRLLRRLLLLRLRRLRRLLRRRLRRLRR',
+        'LLRRLLLRLLRRLLLLRLRRRRLLRRLRRRLLRR',
+        'LLRRLLLRLLRRLLLLRRRLLRRRLRRLLRRRRL',
+        'LLRRLLLRLLRRLLLLRRRLRRLRRRLLRRLRRL',
+        'LLRRLRLRLRRRLRLLRLRRLRLLLRLRLRLLRR',
+        'LLRRLRLRLRRRLRLLRRRLLRLRLRLLLRLRRL',
+        'RLLLLLRLLLLLLLRLLLRRRRRLRRRRRRRLRR',
+        'RLLLLLRLLLLLLLRLLRRLRRRRRRRLRRRRRL',
+        'RLLLLRRLLRLLLRRLLLRRLRRLLRRRLRRLRR',
+        'RLLLLRRLLRLLLRRLLLRRRRLLRRLRRRLLRR',
+        'RLLLLRRLLRLLLRRLLRRLLRRRLRRLLRRRRL',
+        'RLLLLRRLLRLLLRRLLRRLRRLRRRLLRRLRRL',
+        'RLLRLLRRLLLRLLRLLLRRLRRLLRRRLRRLRR',
+        'RLLRLLRRLLLRLLRLLLRRRRLLRRLRRRLLRR',
+        'RLLRLLRRLLLRLLRLLRRLLRRRLRRLLRRRRL',
+        'RLLRLLRRLLLRLLRLLRRLRRLRRRLLRRLRRL',
+        'RLLRLRRRLRLRLRRLLLRRLRLLLRLRLRLLRR',
+        'RLLRLRRRLRLRLRRLLRRLLRLRLRLLLRLRRL',
+        'RLRLLLRLLLRLLLRLRLRLRRRLRRRLRRRLRL',
+        'RLRLLRRLLRRLLRRLRLRLLRRLLRRLLRRLRL',
+        'RLRLLRRLLRRLLRRLRLRLRRLLRRLLRRLLRL',
+        'RLRRLLRRLLRRLLRLRLRLLRRLLRRLLRRLRL',
+        'RLRRLLRRLLRRLLRLRLRLRRLLRRLLRRLLRL',
+        'RLRRLRRRLRRRLRRLRLRLLRLLLRLLLRLLRL'
+    )
+
+    def __init__(self, parent):
+        '''
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step42.txt',
+            self.state_targets,
+            linecount=24010000,
+            max_depth=11,
+            filesize=2040850000)
+        '''
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step42.hash-cost-only.txt',
+            self.state_targets,
+            linecount=24010000,
+            max_depth=11,
+            bucketcount=24010031,
+            filesize=24010032)
+
+
+class LookupTableIDA777Step40(LookupTableIDA):
+    """
+    lookup-table-7x7x7-step40.txt
+    =============================
+    1 steps has 250 entries (0 percent, 0.00x previous step)
+    2 steps has 1,981 entries (0 percent, 7.92x previous step)
+    3 steps has 15,782 entries (0 percent, 7.97x previous step)
+    4 steps has 123,053 entries (1 percent, 7.80x previous step)
+    5 steps has 931,072 entries (11 percent, 7.57x previous step)
+    6 steps has 6,799,621 entries (86 percent, 7.30x previous step)
+
+    Total: 7,871,759 entries
+    """
+
+    state_targets = (
+        '0842109bdef7b',
+        '0a5294ab5ad6b',
+        '0a5294bad6b5a',
+        '0c6318d39ce73',
+        '0c6318d9ce739',
+        '0e739ce318c63',
+        '0e739ce94a529',
+        '0e739cf294a52',
+        '0e739cf8c6318',
+        '18c631939ce73',
+        '18c63199ce739',
+        '1ad6b5a318c63',
+        '1ad6b5a94a529',
+        '1ad6b5b294a52',
+        '1ad6b5b8c6318',
+        '1ce739d18c631',
+        '1ef7bde108421',
+        '1ef7bdf084210',
+        '294a528b5ad6b',
+        '294a529ad6b5a',
+        '2b5ad6aa5294a',
+        '2d6b5ac318c63',
+        '2d6b5ac94a529',
+        '2d6b5ad294a52',
+        '2d6b5ad8c6318',
+        '2f7bdee210842',
+        '2f7bdee842108',
+        '39ce738318c63',
+        '39ce73894a529',
+        '39ce739294a52',
+        '39ce7398c6318',
+        '3bdef7a210842',
+        '3bdef7a842108',
+        '3def7bc108421',
+        '3def7bd084210',
+        '3fffffe000000',
+    )
+
+    centers_step40_777 = (
+        58, 59, 60, 61, 62, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 86, 87, 88, 89, 90, # Left
+        156, 157, 158, 159, 160, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 184, 185, 186, 187, 188, # Right
+    )
+
+    centers_step41_777 = (
+        59, 61, 65, 66, 67, 68, 69, 73, 74, 75, 79, 80, 81, 82, 83, 87, 89, # Left
+        157, 159, 163, 164, 165, 166, 167, 171, 172, 173, 177, 178, 179, 180, 181, 185, 187, # Right
+    )
+
+    centers_step42_777 = (
+        58, 60, 62, 66, 67, 68, 72, 73, 74, 75, 76, 80, 81, 82, 86, 88, 90, # Left
+        156, 158, 160, 164, 165, 166, 170, 171, 172, 173, 174, 178, 179, 180, 184, 186, 188, # Right
+    )
+
+    set_centers_step41_777 = set(centers_step41_777)
+    set_centers_step42_777 = set(centers_step42_777)
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step40.txt',
+            self.state_targets,
+            moves_777,
+
+            # illegal moves
+            ("3Uw", "3Uw'", "3Uw2", "Uw", "Uw'", "Uw2",
+             "3Lw", "3Lw'", "3Lw2", "Lw", "Lw'", "Lw2",
+             "3Fw", "3Fw'", "Fw", "Fw'",
+             "3Rw", "3Rw'", "3Rw2", "Rw", "Rw'", "Rw2",
+             "3Bw", "3Bw'", "Bw", "Bw'",
+             "3Dw", "3Dw'", "3Dw2", "Dw", "Dw'", "Dw2"),
+
+            # prune tables
+            (parent.lt_step41,
+             parent.lt_step42),
+            linecount=7871759,
+            max_depth=6,
+            filesize=149563421)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        lt_state = 0
+        step41_state = []
+        step42_state = []
+
+        set_centers_step41_777 = self.set_centers_step41_777
+        set_centers_step42_777 = self.set_centers_step42_777
+
+        for x in self.centers_step40_777:
+            x_state = parent_state[x]
+
+            if x in set_centers_step41_777:
+                step41_state.append(x_state)
+
+            if x in set_centers_step42_777:
+                step42_state.append(x_state)
+
+            if x_state == 'L':
+                lt_state = lt_state | 0x1
+            lt_state = lt_state << 1
+
+        step41_state = ''.join(step41_state)
+        step42_state = ''.join(step42_state)
+        lt_state = lt_state >> 1
+        lt_state = self.hex_format % lt_state
+
+        cost_to_goal = max(
+            self.parent.lt_step41.heuristic(step41_state),
+            self.parent.lt_step42.heuristic(step42_state),
+        )
+
+        return (lt_state, cost_to_goal)
+
+
+#class LookupTable777Step51(LookupTable):
+class LookupTable777Step51(LookupTableHashCostOnly):
+    """
+    lookup-table-7x7x7-step51.txt
+    =============================
+    1 steps has 226 entries (0 percent, 0.00x previous step)
+    2 steps has 1,433 entries (0 percent, 6.34x previous step)
+    3 steps has 8,986 entries (0 percent, 6.27x previous step)
+    4 steps has 54,072 entries (0 percent, 6.02x previous step)
+    5 steps has 290,610 entries (1 percent, 5.37x previous step)
+    6 steps has 1,339,251 entries (5 percent, 4.61x previous step)
+    7 steps has 4,706,248 entries (19 percent, 3.51x previous step)
+    8 steps has 9,659,696 entries (40 percent, 2.05x previous step)
+    9 steps has 7,031,230 entries (29 percent, 0.73x previous step)
+    10 steps has 907,920 entries (3 percent, 0.13x previous step)
+    11 steps has 10,296 entries (0 percent, 0.01x previous step)
+    12 steps has 32 entries (0 percent, 0.00x previous step)
+
+    Total: 24,010,000 entries
+    Average: 8.01 moves
+    """
+
+    state_targets = (
+        'DDDDUDDDUDDDUDDDDUUUUDUUUDUUUDUUUU',
+        'DDDDUDUDUDDDUDUDDUUDUDUUUDUDUDUUUU',
+        'DDDDUDUDUDDDUDUDDUUUUDUDUDUUUDUDUU',
+        'DDUDUDDDUDUDUDDDDUUDUDUUUDUDUDUUUU',
+        'DDUDUDDDUDUDUDDDDUUUUDUDUDUUUDUDUU',
+        'DDUDUDUDUDUDUDUDDUUDUDUDUDUDUDUDUU',
+        'DUDDUUDDUUDDUUDDUDUUDDUUDDUUDDUUDU',
+        'DUDDUUDDUUDDUUDDUUDUUDDUUDDUUDDUUD',
+        'DUDDUUUDUUDDUUUDUDUDDDUUDDUDDDUUDU',
+        'DUDDUUUDUUDDUUUDUDUUDDUDDDUUDDUDDU',
+        'DUDDUUUDUUDDUUUDUUDDUDDUUDDDUDDUUD',
+        'DUDDUUUDUUDDUUUDUUDUUDDDUDDUUDDDUD',
+        'DUUDUUDDUUUDUUDDUDUDDDUUDDUDDDUUDU',
+        'DUUDUUDDUUUDUUDDUDUUDDUDDDUUDDUDDU',
+        'DUUDUUDDUUUDUUDDUUDDUDDUUDDDUDDUUD',
+        'DUUDUUDDUUUDUUDDUUDUUDDDUDDUUDDDUD',
+        'DUUDUUUDUUUDUUUDUDUDDDUDDDUDDDUDDU',
+        'DUUDUUUDUUUDUUUDUUDDUDDDUDDDUDDDUD',
+        'UDDUUDDUUDDUUDDUDDUUDDUUDDUUDDUUDU',
+        'UDDUUDDUUDDUUDDUDUDUUDDUUDDUUDDUUD',
+        'UDDUUDUUUDDUUDUUDDUDDDUUDDUDDDUUDU',
+        'UDDUUDUUUDDUUDUUDDUUDDUDDDUUDDUDDU',
+        'UDDUUDUUUDDUUDUUDUDDUDDUUDDDUDDUUD',
+        'UDDUUDUUUDDUUDUUDUDUUDDDUDDUUDDDUD',
+        'UDUUUDDUUDUUUDDUDDUDDDUUDDUDDDUUDU',
+        'UDUUUDDUUDUUUDDUDDUUDDUDDDUUDDUDDU',
+        'UDUUUDDUUDUUUDDUDUDDUDDUUDDDUDDUUD',
+        'UDUUUDDUUDUUUDDUDUDUUDDDUDDUUDDDUD',
+        'UDUUUDUUUDUUUDUUDDUDDDUDDDUDDDUDDU',
+        'UDUUUDUUUDUUUDUUDUDDUDDDUDDDUDDDUD',
+        'UUDUUUDUUUDUUUDUUDDUDDDUDDDUDDDUDD',
+        'UUDUUUUUUUDUUUUUUDDDDDDUDDDDDDDUDD',
+        'UUDUUUUUUUDUUUUUUDDUDDDDDDDUDDDDDD',
+        'UUUUUUDUUUUUUUDUUDDDDDDUDDDDDDDUDD',
+        'UUUUUUDUUUUUUUDUUDDUDDDDDDDUDDDDDD',
+        'UUUUUUUUUUUUUUUUUDDDDDDDDDDDDDDDDD'
+    )
+
+    def __init__(self, parent):
+        '''
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step51.txt',
+            self.state_targets,
+            linecount=24010000,
+            max_depth=12,
+            filesize=2064860000)
+        '''
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step51.hash-cost-only.txt',
+            self.state_targets,
+            linecount=24010000,
+            max_depth=12,
+            bucketcount=24010031,
+            filesize=24010032)
+
+
+#class LookupTable777Step52(LookupTable):
+class LookupTable777Step52(LookupTableHashCostOnly):
+    """
+    lookup-table-7x7x7-step52.txt
+    =============================
+    1 steps has 250 entries (0 percent, 0.00x previous step)
+    2 steps has 1,845 entries (0 percent, 7.38x previous step)
+    3 steps has 12,756 entries (0 percent, 6.91x previous step)
+    4 steps has 82,273 entries (0 percent, 6.45x previous step)
+    5 steps has 468,727 entries (1 percent, 5.70x previous step)
+    6 steps has 2,158,967 entries (8 percent, 4.61x previous step)
+    7 steps has 6,972,890 entries (29 percent, 3.23x previous step)
+    8 steps has 10,557,164 entries (43 percent, 1.51x previous step)
+    9 steps has 3,640,612 entries (15 percent, 0.34x previous step)
+    10 steps has 114,304 entries (0 percent, 0.03x previous step)
+    11 steps has 212 entries (0 percent, 0.00x previous step)
+
+    Total: 24,010,000 entries
+    Average: 7.62 moves
+    """
+
+    state_targets = (
+        'DUDDUDDDUDDDUDDUDUDUUDUUUDUUUDUUDU',
+        'DUDDUUDDUUDDUUDUDUDUDDUUDDUUDDUUDU',
+        'DUDDUUDDUUDDUUDUDUDUUDDUUDDUUDDUDU',
+        'DUDUUDDUUDDUUDDUDUDUDDUUDDUUDDUUDU',
+        'DUDUUDDUUDDUUDDUDUDUUDDUUDDUUDDUDU',
+        'DUDUUUDUUUDUUUDUDUDUDDDUDDDUDDDUDU',
+        'DUUDUDDDUDUDUDDUUDDUUDUDUDUUUDUDDU',
+        'DUUDUDDDUDUDUDDUUUDDUDUUUDUDUDUUDD',
+        'DUUDUUDDUUUDUUDUUDDUDDUDDDUUDDUDDU',
+        'DUUDUUDDUUUDUUDUUDDUUDDDUDDUUDDDDU',
+        'DUUDUUDDUUUDUUDUUUDDDDUUDDUDDDUUDD',
+        'DUUDUUDDUUUDUUDUUUDDUDDUUDDDUDDUDD',
+        'DUUUUDDUUDUUUDDUUDDUDDUDDDUUDDUDDU',
+        'DUUUUDDUUDUUUDDUUDDUUDDDUDDUUDDDDU',
+        'DUUUUDDUUDUUUDDUUUDDDDUUDDUDDDUUDD',
+        'DUUUUDDUUDUUUDDUUUDDUDDUUDDDUDDUDD',
+        'DUUUUUDUUUUUUUDUUDDUDDDDDDDUDDDDDU',
+        'DUUUUUDUUUUUUUDUUUDDDDDUDDDDDDDUDD',
+        'UUDDUDUDUDDDUDUUDDDUUDUDUDUUUDUDDU',
+        'UUDDUDUDUDDDUDUUDUDDUDUUUDUDUDUUDD',
+        'UUDDUUUDUUDDUUUUDDDUDDUDDDUUDDUDDU',
+        'UUDDUUUDUUDDUUUUDDDUUDDDUDDUUDDDDU',
+        'UUDDUUUDUUDDUUUUDUDDDDUUDDUDDDUUDD',
+        'UUDDUUUDUUDDUUUUDUDDUDDUUDDDUDDUDD',
+        'UUDUUDUUUDDUUDUUDDDUDDUDDDUUDDUDDU',
+        'UUDUUDUUUDDUUDUUDDDUUDDDUDDUUDDDDU',
+        'UUDUUDUUUDDUUDUUDUDDDDUUDDUDDDUUDD',
+        'UUDUUDUUUDDUUDUUDUDDUDDUUDDDUDDUDD',
+        'UUDUUUUUUUDUUUUUDDDUDDDDDDDUDDDDDU',
+        'UUDUUUUUUUDUUUUUDUDDDDDUDDDDDDDUDD',
+        'UUUDUDUDUDUDUDUUUDDDUDUDUDUDUDUDDD',
+        'UUUDUUUDUUUDUUUUUDDDDDUDDDUDDDUDDD',
+        'UUUDUUUDUUUDUUUUUDDDUDDDUDDDUDDDDD',
+        'UUUUUDUUUDUUUDUUUDDDDDUDDDUDDDUDDD',
+        'UUUUUDUUUDUUUDUUUDDDUDDDUDDDUDDDDD',
+        'UUUUUUUUUUUUUUUUUDDDDDDDDDDDDDDDDD'
+    )
+
+    def __init__(self, parent):
+        '''
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step52.txt',
+            self.state_targets,
+            linecount=24010000,
+            max_depth=11,
+            filesize=1992830000)
+        '''
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step52.hash-cost-only.txt',
+            self.state_targets,
+            linecount=24010000,
+            max_depth=11,
+            bucketcount=24010031,
+            filesize=24010032)
+
+
+class LookupTableIDA777Step50(LookupTableIDA):
+    """
+    lookup-table-7x7x7-step50.txt
+    =============================
+    1 steps has 250 entries (0 percent, 0.00x previous step)
+    2 steps has 1,981 entries (0 percent, 7.92x previous step)
+    3 steps has 15,782 entries (0 percent, 7.97x previous step)
+    4 steps has 123,053 entries (1 percent, 7.80x previous step)
+    5 steps has 931,072 entries (11 percent, 7.57x previous step)
+    6 steps has 6,799,621 entries (86 percent, 7.30x previous step)
+
+    Total: 7,871,759 entries
+    """
+
+    state_targets = (
+        '0842109bdef7b',
+        '0a5294ab5ad6b',
+        '0a5294bad6b5a',
+        '0c6318d39ce73',
+        '0c6318d9ce739',
+        '0e739ce318c63',
+        '0e739ce94a529',
+        '0e739cf294a52',
+        '0e739cf8c6318',
+        '18c631939ce73',
+        '18c63199ce739',
+        '1ad6b5a318c63',
+        '1ad6b5a94a529',
+        '1ad6b5b294a52',
+        '1ad6b5b8c6318',
+        '1ce739d18c631',
+        '1ef7bde108421',
+        '1ef7bdf084210',
+        '294a528b5ad6b',
+        '294a529ad6b5a',
+        '2b5ad6aa5294a',
+        '2d6b5ac318c63',
+        '2d6b5ac94a529',
+        '2d6b5ad294a52',
+        '2d6b5ad8c6318',
+        '2f7bdee210842',
+        '2f7bdee842108',
+        '39ce738318c63',
+        '39ce73894a529',
+        '39ce739294a52',
+        '39ce7398c6318',
+        '3bdef7a210842',
+        '3bdef7a842108',
+        '3def7bc108421',
+        '3def7bd084210',
+        '3fffffe000000',
+    )
+
+    centers_step50_777 = (
+        9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, # Upper
+        254, 255, 256, 257, 258, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 275, 276, 277, 278, 279, 282, 283, 284, 285, 286, # Down
+    )
+
+    centers_step51_777 = (
+        10, 12, 16, 17, 18, 19, 20, 24, 25, 26, 30, 31, 32, 33, 34, 38, 40, # Upper
+        255, 257, 261, 262, 263, 264, 265, 269, 270, 271, 275, 276, 277, 278, 279, 283, 285, # Down
+    )
+
+    centers_step52_777 = (
+        9, 11, 13, 17, 18, 19, 23, 24, 25, 26, 27, 31, 32, 33, 37, 39, 41, # Upper
+        254, 256, 258, 262, 263, 264, 268, 269, 270, 271, 272, 276, 277, 278, 282, 284, 286, # Down
+    )
+
+    set_centers_step51_777 = set(centers_step51_777)
+    set_centers_step52_777 = set(centers_step52_777)
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step50.txt',
+            self.state_targets,
+            moves_777,
+            # illegal moves
+            # keep all centers staged
+            ("3Uw", "3Uw'", "Uw", "Uw'",
+             "3Lw", "3Lw'", "Lw", "Lw'",
+             "3Fw", "3Fw'", "Fw", "Fw'",
+             "3Rw", "3Rw'", "Rw", "Rw'",
+             "3Bw", "3Bw'", "Bw", "Bw'",
+             "3Dw", "3Dw'", "Dw", "Dw'",
+
+            # keep LR in vertical bars
+            "L", "L'", "R", "R'", "3Uw2", "3Dw2", "Uw2", "Dw2"),
+
+            # prune tables
+            (parent.lt_step51,
+             parent.lt_step52),
+            linecount=7871759,
+            max_depth=6,
+            filesize=149563421)
+
+    def ida_heuristic(self):
+        parent_state = self.parent.state
+        lt_state = 0
+        step51_state = []
+        step52_state = []
+
+        set_centers_step51_777 = self.set_centers_step51_777
+        set_centers_step52_777 = self.set_centers_step52_777
+
+        for x in self.centers_step50_777:
+            x_state = parent_state[x]
+
+            if x in set_centers_step51_777:
+                step51_state.append(x_state)
+
+            if x in set_centers_step52_777:
+                step52_state.append(x_state)
+
+            if x_state == 'U':
+                lt_state = lt_state | 0x1
+            lt_state = lt_state << 1
+
+        step51_state = ''.join(step51_state)
+        step52_state = ''.join(step52_state)
+        lt_state = lt_state >> 1
+        lt_state = self.hex_format % lt_state
+
+        cost_to_goal = max(
+            self.parent.lt_step51.heuristic(step51_state),
+            self.parent.lt_step52.heuristic(step52_state),
+        )
+
+        return (lt_state, cost_to_goal)
+
+
+#class LookupTable777Step61(LookupTable):
+class LookupTable777Step61(LookupTableHashCostOnly):
+    """
+    lookup-table-7x7x7-step61.txt
+    =============================
+    1 steps has 9 entries (0 percent, 0.00x previous step)
+    2 steps has 56 entries (0 percent, 6.22x previous step)
+    3 steps has 340 entries (0 percent, 6.07x previous step)
+    4 steps has 1,965 entries (0 percent, 5.78x previous step)
+    5 steps has 11,406 entries (0 percent, 5.80x previous step)
+    6 steps has 63,151 entries (0 percent, 5.54x previous step)
+    7 steps has 315,410 entries (1 percent, 4.99x previous step)
+    8 steps has 1,351,508 entries (5 percent, 4.28x previous step)
+    9 steps has 4,368,424 entries (18 percent, 3.23x previous step)
+    10 steps has 8,741,185 entries (36 percent, 2.00x previous step)
+    11 steps has 7,463,440 entries (31 percent, 0.85x previous step)
+    12 steps has 1,634,978 entries (6 percent, 0.22x previous step)
+    13 steps has 57,824 entries (0 percent, 0.04x previous step)
+    14 steps has 304 entries (0 percent, 0.01x previous step)
+
+    Total: 24,010,000 entries
+    Average: 10.11 moves
+    """
+
+    def __init__(self, parent):
+        '''
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step61.txt',
+            'FFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBBB',
+            linecount=24010000,
+            max_depth=14,
+            filesize=2280950000)
+        '''
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step61.hash-cost-only.txt',
+            'FFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBBB',
+            linecount=24010000,
+            max_depth=14,
+            bucketcount=24010031,
+            filesize=24010032)
+
+
+#class LookupTable777Step62(LookupTable):
+class LookupTable777Step62(LookupTableHashCostOnly):
+    """
+    lookup-table-7x7x7-step62.txt
+    =============================
+    1 steps has 9 entries (0 percent, 0.00x previous step)
+    2 steps has 68 entries (0 percent, 7.56x previous step)
+    3 steps has 464 entries (0 percent, 6.82x previous step)
+    4 steps has 3,080 entries (0 percent, 6.64x previous step)
+    5 steps has 19,660 entries (0 percent, 6.38x previous step)
+    6 steps has 113,360 entries (0 percent, 5.77x previous step)
+    7 steps has 580,520 entries (2 percent, 5.12x previous step)
+    8 steps has 2,435,981 entries (10 percent, 4.20x previous step)
+    9 steps has 7,101,166 entries (29 percent, 2.92x previous step)
+    10 steps has 9,808,434 entries (40 percent, 1.38x previous step)
+    11 steps has 3,691,124 entries (15 percent, 0.38x previous step)
+    12 steps has 252,402 entries (1 percent, 0.07x previous step)
+    13 steps has 3,732 entries (0 percent, 0.01x previous step)
+
+    Total: 24,010,000 entries
+    Average: 9.58 moves
+    """
+
+    def __init__(self, parent):
+        '''
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step62.txt',
+            'FFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBBB',
+            linecount=24010000,
+            max_depth=13,
+            filesize=)
+        '''
+        LookupTableHashCostOnly.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step62.hash-cost-only.txt',
+            'FFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBBB',
+            linecount=24010000,
+            max_depth=13,
+            bucketcount=24010031,
+            filesize=24010032)
+
+
+class LookupTableIDA777Step60(LookupTableIDA):
+    """
+    lookup-table-7x7x7-step60.txt
+    =============================
+    1 steps has 9 entries (0 percent, 0.00x previous step)
+    2 steps has 108 entries (0 percent, 12.00x previous step)
+    3 steps has 1,192 entries (0 percent, 11.04x previous step)
+    4 steps has 12,762 entries (0 percent, 10.71x previous step)
+    5 steps has 133,624 entries (0 percent, 10.47x previous step)
+    6 steps has 1,382,900 entries (8 percent, 10.35x previous step)
+    7 steps has 13,876,960 entries (90 percent, 10.03x previous step)
+
+    Total: 15,407,555 entries
+    """
+
+    state_indexes_step60 = (
+        9, 10, 11, 12, 13, 16, 17, 18, 19, 20, 23, 24, 25, 26, 27, 30, 31, 32, 33, 34, 37, 38, 39, 40, 41, # Upper
+        58, 59, 60, 61, 62, 65, 66, 67, 68, 69, 72, 73, 74, 75, 76, 79, 80, 81, 82, 83, 86, 87, 88, 89, 90, # Left
+        107, 108, 109, 110, 111, 114, 115, 116, 117, 118, 121, 122, 123, 124, 125, 128, 129, 130, 131, 132, 135, 136, 137, 138, 139, # Front
+        156, 157, 158, 159, 160, 163, 164, 165, 166, 167, 170, 171, 172, 173, 174, 177, 178, 179, 180, 181, 184, 185, 186, 187, 188, # Right
+        205, 206, 207, 208, 209, 212, 213, 214, 215, 216, 219, 220, 221, 222, 223, 226, 227, 228, 229, 230, 233, 234, 235, 236, 237, # Back
+        254, 255, 256, 257, 258, 261, 262, 263, 264, 265, 268, 269, 270, 271, 272, 275, 276, 277, 278, 279, 282, 283, 284, 285, 286, # Down
+    )
+
+    state_indexes_step61 = (
+        108, 110, 114, 115, 116, 117, 118, 122, 123, 124, 128, 129, 130, 131, 132, 136, 138, # Front
+        206, 208, 212, 213, 214, 215, 216, 220, 221, 222, 226, 227, 228, 229, 230, 234, 236, # Back
+    )
+
+    state_indexes_step62 = (
+        107, 109, 111, 115, 116, 117, 121, 122, 123, 124, 125, 129, 130, 131, 135, 137, 139, # Front
+        205, 207, 209, 213, 214, 215, 219, 220, 221, 222, 223, 227, 228, 229, 233, 235, 237, # Back
+    )
+
+    set_state_indexes_step61 = set(state_indexes_step61)
+    set_state_indexes_step62 = set(state_indexes_step62)
+
+    def __init__(self, parent):
+        LookupTableIDA.__init__(
+            self,
+            parent,
+            'lookup-table-7x7x7-step60.txt',
+            '3ffffffffffffffffff8000000000000000000',
+            moves_777,
+
+            # illegal moves
+            # keep all centers staged
+            ("3Uw", "3Uw'", "Uw", "Uw'",
+             "3Lw", "3Lw'", "Lw", "Lw'",
+             "3Fw", "3Fw'", "Fw", "Fw'",
+             "3Rw", "3Rw'", "Rw", "Rw'",
+             "3Bw", "3Bw'", "Bw", "Bw'",
+             "3Dw", "3Dw'", "Dw", "Dw'",
+
+            # keep LR in horizontal bars
+            "L", "L'", "R", "R'", "3Fw2", "3Bw2", "Fw2", "Bw2",
+
+            # keep UD in vertical bars
+            "U", "U'", "D", "D'"),
+
+            # prune tables
+            (parent.lt_step61,
+             parent.lt_step62),
+            linecount=15407555,
             max_depth=7,
-            filesize=59510848)
+            filesize=677932420)
 
-    def state(self):
+    def ida_heuristic(self):
         parent_state = self.parent.state
+        lt_state = 0
+        step61_state = []
+        step62_state = []
 
-        result = [
-            # Left
-            parent_state[59], parent_state[60], parent_state[61],
-            parent_state[65], parent_state[69],
-            parent_state[72], parent_state[76],
-            parent_state[79], parent_state[83],
-            parent_state[87], parent_state[88], parent_state[89],
+        set_state_indexes_step61 = self.set_state_indexes_step61
+        set_state_indexes_step62 = self.set_state_indexes_step62
 
-            # Front
-            parent_state[108], parent_state[109], parent_state[110],
-            parent_state[114], parent_state[118],
-            parent_state[121], parent_state[125],
-            parent_state[128], parent_state[132],
-            parent_state[136], parent_state[137], parent_state[138],
+        for x in self.state_indexes_step60:
+            x_state = parent_state[x]
 
-            # Right
-            parent_state[157], parent_state[158], parent_state[159],
-            parent_state[163], parent_state[167],
-            parent_state[170], parent_state[174],
-            parent_state[177], parent_state[181],
-            parent_state[185], parent_state[186], parent_state[187],
+            if x in set_state_indexes_step61:
+                step61_state.append(x_state)
 
-            # Back
-            parent_state[206], parent_state[207], parent_state[208],
-            parent_state[212], parent_state[216],
-            parent_state[219], parent_state[223],
-            parent_state[226], parent_state[230],
-            parent_state[234], parent_state[235], parent_state[236]
-        ]
+            if x in set_state_indexes_step62:
+                step62_state.append(x_state)
 
-        result = ['1' if x in ('L', 'R') else '0' for x in result]
-        result = ''.join(result)
+            if x_state in ('U', 'L', 'F'):
+                lt_state = lt_state | 0x1
+            lt_state = lt_state << 1
 
-        # Convert to hex
-        return self.hex_format % int(result, 2)
+        step61_state = ''.join(step61_state)
+        step62_state = ''.join(step62_state)
+        lt_state = lt_state >> 1
+        lt_state = self.hex_format % lt_state
 
+        cost_to_goal = max(
+            self.parent.lt_step61.heuristic(step61_state),
+            self.parent.lt_step62.heuristic(step62_state),
+        )
 
-class LookupTable777UDSolveInnerCentersAndObliqueEdgesCenterOnly(LookupTable):
-    """
-    lookup-table-7x7x7-step51-UD-solve-inner-center-and-oblique-edges-center-only.txt
-    =================================================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 22 entries (0 percent, 4.40x previous step)
-    3 steps has 82 entries (1 percent, 3.73x previous step)
-    4 steps has 292 entries (5 percent, 3.56x previous step)
-    5 steps has 986 entries (20 percent, 3.38x previous step)
-    6 steps has 2,001 entries (40 percent, 2.03x previous step)
-    7 steps has 1,312 entries (26 percent, 0.66x previous step)
-    8 steps has 200 entries (4 percent, 0.15x previous step)
-
-    Total: 4,900 entries
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step51-UD-solve-inner-center-and-oblique-edges-center-only.txt',
-            'xxxxxxUUUxxUxUxxUUUxxxxxxxxxxxxDDDxxDxDxxDDDxxxxxx',
-            linecount=4900,
-            max_depth=8)
-
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Upper
-            'xxxxx',
-            'x', parent_state[17], parent_state[18], parent_state[19], 'x',
-            'x', parent_state[24], 'x', parent_state[26], 'x',
-            'x', parent_state[31], parent_state[32], parent_state[33], 'x',
-            'xxxxx',
-
-            # Down
-            'xxxxx',
-            'x', parent_state[262], parent_state[263], parent_state[264], 'x',
-            'x', parent_state[269], 'x', parent_state[271], 'x',
-            'x', parent_state[276], parent_state[277], parent_state[278], 'x',
-            'xxxxx'
-        ]
-
-        result = ''.join(result)
-        return result
-
-
-class LookupTable777UDSolveInnerCentersAndObliqueEdgesEdgesOnly(LookupTable):
-    """
-    lookup-table-7x7x7-step52-UD-solve-inner-center-and-oblique-edges-edges-only.txt
-    ================================================================================
-    1 steps has 294 entries (0 percent, 0.00x previous step)
-    2 steps has 1,392 entries (0 percent, 4.73x previous step)
-    3 steps has 6,112 entries (1 percent, 4.39x previous step)
-    4 steps has 23,304 entries (6 percent, 3.81x previous step)
-    5 steps has 71,086 entries (20 percent, 3.05x previous step)
-    6 steps has 137,528 entries (40 percent, 1.93x previous step)
-    7 steps has 92,192 entries (26 percent, 0.67x previous step)
-    8 steps has 11,068 entries (3 percent, 0.12x previous step)
-    9 steps has 24 entries (0 percent, 0.00x previous step)
-
-    Total: 343,000 entries
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step52-UD-solve-inner-center-and-oblique-edges-edges-only.txt',
-            ('xUUUxUxxxUUxxxUUxxxUxUUUxxDDDxDxxxDDxxxDDxxxDxDDDx',
-             'xUUUxUxxxUUxxxUUxxxUxDDDxxUUUxDxxxDDxxxDDxxxDxDDDx',
-             'xUUUxUxxxUUxxxUUxxxUxDDDxxDDDxUxxxDUxxxDUxxxDxDDDx',
-             'xUUUxUxxxUUxxxUUxxxUxDDDxxDDDxDxxxUDxxxUDxxxUxDDDx',
-             'xUUUxUxxxUUxxxUUxxxUxDDDxxDDDxDxxxDDxxxDDxxxDxUUUx',
-             'xUUUxUxxxDUxxxDUxxxDxUUUxxUUUxDxxxDDxxxDDxxxDxDDDx',
-             'xUUUxUxxxDUxxxDUxxxDxUUUxxDDDxUxxxDUxxxDUxxxDxDDDx',
-             'xUUUxUxxxDUxxxDUxxxDxUUUxxDDDxDxxxUDxxxUDxxxUxDDDx',
-             'xUUUxUxxxDUxxxDUxxxDxUUUxxDDDxDxxxDDxxxDDxxxDxUUUx',
-             'xUUUxUxxxDUxxxDUxxxDxDDDxxUUUxUxxxDUxxxDUxxxDxDDDx',
-             'xUUUxUxxxDUxxxDUxxxDxDDDxxUUUxDxxxUDxxxUDxxxUxDDDx',
-             'xUUUxUxxxDUxxxDUxxxDxDDDxxUUUxDxxxDDxxxDDxxxDxUUUx',
-             'xUUUxUxxxDUxxxDUxxxDxDDDxxDDDxUxxxUUxxxUUxxxUxDDDx',
-             'xUUUxUxxxDUxxxDUxxxDxDDDxxDDDxUxxxDUxxxDUxxxDxUUUx',
-             'xUUUxUxxxDUxxxDUxxxDxDDDxxDDDxDxxxUDxxxUDxxxUxUUUx',
-             'xUUUxDxxxUDxxxUDxxxUxUUUxxUUUxDxxxDDxxxDDxxxDxDDDx',
-             'xUUUxDxxxUDxxxUDxxxUxUUUxxDDDxUxxxDUxxxDUxxxDxDDDx',
-             'xUUUxDxxxUDxxxUDxxxUxUUUxxDDDxDxxxUDxxxUDxxxUxDDDx',
-             'xUUUxDxxxUDxxxUDxxxUxUUUxxDDDxDxxxDDxxxDDxxxDxUUUx',
-             'xUUUxDxxxUDxxxUDxxxUxDDDxxUUUxUxxxDUxxxDUxxxDxDDDx',
-             'xUUUxDxxxUDxxxUDxxxUxDDDxxUUUxDxxxUDxxxUDxxxUxDDDx',
-             'xUUUxDxxxUDxxxUDxxxUxDDDxxUUUxDxxxDDxxxDDxxxDxUUUx',
-             'xUUUxDxxxUDxxxUDxxxUxDDDxxDDDxUxxxUUxxxUUxxxUxDDDx',
-             'xUUUxDxxxUDxxxUDxxxUxDDDxxDDDxUxxxDUxxxDUxxxDxUUUx',
-             'xUUUxDxxxUDxxxUDxxxUxDDDxxDDDxDxxxUDxxxUDxxxUxUUUx',
-             'xUUUxDxxxDDxxxDDxxxDxUUUxxUUUxUxxxDUxxxDUxxxDxDDDx',
-             'xUUUxDxxxDDxxxDDxxxDxUUUxxUUUxDxxxUDxxxUDxxxUxDDDx',
-             'xUUUxDxxxDDxxxDDxxxDxUUUxxUUUxDxxxDDxxxDDxxxDxUUUx',
-             'xUUUxDxxxDDxxxDDxxxDxUUUxxDDDxUxxxUUxxxUUxxxUxDDDx',
-             'xUUUxDxxxDDxxxDDxxxDxUUUxxDDDxUxxxDUxxxDUxxxDxUUUx',
-             'xUUUxDxxxDDxxxDDxxxDxUUUxxDDDxDxxxUDxxxUDxxxUxUUUx',
-             'xUUUxDxxxDDxxxDDxxxDxDDDxxUUUxUxxxUUxxxUUxxxUxDDDx',
-             'xUUUxDxxxDDxxxDDxxxDxDDDxxUUUxUxxxDUxxxDUxxxDxUUUx',
-             'xUUUxDxxxDDxxxDDxxxDxDDDxxUUUxDxxxUDxxxUDxxxUxUUUx',
-             'xUUUxDxxxDDxxxDDxxxDxDDDxxDDDxUxxxUUxxxUUxxxUxUUUx',
-             'xDDDxUxxxUUxxxUUxxxUxUUUxxUUUxDxxxDDxxxDDxxxDxDDDx',
-             'xDDDxUxxxUUxxxUUxxxUxUUUxxDDDxUxxxDUxxxDUxxxDxDDDx',
-             'xDDDxUxxxUUxxxUUxxxUxUUUxxDDDxDxxxUDxxxUDxxxUxDDDx',
-             'xDDDxUxxxUUxxxUUxxxUxUUUxxDDDxDxxxDDxxxDDxxxDxUUUx',
-             'xDDDxUxxxUUxxxUUxxxUxDDDxxUUUxUxxxDUxxxDUxxxDxDDDx',
-             'xDDDxUxxxUUxxxUUxxxUxDDDxxUUUxDxxxUDxxxUDxxxUxDDDx',
-             'xDDDxUxxxUUxxxUUxxxUxDDDxxUUUxDxxxDDxxxDDxxxDxUUUx',
-             'xDDDxUxxxUUxxxUUxxxUxDDDxxDDDxUxxxUUxxxUUxxxUxDDDx',
-             'xDDDxUxxxUUxxxUUxxxUxDDDxxDDDxUxxxDUxxxDUxxxDxUUUx',
-             'xDDDxUxxxUUxxxUUxxxUxDDDxxDDDxDxxxUDxxxUDxxxUxUUUx',
-             'xDDDxUxxxDUxxxDUxxxDxUUUxxUUUxUxxxDUxxxDUxxxDxDDDx',
-             'xDDDxUxxxDUxxxDUxxxDxUUUxxUUUxDxxxUDxxxUDxxxUxDDDx',
-             'xDDDxUxxxDUxxxDUxxxDxUUUxxUUUxDxxxDDxxxDDxxxDxUUUx',
-             'xDDDxUxxxDUxxxDUxxxDxUUUxxDDDxUxxxUUxxxUUxxxUxDDDx',
-             'xDDDxUxxxDUxxxDUxxxDxUUUxxDDDxUxxxDUxxxDUxxxDxUUUx',
-             'xDDDxUxxxDUxxxDUxxxDxUUUxxDDDxDxxxUDxxxUDxxxUxUUUx',
-             'xDDDxUxxxDUxxxDUxxxDxDDDxxUUUxUxxxUUxxxUUxxxUxDDDx',
-             'xDDDxUxxxDUxxxDUxxxDxDDDxxUUUxUxxxDUxxxDUxxxDxUUUx',
-             'xDDDxUxxxDUxxxDUxxxDxDDDxxUUUxDxxxUDxxxUDxxxUxUUUx',
-             'xDDDxUxxxDUxxxDUxxxDxDDDxxDDDxUxxxUUxxxUUxxxUxUUUx',
-             'xDDDxDxxxUDxxxUDxxxUxUUUxxUUUxUxxxDUxxxDUxxxDxDDDx',
-             'xDDDxDxxxUDxxxUDxxxUxUUUxxUUUxDxxxUDxxxUDxxxUxDDDx',
-             'xDDDxDxxxUDxxxUDxxxUxUUUxxUUUxDxxxDDxxxDDxxxDxUUUx',
-             'xDDDxDxxxUDxxxUDxxxUxUUUxxDDDxUxxxUUxxxUUxxxUxDDDx',
-             'xDDDxDxxxUDxxxUDxxxUxUUUxxDDDxUxxxDUxxxDUxxxDxUUUx',
-             'xDDDxDxxxUDxxxUDxxxUxUUUxxDDDxDxxxUDxxxUDxxxUxUUUx',
-             'xDDDxDxxxUDxxxUDxxxUxDDDxxUUUxUxxxUUxxxUUxxxUxDDDx',
-             'xDDDxDxxxUDxxxUDxxxUxDDDxxUUUxUxxxDUxxxDUxxxDxUUUx',
-             'xDDDxDxxxUDxxxUDxxxUxDDDxxUUUxDxxxUDxxxUDxxxUxUUUx',
-             'xDDDxDxxxUDxxxUDxxxUxDDDxxDDDxUxxxUUxxxUUxxxUxUUUx',
-             'xDDDxDxxxDDxxxDDxxxDxUUUxxUUUxUxxxUUxxxUUxxxUxDDDx',
-             'xDDDxDxxxDDxxxDDxxxDxUUUxxUUUxUxxxDUxxxDUxxxDxUUUx',
-             'xDDDxDxxxDDxxxDDxxxDxUUUxxUUUxDxxxUDxxxUDxxxUxUUUx',
-             'xDDDxDxxxDDxxxDDxxxDxUUUxxDDDxUxxxUUxxxUUxxxUxUUUx',
-             'xDDDxDxxxDDxxxDDxxxDxDDDxxUUUxUxxxUUxxxUUxxxUxUUUx'),
-            linecount=343000,
-            max_depth=9)
-
-    def state(self):
-        parent_state = self.parent.state
-
-        result = [
-            # Upper
-            'x', parent_state[10], parent_state[11], parent_state[12], 'x',
-            parent_state[16], 'xxx', parent_state[20],
-            parent_state[23], 'xxx', parent_state[27],
-            parent_state[30], 'xxx', parent_state[34],
-            'x', parent_state[38], parent_state[39], parent_state[40], 'x',
-
-            # Down
-            'x', parent_state[255], parent_state[256], parent_state[257], 'x',
-            parent_state[261], 'xxx', parent_state[265],
-            parent_state[268], 'xxx', parent_state[272],
-            parent_state[275], 'xxx', parent_state[279],
-            'x', parent_state[283], parent_state[284], parent_state[285], 'x'
-        ]
-
-        result = ''.join(result)
-        return result
-
-
-class LookupTableIDA777UDSolveInnerCentersAndObliqueEdges(LookupTableIDA):
-    """
-    I built this 6-deep for all 70 tables and merged them together into the following
-
-    lookup-table-7x7x7-step50-UD-solve-inner-center-and-oblique-edges.txt
-    =====================================================================
-    1 steps has 350 entries (0 percent, 0.00x previous step)
-    2 steps has 2,036 entries (0 percent, 5.82x previous step)
-    3 steps has 13,108 entries (1 percent, 6.44x previous step)
-    4 steps has 86,624 entries (13 percent, 6.61x previous step)
-    5 steps has 560,132 entries (84 percent, 6.47x previous step)
-
-    Total: 662,250 entries
-    """
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step50-UD-solve-inner-center-and-oblique-edges.txt',
-            ('xUUUxUUUUUUUUUUUUUUUxUUUxxDDDxDDDDDDDDDDDDDDDxDDDx',
-             'xUUUxUUUUUUUUUUUUUUUxDDDxxUUUxDDDDDDDDDDDDDDDxDDDx',
-             'xUUUxUUUUUUUUUUUUUUUxDDDxxDDDxUDDDDUDDDDUDDDDxDDDx',
-             'xUUUxUUUUUUUUUUUUUUUxDDDxxDDDxDDDDUDDDDUDDDDUxDDDx',
-             'xUUUxUUUUUUUUUUUUUUUxDDDxxDDDxDDDDDDDDDDDDDDDxUUUx',
-             'xUUUxUUUUDUUUUDUUUUDxUUUxxUUUxDDDDDDDDDDDDDDDxDDDx',
-             'xUUUxUUUUDUUUUDUUUUDxUUUxxDDDxUDDDDUDDDDUDDDDxDDDx',
-             'xUUUxUUUUDUUUUDUUUUDxUUUxxDDDxDDDDUDDDDUDDDDUxDDDx',
-             'xUUUxUUUUDUUUUDUUUUDxUUUxxDDDxDDDDDDDDDDDDDDDxUUUx',
-             'xUUUxUUUUDUUUUDUUUUDxDDDxxUUUxUDDDDUDDDDUDDDDxDDDx',
-             'xUUUxUUUUDUUUUDUUUUDxDDDxxUUUxDDDDUDDDDUDDDDUxDDDx',
-             'xUUUxUUUUDUUUUDUUUUDxDDDxxUUUxDDDDDDDDDDDDDDDxUUUx',
-             'xUUUxUUUUDUUUUDUUUUDxDDDxxDDDxUDDDUUDDDUUDDDUxDDDx',
-             'xUUUxUUUUDUUUUDUUUUDxDDDxxDDDxUDDDDUDDDDUDDDDxUUUx',
-             'xUUUxUUUUDUUUUDUUUUDxDDDxxDDDxDDDDUDDDDUDDDDUxUUUx',
-             'xUUUxDUUUUDUUUUDUUUUxUUUxxUUUxDDDDDDDDDDDDDDDxDDDx',
-             'xUUUxDUUUUDUUUUDUUUUxUUUxxDDDxUDDDDUDDDDUDDDDxDDDx',
-             'xUUUxDUUUUDUUUUDUUUUxUUUxxDDDxDDDDUDDDDUDDDDUxDDDx',
-             'xUUUxDUUUUDUUUUDUUUUxUUUxxDDDxDDDDDDDDDDDDDDDxUUUx',
-             'xUUUxDUUUUDUUUUDUUUUxDDDxxUUUxUDDDDUDDDDUDDDDxDDDx',
-             'xUUUxDUUUUDUUUUDUUUUxDDDxxUUUxDDDDUDDDDUDDDDUxDDDx',
-             'xUUUxDUUUUDUUUUDUUUUxDDDxxUUUxDDDDDDDDDDDDDDDxUUUx',
-             'xUUUxDUUUUDUUUUDUUUUxDDDxxDDDxUDDDUUDDDUUDDDUxDDDx',
-             'xUUUxDUUUUDUUUUDUUUUxDDDxxDDDxUDDDDUDDDDUDDDDxUUUx',
-             'xUUUxDUUUUDUUUUDUUUUxDDDxxDDDxDDDDUDDDDUDDDDUxUUUx',
-             'xUUUxDUUUDDUUUDDUUUDxUUUxxUUUxUDDDDUDDDDUDDDDxDDDx',
-             'xUUUxDUUUDDUUUDDUUUDxUUUxxUUUxDDDDUDDDDUDDDDUxDDDx',
-             'xUUUxDUUUDDUUUDDUUUDxUUUxxUUUxDDDDDDDDDDDDDDDxUUUx',
-             'xUUUxDUUUDDUUUDDUUUDxUUUxxDDDxUDDDUUDDDUUDDDUxDDDx',
-             'xUUUxDUUUDDUUUDDUUUDxUUUxxDDDxUDDDDUDDDDUDDDDxUUUx',
-             'xUUUxDUUUDDUUUDDUUUDxUUUxxDDDxDDDDUDDDDUDDDDUxUUUx',
-             'xUUUxDUUUDDUUUDDUUUDxDDDxxUUUxUDDDUUDDDUUDDDUxDDDx',
-             'xUUUxDUUUDDUUUDDUUUDxDDDxxUUUxUDDDDUDDDDUDDDDxUUUx',
-             'xUUUxDUUUDDUUUDDUUUDxDDDxxUUUxDDDDUDDDDUDDDDUxUUUx',
-             'xUUUxDUUUDDUUUDDUUUDxDDDxxDDDxUDDDUUDDDUUDDDUxUUUx',
-             'xDDDxUUUUUUUUUUUUUUUxUUUxxUUUxDDDDDDDDDDDDDDDxDDDx',
-             'xDDDxUUUUUUUUUUUUUUUxUUUxxDDDxUDDDDUDDDDUDDDDxDDDx',
-             'xDDDxUUUUUUUUUUUUUUUxUUUxxDDDxDDDDUDDDDUDDDDUxDDDx',
-             'xDDDxUUUUUUUUUUUUUUUxUUUxxDDDxDDDDDDDDDDDDDDDxUUUx',
-             'xDDDxUUUUUUUUUUUUUUUxDDDxxUUUxUDDDDUDDDDUDDDDxDDDx',
-             'xDDDxUUUUUUUUUUUUUUUxDDDxxUUUxDDDDUDDDDUDDDDUxDDDx',
-             'xDDDxUUUUUUUUUUUUUUUxDDDxxUUUxDDDDDDDDDDDDDDDxUUUx',
-             'xDDDxUUUUUUUUUUUUUUUxDDDxxDDDxUDDDUUDDDUUDDDUxDDDx',
-             'xDDDxUUUUUUUUUUUUUUUxDDDxxDDDxUDDDDUDDDDUDDDDxUUUx',
-             'xDDDxUUUUUUUUUUUUUUUxDDDxxDDDxDDDDUDDDDUDDDDUxUUUx',
-             'xDDDxUUUUDUUUUDUUUUDxUUUxxUUUxUDDDDUDDDDUDDDDxDDDx',
-             'xDDDxUUUUDUUUUDUUUUDxUUUxxUUUxDDDDUDDDDUDDDDUxDDDx',
-             'xDDDxUUUUDUUUUDUUUUDxUUUxxUUUxDDDDDDDDDDDDDDDxUUUx',
-             'xDDDxUUUUDUUUUDUUUUDxUUUxxDDDxUDDDUUDDDUUDDDUxDDDx',
-             'xDDDxUUUUDUUUUDUUUUDxUUUxxDDDxUDDDDUDDDDUDDDDxUUUx',
-             'xDDDxUUUUDUUUUDUUUUDxUUUxxDDDxDDDDUDDDDUDDDDUxUUUx',
-             'xDDDxUUUUDUUUUDUUUUDxDDDxxUUUxUDDDUUDDDUUDDDUxDDDx',
-             'xDDDxUUUUDUUUUDUUUUDxDDDxxUUUxUDDDDUDDDDUDDDDxUUUx',
-             'xDDDxUUUUDUUUUDUUUUDxDDDxxUUUxDDDDUDDDDUDDDDUxUUUx',
-             'xDDDxUUUUDUUUUDUUUUDxDDDxxDDDxUDDDUUDDDUUDDDUxUUUx',
-             'xDDDxDUUUUDUUUUDUUUUxUUUxxUUUxUDDDDUDDDDUDDDDxDDDx',
-             'xDDDxDUUUUDUUUUDUUUUxUUUxxUUUxDDDDUDDDDUDDDDUxDDDx',
-             'xDDDxDUUUUDUUUUDUUUUxUUUxxUUUxDDDDDDDDDDDDDDDxUUUx',
-             'xDDDxDUUUUDUUUUDUUUUxUUUxxDDDxUDDDUUDDDUUDDDUxDDDx',
-             'xDDDxDUUUUDUUUUDUUUUxUUUxxDDDxUDDDDUDDDDUDDDDxUUUx',
-             'xDDDxDUUUUDUUUUDUUUUxUUUxxDDDxDDDDUDDDDUDDDDUxUUUx',
-             'xDDDxDUUUUDUUUUDUUUUxDDDxxUUUxUDDDUUDDDUUDDDUxDDDx',
-             'xDDDxDUUUUDUUUUDUUUUxDDDxxUUUxUDDDDUDDDDUDDDDxUUUx',
-             'xDDDxDUUUUDUUUUDUUUUxDDDxxUUUxDDDDUDDDDUDDDDUxUUUx',
-             'xDDDxDUUUUDUUUUDUUUUxDDDxxDDDxUDDDUUDDDUUDDDUxUUUx',
-             'xDDDxDUUUDDUUUDDUUUDxUUUxxUUUxUDDDUUDDDUUDDDUxDDDx',
-             'xDDDxDUUUDDUUUDDUUUDxUUUxxUUUxUDDDDUDDDDUDDDDxUUUx',
-             'xDDDxDUUUDDUUUDDUUUDxUUUxxUUUxDDDDUDDDDUDDDDUxUUUx',
-             'xDDDxDUUUDDUUUDDUUUDxUUUxxDDDxUDDDUUDDDUUDDDUxUUUx',
-             'xDDDxDUUUDDUUUDDUUUDxDDDxxUUUxUDDDUUDDDUUDDDUxUUUx'),
-            moves_777,
-
-            ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
-             "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'"),            # do not mess up staged centers
-
-            # prune tables
-            (parent.lt_UD_solve_inner_centers_and_oblique_edges_center_only,
-             parent.lt_UD_solve_inner_centers_and_oblique_edges_edges_only),
-
-            linecount=662250,
-            max_depth=5,
-            filesize=50331000)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = [
-            # Upper
-            'x', parent_state[10], parent_state[11], parent_state[12], 'x',
-            parent_state[16], parent_state[17], parent_state[18], parent_state[19], parent_state[20],
-            parent_state[23], parent_state[24], parent_state[25], parent_state[26], parent_state[27],
-            parent_state[30], parent_state[31], parent_state[32], parent_state[33], parent_state[34],
-            'x', parent_state[38], parent_state[39], parent_state[40], 'x',
-
-            # Down
-            'x', parent_state[255], parent_state[256], parent_state[257], 'x',
-            parent_state[261], parent_state[262], parent_state[263], parent_state[264], parent_state[265],
-            parent_state[268], parent_state[269], parent_state[270], parent_state[271], parent_state[272],
-            parent_state[275], parent_state[276], parent_state[277], parent_state[278], parent_state[279],
-            'x', parent_state[283], parent_state[284], parent_state[285], 'x'
-        ]
-
-        result = ''.join(result)
-        return result
-
-
-class LookupTableIDA777Step81(LookupTable):
-    """
-    lookup-table-7x7x7-step81.txt
-    =============================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 37 entries (0 percent, 5.29x previous step)
-    3 steps has 156 entries (0 percent, 4.22x previous step)
-    4 steps has 580 entries (0 percent, 3.72x previous step)
-    5 steps has 2,024 entries (0 percent, 3.49x previous step)
-    6 steps has 6,256 entries (1 percent, 3.09x previous step)
-    7 steps has 17,858 entries (5 percent, 2.85x previous step)
-    8 steps has 43,459 entries (12 percent, 2.43x previous step)
-    9 steps has 80,450 entries (23 percent, 1.85x previous step)
-    10 steps has 100,399 entries (29 percent, 1.25x previous step)
-    11 steps has 66,896 entries (19 percent, 0.67x previous step)
-    12 steps has 21,508 entries (6 percent, 0.32x previous step)
-    13 steps has 3,176 entries (0 percent, 0.15x previous step)
-    14 steps has 190 entries (0 percent, 0.06x previous step)
-    15 steps has 4 entries (0 percent, 0.02x previous step)
-
-    Total: 343,000 entries
-    Average: 9.59 moves
-    """
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step81.txt',
-            '3ffe000',
-            linecount=343000,
-            max_depth=15)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] == 'L' else '0' for x in step81_centers_777])
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
-
-
-class LookupTableIDA777Step80(LookupTableIDA):
-    """
-    lookup-table-7x7x7-step80.txt
-    =============================
-    1 steps has 7 entries (0 percent, 0.00x previous step)
-    2 steps has 41 entries (0 percent, 5.86x previous step)
-    3 steps has 212 entries (0 percent, 5.17x previous step)
-    4 steps has 1,135 entries (0 percent, 5.35x previous step)
-    5 steps has 6,584 entries (2 percent, 5.80x previous step)
-    6 steps has 36,283 entries (15 percent, 5.51x previous step)
-    7 steps has 195,880 entries (81 percent, 5.40x previous step)
-
-    Total: 240,142 entries
-    """
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step80.txt',
-            '3ffffe00000',
-            moves_777,
-
-            ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
-             "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
-             "3Rw2", "3Lw2", "3Fw2", "3Bw2"),                                                          # do not mess up solved UD
-
-            # prune tables
-            (parent.lt_777_step81,),
-
-            linecount=240142,
-            max_depth=7)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] == 'L' else '0' for x in step80_centers_777])
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
-
-
-class LookupTableIDA777Step91(LookupTable):
-    """
-    lookup-table-7x7x7-step91.txt
-    =============================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 26 entries (0 percent, 5.20x previous step)
-    3 steps has 88 entries (0 percent, 3.38x previous step)
-    4 steps has 343 entries (0 percent, 3.90x previous step)
-    5 steps has 1,162 entries (0 percent, 3.39x previous step)
-    6 steps has 3,795 entries (1 percent, 3.27x previous step)
-    7 steps has 11,370 entries (3 percent, 3.00x previous step)
-    8 steps has 29,301 entries (8 percent, 2.58x previous step)
-    9 steps has 62,552 entries (18 percent, 2.13x previous step)
-    10 steps has 94,870 entries (27 percent, 1.52x previous step)
-    11 steps has 88,646 entries (25 percent, 0.93x previous step)
-    12 steps has 42,214 entries (12 percent, 0.48x previous step)
-    13 steps has 8,174 entries (2 percent, 0.19x previous step)
-    14 steps has 449 entries (0 percent, 0.05x previous step)
-    15 steps has 5 entries (0 percent, 0.01x previous step)
-
-    Total: 343,000 entries
-    Average: 10.06 moves
-    """
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step91.txt',
-            '3ffe000',
-            linecount=343000,
-            max_depth=15)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join(['1' if parent_state[x] == 'F' else '0' for x in step91_centers_777])
-
-        # Convert to hex
-        return self.hex_format % int(result, 2)
-
-
-class LookupTableIDA777Step90(LookupTableIDA):
-    """
-    lookup-table-7x7x7-step90.txt
-    =============================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 30 entries (0 percent, 6.00x previous step)
-    3 steps has 156 entries (0 percent, 5.20x previous step)
-    4 steps has 795 entries (0 percent, 5.10x previous step)
-    5 steps has 4,184 entries (0 percent, 5.26x previous step)
-    6 steps has 22,129 entries (3 percent, 5.29x previous step)
-    7 steps has 108,570 entries (16 percent, 4.91x previous step)
-    8 steps has 517,070 entries (79 percent, 4.76x previous step)
-
-    Total: 652,939 entries
-    """
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step90.txt',
-            'LLLLLLLLLLLLLLLLLLLLLFFFFFFFFFFFFFFFFFFFFFRRRRRRRRRRRRRRRRRRRRRBBBBBBBBBBBBBBBBBBBBB',
-            moves_777,
-
-            ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'", "3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged centers
-             "Rw", "Rw'", "Lw", "Lw'", "Fw", "Fw'", "Bw", "Bw'", "Uw", "Uw'", "Dw", "Dw'",             # do not mess up staged centers
-             "3Rw2", "3Lw2", "3Fw2", "3Bw2",                                                           # do not mess up solved UD
-             "Lw", "Lw'", "Lw2", "Rw", "Rw'", "Rw2", "Fw2", "Bw2",                                     # do not mess up solved LR
-             "L", "L'", "L2", "R", "R'", "R2"),
-
-            # prune tables
-            (parent.lt_777_step91,),
-
-            linecount=652939,
-            max_depth=8)
-
-    def state(self):
-        parent_state = self.parent.state
-        result = ''.join([parent_state[x] for x in step90_centers_777])
-        return result
+        return (lt_state, cost_to_goal)
 
 
 class RubiksCube777(RubiksCubeNNNOddEdges):
@@ -1216,14 +1580,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             log.warning("Another 7x7x7 instance is being created")
         else:
             RubiksCube777.instantiated = True
-
-    def get_fake_666(self):
-        if self.fake_666 is None:
-            self.fake_666 = RubiksCube666(solved_666, 'URFDLB')
-            self.fake_666.lt_init()
-        else:
-            self.fake_666.re_init()
-        return self.fake_666
 
     def phase(self):
         if self._phase is None:
@@ -1339,212 +1695,98 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             return
         self.lt_init_called = True
 
+        self.lt_UD_outside_oblique_edge_pairing_left_only = LookupTable777UDOutsideObliqueEdgePairingLeftOnly(self)
+        self.lt_UD_outside_oblique_edge_pairing_right_only = LookupTable777UDOutsideObliqueEdgePairingRightOnly(self)
+        self.lt_UD_outside_oblique_edge_pairing = LookupTableIDA777UDOutsideObliqueEdgePairing(self)
+        self.lt_UD_outside_oblique_edge_pairing_left_only.preload_cache_dict()
+        self.lt_UD_outside_oblique_edge_pairing_right_only.preload_cache_dict()
+        self.lt_UD_outside_oblique_edge_pairing.preload_cache_string()
+
         self.lt_UD_oblique_edge_pairing_middle_only = LookupTable777UDObliqueEdgePairingMiddleOnly(self)
         self.lt_UD_oblique_edge_pairing_left_only = LookupTable777UDObliqueEdgePairingLeftOnly(self)
         self.lt_UD_oblique_edge_pairing_right_only = LookupTable777UDObliqueEdgePairingRightOnly(self)
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
-        self.lt_UD_oblique_edge_pairing_middle_only.preload_cache()
-        self.lt_UD_oblique_edge_pairing_left_only.preload_cache()
-        self.lt_UD_oblique_edge_pairing_right_only.preload_cache()
-        self.lt_UD_oblique_edge_pairing.preload_cache()
+        self.lt_UD_oblique_edge_pairing_middle_only.preload_cache_dict()
+        self.lt_UD_oblique_edge_pairing_left_only.preload_cache_dict()
+        self.lt_UD_oblique_edge_pairing_right_only.preload_cache_dict()
+        self.lt_UD_oblique_edge_pairing.preload_cache_string()
 
-        self.lt_LR_oblique_edge_pairing_middle_only = LookupTable777LRObliqueEdgePairingMiddleOnly(self)
-        self.lt_LR_oblique_edge_pairing_left_only = LookupTable777LRObliqueEdgePairingLeftOnly(self)
-        self.lt_LR_oblique_edge_pairing_right_only = LookupTable777LRObliqueEdgePairingRightOnly(self)
+        self.lt_LR_left_right_oblique_edge_pairing = LookupTable777LRLeftRightObliqueEdgePairing(self)
+        self.lt_LR_left_middle_oblique_edge_pairing = LookupTable777LRLeftMiddleObliqueEdgePairing(self)
         self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
-        self.lt_LR_oblique_edge_pairing_middle_only.preload_cache()
-        self.lt_LR_oblique_edge_pairing_left_only.preload_cache()
-        self.lt_LR_oblique_edge_pairing_right_only.preload_cache()
-        self.lt_LR_oblique_edge_pairing.preload_cache()
+        self.lt_LR_oblique_edge_pairing.preload_cache_string()
 
-        self.lt_UD_solve_inner_centers_and_oblique_edges_center_only = LookupTable777UDSolveInnerCentersAndObliqueEdgesCenterOnly(self)
-        self.lt_UD_solve_inner_centers_and_oblique_edges_edges_only = LookupTable777UDSolveInnerCentersAndObliqueEdgesEdgesOnly(self)
-        self.lt_UD_solve_inner_centers_and_oblique_edges = LookupTableIDA777UDSolveInnerCentersAndObliqueEdges(self)
-        self.lt_UD_solve_inner_centers_and_oblique_edges_center_only.preload_cache()
-        self.lt_UD_solve_inner_centers_and_oblique_edges_edges_only.preload_cache()
-        self.lt_UD_solve_inner_centers_and_oblique_edges.preload_cache()
+        self.lt_step41 = LookupTable777Step41(self)
+        self.lt_step42 = LookupTable777Step42(self)
+        self.lt_step40 = LookupTableIDA777Step40(self)
+        self.lt_step40.preload_cache_string()
 
-        self.lt_777_step81 = LookupTableIDA777Step81(self)
-        self.lt_777_step80 = LookupTableIDA777Step80(self)
-        self.lt_777_step81.preload_cache()
-        self.lt_777_step80.preload_cache()
+        self.lt_step51 = LookupTable777Step51(self)
+        self.lt_step52 = LookupTable777Step52(self)
+        self.lt_step50 = LookupTableIDA777Step50(self)
+        self.lt_step50.preload_cache_string()
 
-        self.lt_777_step91 = LookupTableIDA777Step91(self)
-        self.lt_777_step90 = LookupTableIDA777Step90(self)
-        self.lt_777_step91.preload_cache()
-        self.lt_777_step90.preload_cache()
-
-    def create_fake_555_for_LR_t_centers(self):
-
-        # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
-        fake_555 = self.get_fake_555()
-
-        for x in range(1, 151):
-            fake_555.state[x] = 'x'
-
-        # Left
-        fake_555.state[33] = self.state[60]
-        fake_555.state[37] = self.state[72]
-        fake_555.state[39] = self.state[76]
-        fake_555.state[43] = self.state[88]
-
-        # Right
-        fake_555.state[83] = self.state[158]
-        fake_555.state[87] = self.state[170]
-        fake_555.state[89] = self.state[174]
-        fake_555.state[93] = self.state[186]
+        self.lt_step61 = LookupTable777Step61(self)
+        self.lt_step62 = LookupTable777Step62(self)
+        self.lt_step60 = LookupTableIDA777Step60(self)
+        self.lt_step60.preload_cache_string()
 
     def create_fake_555_from_inside_centers(self):
 
         # Create a fake 5x5x5 to stage the UD inner 5x5x5 centers
         fake_555 = self.get_fake_555()
+        fake_555.nuke_corners()
+        fake_555.nuke_edges()
+        fake_555.nuke_centers()
 
-        for x in range(1, 151):
-            fake_555.state[x] = 'x'
-
-        # Upper
-        fake_555.state[7] = self.state[17]
-        fake_555.state[8] = self.state[18]
-        fake_555.state[9] = self.state[19]
-        fake_555.state[12] = self.state[24]
-        fake_555.state[13] = self.state[25]
-        fake_555.state[14] = self.state[26]
-        fake_555.state[17] = self.state[31]
-        fake_555.state[18] = self.state[32]
-        fake_555.state[19] = self.state[33]
-
-        # Left
-        fake_555.state[32] = self.state[66]
-        fake_555.state[33] = self.state[67]
-        fake_555.state[34] = self.state[68]
-        fake_555.state[37] = self.state[73]
-        fake_555.state[38] = self.state[74]
-        fake_555.state[39] = self.state[75]
-        fake_555.state[42] = self.state[80]
-        fake_555.state[43] = self.state[81]
-        fake_555.state[44] = self.state[82]
-
-        # Front
-        fake_555.state[57] = self.state[115]
-        fake_555.state[58] = self.state[116]
-        fake_555.state[59] = self.state[117]
-        fake_555.state[62] = self.state[122]
-        fake_555.state[63] = self.state[123]
-        fake_555.state[64] = self.state[124]
-        fake_555.state[67] = self.state[129]
-        fake_555.state[68] = self.state[130]
-        fake_555.state[69] = self.state[131]
-
-        # Right
-        fake_555.state[82] = self.state[164]
-        fake_555.state[83] = self.state[165]
-        fake_555.state[84] = self.state[166]
-        fake_555.state[87] = self.state[171]
-        fake_555.state[88] = self.state[172]
-        fake_555.state[89] = self.state[173]
-        fake_555.state[92] = self.state[178]
-        fake_555.state[93] = self.state[179]
-        fake_555.state[94] = self.state[180]
-
-        # Back
-        fake_555.state[107] = self.state[213]
-        fake_555.state[108] = self.state[214]
-        fake_555.state[109] = self.state[215]
-        fake_555.state[112] = self.state[220]
-        fake_555.state[113] = self.state[221]
-        fake_555.state[114] = self.state[222]
-        fake_555.state[117] = self.state[227]
-        fake_555.state[118] = self.state[228]
-        fake_555.state[119] = self.state[229]
-
-        # Down
-        fake_555.state[132] = self.state[262]
-        fake_555.state[133] = self.state[263]
-        fake_555.state[134] = self.state[264]
-        fake_555.state[137] = self.state[269]
-        fake_555.state[138] = self.state[270]
-        fake_555.state[139] = self.state[271]
-        fake_555.state[142] = self.state[276]
-        fake_555.state[143] = self.state[277]
-        fake_555.state[144] = self.state[278]
-        fake_555.sanity_check()
+        for side_index in range(6):
+            offset_555 = side_index * 25
+            offset_777 = side_index * 49
+            fake_555.state[7 + offset_555] = self.state[17 + offset_777]
+            fake_555.state[8 + offset_555] = self.state[18 + offset_777]
+            fake_555.state[9 + offset_555] = self.state[19 + offset_777]
+            fake_555.state[12 + offset_555] = self.state[24 + offset_777]
+            fake_555.state[13 + offset_555] = self.state[25 + offset_777]
+            fake_555.state[14 + offset_555] = self.state[26 + offset_777]
+            fake_555.state[17 + offset_555] = self.state[31 + offset_777]
+            fake_555.state[18 + offset_555] = self.state[32 + offset_777]
+            fake_555.state[19 + offset_555] = self.state[33 + offset_777]
 
     def create_fake_555_from_outside_centers(self):
 
         # Create a fake 5x5x5 to solve 7x7x7 centers (they have been reduced to a 5x5x5)
         fake_555 = self.get_fake_555()
+        fake_555.nuke_corners()
+        fake_555.nuke_edges()
+        fake_555.nuke_centers()
 
-        for x in range(1, 151):
-            fake_555.state[x] = 'x'
+        for side_index in range(6):
+            offset_555 = side_index * 25
+            offset_777 = side_index * 49
+            fake_555.state[7 + offset_555] = self.state[9 + offset_777]
+            fake_555.state[8 + offset_555] = self.state[11 + offset_777]
+            fake_555.state[9 + offset_555] = self.state[13 + offset_777]
+            fake_555.state[12 + offset_555] = self.state[23 + offset_777]
+            fake_555.state[13 + offset_555] = self.state[25 + offset_777]
+            fake_555.state[14 + offset_555] = self.state[27 + offset_777]
+            fake_555.state[17 + offset_555] = self.state[37 + offset_777]
+            fake_555.state[18 + offset_555] = self.state[39 + offset_777]
+            fake_555.state[19 + offset_555] = self.state[41 + offset_777]
 
-        # Upper
-        fake_555.state[7] = self.state[9]
-        fake_555.state[8] = self.state[11]
-        fake_555.state[9] = self.state[13]
-        fake_555.state[12] = self.state[23]
-        fake_555.state[13] = self.state[25]
-        fake_555.state[14] = self.state[27]
-        fake_555.state[17] = self.state[37]
-        fake_555.state[18] = self.state[39]
-        fake_555.state[19] = self.state[41]
+    def UD_inside_centers_staged(self):
+        state = self.state
 
-        # Left
-        fake_555.state[32] = self.state[58]
-        fake_555.state[33] = self.state[60]
-        fake_555.state[34] = self.state[62]
-        fake_555.state[37] = self.state[72]
-        fake_555.state[38] = self.state[74]
-        fake_555.state[39] = self.state[76]
-        fake_555.state[42] = self.state[86]
-        fake_555.state[43] = self.state[88]
-        fake_555.state[44] = self.state[90]
-
-        # Front
-        fake_555.state[57] = self.state[107]
-        fake_555.state[58] = self.state[109]
-        fake_555.state[59] = self.state[111]
-        fake_555.state[62] = self.state[121]
-        fake_555.state[63] = self.state[123]
-        fake_555.state[64] = self.state[125]
-        fake_555.state[67] = self.state[135]
-        fake_555.state[68] = self.state[137]
-        fake_555.state[69] = self.state[139]
-
-        # Right
-        fake_555.state[82] = self.state[156]
-        fake_555.state[83] = self.state[158]
-        fake_555.state[84] = self.state[160]
-        fake_555.state[87] = self.state[170]
-        fake_555.state[88] = self.state[172]
-        fake_555.state[89] = self.state[174]
-        fake_555.state[92] = self.state[184]
-        fake_555.state[93] = self.state[186]
-        fake_555.state[94] = self.state[188]
-
-        # Back
-        fake_555.state[107] = self.state[205]
-        fake_555.state[108] = self.state[207]
-        fake_555.state[109] = self.state[209]
-        fake_555.state[112] = self.state[219]
-        fake_555.state[113] = self.state[221]
-        fake_555.state[114] = self.state[223]
-        fake_555.state[117] = self.state[233]
-        fake_555.state[118] = self.state[235]
-        fake_555.state[119] = self.state[237]
-
-        # Down
-        fake_555.state[132] = self.state[254]
-        fake_555.state[133] = self.state[256]
-        fake_555.state[134] = self.state[258]
-        fake_555.state[137] = self.state[268]
-        fake_555.state[138] = self.state[270]
-        fake_555.state[139] = self.state[272]
-        fake_555.state[142] = self.state[282]
-        fake_555.state[143] = self.state[284]
-        fake_555.state[144] = self.state[286]
-        fake_555.sanity_check()
+        for x in (17, 18, 19, 24, 25, 26, 31, 32, 33,
+                  262, 263, 264, 269, 270, 271, 276, 277, 278):
+            if state[x] not in ('U', 'D'):
+                return False
+        return True
 
     def group_inside_UD_centers(self):
+
+        if self.UD_inside_centers_staged():
+            return
+
         self.create_fake_555_from_inside_centers()
         self.fake_555.group_centers_stage_UD()
 
@@ -1559,7 +1801,20 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
             self.rotate(step)
 
+    def LR_inside_centers_staged(self):
+        state = self.state
+
+        for x in (66, 67, 68, 73, 74, 75, 80, 81, 82,
+                  164, 165, 166, 171, 172, 173, 178, 179, 180):
+            if state[x] not in ('L', 'R'):
+                return False
+        return True
+
     def group_inside_LR_centers(self):
+
+        if self.LR_inside_centers_staged():
+            return
+
         self.create_fake_555_from_inside_centers()
         self.fake_555.lt_LR_centers_stage.solve()
 
@@ -1574,553 +1829,247 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
             self.rotate(step)
 
-    def solve_reduced_555_centers(self):
-        self.create_fake_555_from_outside_centers()
-        self.fake_555.group_centers()
-
-        for step in self.fake_555.solution:
-
-            if step == 'CENTERS_SOLVED':
-                continue
-
-            if step.startswith('5'):
-                step = '7' + step[1:]
-
-            elif step.startswith('3'):
-                raise Exception("5x5x5 solution has 3 wide turn")
-
-            self.rotate(step)
-
-    def solve_reduced_555_t_centers(self):
-        self.create_fake_555_from_outside_centers()
-        self.fake_555.lt_ULFRBD_t_centers_solve.solve()
-
-        for step in self.fake_555.solution:
-
-            if step == 'CENTERS_SOLVED':
-                continue
-
-            if step.startswith('5'):
-                step = '7' + step[1:]
-
-            elif step.startswith('3'):
-                raise Exception("5x5x5 solution has 3 wide turn")
-
-            self.rotate(step)
-
-    def create_fake_666_centers(self):
-
-        # Create a fake 6x6x6 to stage the outside UD oblique edges
-        fake_666 = self.get_fake_666()
-
-        for x in range(1, 217):
-            fake_666.state[x] = 'x'
-
-        # Upper
-        fake_666.state[8] = self.state[9]
-        fake_666.state[9] = self.state[10]
-        fake_666.state[10] = self.state[12]
-        fake_666.state[11] = self.state[13]
-
-        fake_666.state[14] = self.state[16]
-        fake_666.state[15] = self.state[17]
-        fake_666.state[16] = self.state[19]
-        fake_666.state[17] = self.state[20]
-
-        fake_666.state[20] = self.state[30]
-        fake_666.state[21] = self.state[31]
-        fake_666.state[22] = self.state[33]
-        fake_666.state[23] = self.state[34]
-
-        fake_666.state[26] = self.state[37]
-        fake_666.state[27] = self.state[38]
-        fake_666.state[28] = self.state[40]
-        fake_666.state[29] = self.state[41]
-
-        # Left
-        fake_666.state[44] = self.state[58]
-        fake_666.state[45] = self.state[59]
-        fake_666.state[46] = self.state[61]
-        fake_666.state[47] = self.state[62]
-        fake_666.state[50] = self.state[65]
-        fake_666.state[51] = self.state[66]
-        fake_666.state[52] = self.state[68]
-        fake_666.state[53] = self.state[69]
-        fake_666.state[56] = self.state[79]
-        fake_666.state[57] = self.state[80]
-        fake_666.state[58] = self.state[82]
-        fake_666.state[59] = self.state[83]
-        fake_666.state[62] = self.state[86]
-        fake_666.state[63] = self.state[87]
-        fake_666.state[64] = self.state[89]
-        fake_666.state[65] = self.state[90]
-
-        # Front
-        fake_666.state[80] = self.state[107]
-        fake_666.state[81] = self.state[108]
-        fake_666.state[82] = self.state[110]
-        fake_666.state[83] = self.state[111]
-        fake_666.state[86] = self.state[114]
-        fake_666.state[87] = self.state[115]
-        fake_666.state[88] = self.state[117]
-        fake_666.state[89] = self.state[118]
-        fake_666.state[92] = self.state[128]
-        fake_666.state[93] = self.state[129]
-        fake_666.state[94] = self.state[131]
-        fake_666.state[95] = self.state[132]
-        fake_666.state[98] = self.state[135]
-        fake_666.state[99] = self.state[136]
-        fake_666.state[100] = self.state[138]
-        fake_666.state[101] = self.state[139]
-
-        # Right
-        fake_666.state[116] = self.state[156]
-        fake_666.state[117] = self.state[157]
-        fake_666.state[118] = self.state[159]
-        fake_666.state[119] = self.state[160]
-        fake_666.state[122] = self.state[163]
-        fake_666.state[123] = self.state[164]
-        fake_666.state[124] = self.state[166]
-        fake_666.state[125] = self.state[167]
-        fake_666.state[128] = self.state[177]
-        fake_666.state[129] = self.state[178]
-        fake_666.state[130] = self.state[180]
-        fake_666.state[131] = self.state[181]
-        fake_666.state[134] = self.state[184]
-        fake_666.state[135] = self.state[185]
-        fake_666.state[136] = self.state[187]
-        fake_666.state[137] = self.state[188]
-
-        # Back
-        fake_666.state[152] = self.state[205]
-        fake_666.state[153] = self.state[206]
-        fake_666.state[154] = self.state[208]
-        fake_666.state[155] = self.state[209]
-        fake_666.state[158] = self.state[212]
-        fake_666.state[159] = self.state[213]
-        fake_666.state[160] = self.state[215]
-        fake_666.state[161] = self.state[216]
-        fake_666.state[164] = self.state[226]
-        fake_666.state[165] = self.state[227]
-        fake_666.state[166] = self.state[229]
-        fake_666.state[167] = self.state[230]
-        fake_666.state[170] = self.state[233]
-        fake_666.state[171] = self.state[234]
-        fake_666.state[172] = self.state[236]
-        fake_666.state[173] = self.state[237]
-
-        # Down
-        fake_666.state[188] = self.state[254]
-        fake_666.state[189] = self.state[255]
-        fake_666.state[190] = self.state[257]
-        fake_666.state[191] = self.state[258]
-        fake_666.state[194] = self.state[261]
-        fake_666.state[195] = self.state[262]
-        fake_666.state[196] = self.state[264]
-        fake_666.state[197] = self.state[265]
-        fake_666.state[200] = self.state[275]
-        fake_666.state[201] = self.state[276]
-        fake_666.state[202] = self.state[278]
-        fake_666.state[203] = self.state[279]
-        fake_666.state[206] = self.state[282]
-        fake_666.state[207] = self.state[283]
-        fake_666.state[208] = self.state[285]
-        fake_666.state[209] = self.state[286]
-        fake_666.sanity_check()
-
     def group_outside_UD_oblique_edges(self):
-        self.create_fake_666_centers()
-        self.fake_666.stage_UD_oblique_edges()
-
-        for step in self.fake_666.solution:
-
-            if step.startswith('6'):
-                step = '7' + step[1:]
-
-            self.rotate(step)
-
+        self.lt_UD_outside_oblique_edge_pairing.solve()
         self.rotate_U_to_U()
         self.rotate_F_to_F()
 
-    def group_outside_LR_oblique_edges(self):
-        self.create_fake_666_centers()
-        self.fake_666.stage_LR_oblique_edges()
-
-        for step in self.fake_666.solution:
-
-            if step.startswith('6'):
-                step = '7' + step[1:]
-
-            self.rotate(step)
-
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
-
-    def group_centers_guts(self, oblique_edges_only=False):
+    def group_centers_guts(self):
         self.lt_init()
 
         # Uses 5x5x5 solver to stage the inner x-centers and inner t-centers for UD
-        self.group_inside_UD_centers()
-        self.print_cube()
-        log.info("%s: UD inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
+        if not self.UD_centers_staged():
+            self.group_inside_UD_centers()
+            self.print_cube()
+            log.info("%s: UD inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
+            log.info("")
+            log.info("")
+            log.info("")
 
-        # Uses 6x6x6 solver to pair the "outside" oblique edges for UD
-        self.group_outside_UD_oblique_edges()
-        self.print_cube()
-        log.info("%s: UD oblique edges (outside only) staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
+            # Uses 6x6x6 solver to pair the "outside" oblique edges for UD
+            self.group_outside_UD_oblique_edges()
+            self.print_cube()
+            log.info("%s: UD oblique edges (outside only) staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
+            log.info("")
+            log.info("")
+            log.info("")
 
-        # Test the prune tables
-        #self.lt_UD_oblique_edge_pairing_middle_only.solve()
-        #self.lt_UD_oblique_edge_pairing_left_only.solve()
-        #self.lt_UD_oblique_edge_pairing_right_only.solve()
-        #self.print_cube()
+            # Test the prune tables
+            #self.lt_UD_oblique_edge_pairing_middle_only.solve()
+            #self.lt_UD_oblique_edge_pairing_left_only.solve()
+            #self.lt_UD_oblique_edge_pairing_right_only.solve()
+            #self.print_cube()
 
-        # Now stage the "inside" oblique UD edges with the already staged outside oblique UD edges
-        self.lt_UD_oblique_edge_pairing.solve()
-        self.print_cube()
-        log.info("%s: UD oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
+            # Now stage the "inside" oblique UD edges with the already staged outside oblique UD edges
+            self.lt_UD_oblique_edge_pairing.solve()
+            self.print_cube()
+            log.info("%s: UD oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
+            log.info("")
+            log.info("")
+            log.info("")
 
-        # Uses 5x5x5 solver to stage the inner x-centers and inner t-centers for LR
-        self.group_inside_LR_centers()
-        self.print_cube()
-        log.info("%s: LR inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
+            # Stage the UD centers
+            self.create_fake_555_from_outside_centers()
+            self.fake_555.group_centers_stage_UD()
 
-        # Uses 6x6x6 solver to pair the "outside" oblique edges for LR
-        self.group_outside_LR_oblique_edges()
-        self.print_cube()
-        log.info("%s: LR oblique edges (outside only) staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
+            for step in self.fake_555.solution:
+                if step.startswith('5'):
+                    step = '7' + step[1:]
+                elif step.startswith('3'):
+                    raise Exception("5x5x5 solution has 3 wide turn")
+                self.rotate(step)
 
-        # Test the prune tables
-        #self.lt_LR_oblique_edge_pairing_middle_only.solve()
-        #self.lt_LR_oblique_edge_pairing_left_only.solve()
-        #self.lt_LR_oblique_edge_pairing_right_only.solve()
-        #self.print_cube()
-        #sys.exit(0)
+            self.print_cube()
+            log.info("%s: UD centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
+            log.info("")
+            log.info("")
+            log.info("")
 
-        # Now stage the "inside" oblique LR edges with the already staged outside oblique LR edges
-        self.lt_LR_oblique_edge_pairing.solve()
-        self.print_cube()
-        log.info("%s: LR oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
+        if not self.LR_centers_staged():
+            # Uses 5x5x5 solver to stage the inner x-centers
+            self.group_inside_LR_centers()
+            self.print_cube()
+            log.info("%s: LR inner x-centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
+            log.info("")
+            log.info("")
+            log.info("")
 
-        # Test pruning tables
-        #self.lt_UD_solve_inner_centers_and_oblique_edges_center_only.solve()
-        #self.lt_UD_solve_inner_centers_and_oblique_edges_edges_only.solve()
-        #log.info("%s: UD inner-centers solved, UD oblique edges paired, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #self.print_cube()
-        #sys.exit(0)
+            # Test the pruning tables
+            #self.lt_LR_left_right_oblique_edge_pairing.solve()
+            #self.lt_LR_left_middle_oblique_edge_pairing.solve()
+            #self.print_cube()
+            #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            #sys.exit(0)
 
-        self.lt_UD_solve_inner_centers_and_oblique_edges.solve()
-        self.print_cube()
-        log.info("%s: UD centers reduced to 5x5x5 centers, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #log.info("state: %s" % self.get_kociemba_string(True))
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
+            log.info("kociemba: %s" % self.get_kociemba_string(True))
+            self.lt_LR_oblique_edge_pairing.solve()
+            self.print_cube()
+            log.info("%s: LR oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        # Test the step80 prune tables
-        #self.lt_777_step81.solve()
+            # Stage the LR centers
+            self.create_fake_555_from_outside_centers()
+            self.fake_555.group_centers_stage_LR()
+
+            for step in self.fake_555.solution:
+                if step.startswith('5'):
+                    step = '7' + step[1:]
+                elif step.startswith('3'):
+                    raise Exception("5x5x5 solution has 3 wide turn")
+                self.rotate(step)
+
+            self.print_cube()
+            log.info("%s: centers staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("")
+            log.info("")
+            log.info("")
+            log.info("")
+
+        # Test the pruning tables
+        #self.lt_step41.solve()
+        #self.lt_step42.solve()
         #self.print_cube()
         #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        #sys.exit(0)
 
-        # Reduce LRFB centers to 5x5x5 by solving the inner x-centers, t-centers and oblique edges
-        self.lt_777_step80.solve()
+        self.lt_step40.solve()
         self.print_cube()
-        log.info("%s: UB and LR centers reduced to 5x5x5 centers, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        log.info("kociemba: %s" % self.get_kociemba_string(True))
+        log.info("%s: LR centers vertical bars, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-        # Test the step90 prune tables
-        #self.lt_777_step91.solve()
+        # Test the pruning tables
+        #self.lt_step51.solve()
+        #self.lt_step52.solve()
         #self.print_cube()
         #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        #sys.exit(0)
 
-        self.lt_777_step90.solve()
+        self.lt_step50.solve()
+
+        # Make the LR bars horizontal for the next phase
+        self.rotate("L")
+        self.rotate("R")
         self.print_cube()
-        log.info("%s: LFRB centers reduced to 5x5x5 centers, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        log.info("")
-        log.info("")
-        log.info("")
-        log.info("")
-
-        # Centers are now reduced to 5x5x5 centers
-        if oblique_edges_only:
-
-            # If we are here it is because a larger cube is using the 7x7x7 solver to
-            # solve their centers. We must "solve" the t-centers in this scenario.
-            self.solve_reduced_555_t_centers()
-            self.print_cube()
-            log.info("%s: Took %d steps to solve oblique edges and t-centers" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        else:
-            self.solve_reduced_555_centers()
-            self.print_cube()
-            log.info("%s: Took %d steps to solve centers" % (self, self.get_solution_len_minus_rotates(self.solution)))
-
-
-def rotate_777_U(cube):
-    return [cube[0],cube[43],cube[36],cube[29],cube[22],cube[15],cube[8],cube[1],cube[44],cube[37],cube[30],cube[23],cube[16],cube[9],cube[2],cube[45],cube[38],cube[31],cube[24],cube[17],cube[10],cube[3],cube[46],cube[39],cube[32],cube[25],cube[18],cube[11],cube[4],cube[47],cube[40],cube[33],cube[26],cube[19],cube[12],cube[5],cube[48],cube[41],cube[34],cube[27],cube[20],cube[13],cube[6],cube[49],cube[42],cube[35],cube[28],cube[21],cube[14],cube[7]] + cube[99:106] + cube[57:99] + cube[148:155] + cube[106:148] + cube[197:204] + cube[155:197] + cube[50:57] + cube[204:295]
-
-def rotate_777_U_prime(cube):
-    return [cube[0],cube[7],cube[14],cube[21],cube[28],cube[35],cube[42],cube[49],cube[6],cube[13],cube[20],cube[27],cube[34],cube[41],cube[48],cube[5],cube[12],cube[19],cube[26],cube[33],cube[40],cube[47],cube[4],cube[11],cube[18],cube[25],cube[32],cube[39],cube[46],cube[3],cube[10],cube[17],cube[24],cube[31],cube[38],cube[45],cube[2],cube[9],cube[16],cube[23],cube[30],cube[37],cube[44],cube[1],cube[8],cube[15],cube[22],cube[29],cube[36],cube[43]] + cube[197:204] + cube[57:99] + cube[50:57] + cube[106:148] + cube[99:106] + cube[155:197] + cube[148:155] + cube[204:295]
-
-def rotate_777_U2(cube):
-    return [cube[0],cube[49],cube[48],cube[47],cube[46],cube[45],cube[44],cube[43],cube[42],cube[41],cube[40],cube[39],cube[38],cube[37],cube[36],cube[35],cube[34],cube[33],cube[32],cube[31],cube[30],cube[29],cube[28],cube[27],cube[26],cube[25],cube[24],cube[23],cube[22],cube[21],cube[20],cube[19],cube[18],cube[17],cube[16],cube[15],cube[14],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]] + cube[148:155] + cube[57:99] + cube[197:204] + cube[106:148] + cube[50:57] + cube[155:197] + cube[99:106] + cube[204:295]
-
-def rotate_777_Uw(cube):
-    return [cube[0],cube[43],cube[36],cube[29],cube[22],cube[15],cube[8],cube[1],cube[44],cube[37],cube[30],cube[23],cube[16],cube[9],cube[2],cube[45],cube[38],cube[31],cube[24],cube[17],cube[10],cube[3],cube[46],cube[39],cube[32],cube[25],cube[18],cube[11],cube[4],cube[47],cube[40],cube[33],cube[26],cube[19],cube[12],cube[5],cube[48],cube[41],cube[34],cube[27],cube[20],cube[13],cube[6],cube[49],cube[42],cube[35],cube[28],cube[21],cube[14],cube[7]] + cube[99:113] + cube[64:99] + cube[148:162] + cube[113:148] + cube[197:211] + cube[162:197] + cube[50:64] + cube[211:295]
-
-def rotate_777_Uw_prime(cube):
-    return [cube[0],cube[7],cube[14],cube[21],cube[28],cube[35],cube[42],cube[49],cube[6],cube[13],cube[20],cube[27],cube[34],cube[41],cube[48],cube[5],cube[12],cube[19],cube[26],cube[33],cube[40],cube[47],cube[4],cube[11],cube[18],cube[25],cube[32],cube[39],cube[46],cube[3],cube[10],cube[17],cube[24],cube[31],cube[38],cube[45],cube[2],cube[9],cube[16],cube[23],cube[30],cube[37],cube[44],cube[1],cube[8],cube[15],cube[22],cube[29],cube[36],cube[43]] + cube[197:211] + cube[64:99] + cube[50:64] + cube[113:148] + cube[99:113] + cube[162:197] + cube[148:162] + cube[211:295]
-
-def rotate_777_Uw2(cube):
-    return [cube[0],cube[49],cube[48],cube[47],cube[46],cube[45],cube[44],cube[43],cube[42],cube[41],cube[40],cube[39],cube[38],cube[37],cube[36],cube[35],cube[34],cube[33],cube[32],cube[31],cube[30],cube[29],cube[28],cube[27],cube[26],cube[25],cube[24],cube[23],cube[22],cube[21],cube[20],cube[19],cube[18],cube[17],cube[16],cube[15],cube[14],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]] + cube[148:162] + cube[64:99] + cube[197:211] + cube[113:148] + cube[50:64] + cube[162:197] + cube[99:113] + cube[211:295]
-
-def rotate_777_3Uw(cube):
-    return [cube[0],cube[43],cube[36],cube[29],cube[22],cube[15],cube[8],cube[1],cube[44],cube[37],cube[30],cube[23],cube[16],cube[9],cube[2],cube[45],cube[38],cube[31],cube[24],cube[17],cube[10],cube[3],cube[46],cube[39],cube[32],cube[25],cube[18],cube[11],cube[4],cube[47],cube[40],cube[33],cube[26],cube[19],cube[12],cube[5],cube[48],cube[41],cube[34],cube[27],cube[20],cube[13],cube[6],cube[49],cube[42],cube[35],cube[28],cube[21],cube[14],cube[7]] + cube[99:120] + cube[71:99] + cube[148:169] + cube[120:148] + cube[197:218] + cube[169:197] + cube[50:71] + cube[218:295]
-
-def rotate_777_3Uw_prime(cube):
-    return [cube[0],cube[7],cube[14],cube[21],cube[28],cube[35],cube[42],cube[49],cube[6],cube[13],cube[20],cube[27],cube[34],cube[41],cube[48],cube[5],cube[12],cube[19],cube[26],cube[33],cube[40],cube[47],cube[4],cube[11],cube[18],cube[25],cube[32],cube[39],cube[46],cube[3],cube[10],cube[17],cube[24],cube[31],cube[38],cube[45],cube[2],cube[9],cube[16],cube[23],cube[30],cube[37],cube[44],cube[1],cube[8],cube[15],cube[22],cube[29],cube[36],cube[43]] + cube[197:218] + cube[71:99] + cube[50:71] + cube[120:148] + cube[99:120] + cube[169:197] + cube[148:169] + cube[218:295]
-
-def rotate_777_3Uw2(cube):
-    return [cube[0],cube[49],cube[48],cube[47],cube[46],cube[45],cube[44],cube[43],cube[42],cube[41],cube[40],cube[39],cube[38],cube[37],cube[36],cube[35],cube[34],cube[33],cube[32],cube[31],cube[30],cube[29],cube[28],cube[27],cube[26],cube[25],cube[24],cube[23],cube[22],cube[21],cube[20],cube[19],cube[18],cube[17],cube[16],cube[15],cube[14],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]] + cube[148:169] + cube[71:99] + cube[197:218] + cube[120:148] + cube[50:71] + cube[169:197] + cube[99:120] + cube[218:295]
-
-def rotate_777_L(cube):
-    return [cube[0],cube[245]] + cube[2:8] + [cube[238]] + cube[9:15] + [cube[231]] + cube[16:22] + [cube[224]] + cube[23:29] + [cube[217]] + cube[30:36] + [cube[210]] + cube[37:43] + [cube[203]] + cube[44:50] + [cube[92],cube[85],cube[78],cube[71],cube[64],cube[57],cube[50],cube[93],cube[86],cube[79],cube[72],cube[65],cube[58],cube[51],cube[94],cube[87],cube[80],cube[73],cube[66],cube[59],cube[52],cube[95],cube[88],cube[81],cube[74],cube[67],cube[60],cube[53],cube[96],cube[89],cube[82],cube[75],cube[68],cube[61],cube[54],cube[97],cube[90],cube[83],cube[76],cube[69],cube[62],cube[55],cube[98],cube[91],cube[84],cube[77],cube[70],cube[63],cube[56],cube[1]] + cube[100:106] + [cube[8]] + cube[107:113] + [cube[15]] + cube[114:120] + [cube[22]] + cube[121:127] + [cube[29]] + cube[128:134] + [cube[36]] + cube[135:141] + [cube[43]] + cube[142:203] + [cube[288]] + cube[204:210] + [cube[281]] + cube[211:217] + [cube[274]] + cube[218:224] + [cube[267]] + cube[225:231] + [cube[260]] + cube[232:238] + [cube[253]] + cube[239:245] + [cube[246],cube[99]] + cube[247:253] + [cube[106]] + cube[254:260] + [cube[113]] + cube[261:267] + [cube[120]] + cube[268:274] + [cube[127]] + cube[275:281] + [cube[134]] + cube[282:288] + [cube[141]] + cube[289:295]
-
-def rotate_777_L_prime(cube):
-    return [cube[0],cube[99]] + cube[2:8] + [cube[106]] + cube[9:15] + [cube[113]] + cube[16:22] + [cube[120]] + cube[23:29] + [cube[127]] + cube[30:36] + [cube[134]] + cube[37:43] + [cube[141]] + cube[44:50] + [cube[56],cube[63],cube[70],cube[77],cube[84],cube[91],cube[98],cube[55],cube[62],cube[69],cube[76],cube[83],cube[90],cube[97],cube[54],cube[61],cube[68],cube[75],cube[82],cube[89],cube[96],cube[53],cube[60],cube[67],cube[74],cube[81],cube[88],cube[95],cube[52],cube[59],cube[66],cube[73],cube[80],cube[87],cube[94],cube[51],cube[58],cube[65],cube[72],cube[79],cube[86],cube[93],cube[50],cube[57],cube[64],cube[71],cube[78],cube[85],cube[92],cube[246]] + cube[100:106] + [cube[253]] + cube[107:113] + [cube[260]] + cube[114:120] + [cube[267]] + cube[121:127] + [cube[274]] + cube[128:134] + [cube[281]] + cube[135:141] + [cube[288]] + cube[142:203] + [cube[43]] + cube[204:210] + [cube[36]] + cube[211:217] + [cube[29]] + cube[218:224] + [cube[22]] + cube[225:231] + [cube[15]] + cube[232:238] + [cube[8]] + cube[239:245] + [cube[1],cube[245]] + cube[247:253] + [cube[238]] + cube[254:260] + [cube[231]] + cube[261:267] + [cube[224]] + cube[268:274] + [cube[217]] + cube[275:281] + [cube[210]] + cube[282:288] + [cube[203]] + cube[289:295]
-
-def rotate_777_L2(cube):
-    return [cube[0],cube[246]] + cube[2:8] + [cube[253]] + cube[9:15] + [cube[260]] + cube[16:22] + [cube[267]] + cube[23:29] + [cube[274]] + cube[30:36] + [cube[281]] + cube[37:43] + [cube[288]] + cube[44:50] + [cube[98],cube[97],cube[96],cube[95],cube[94],cube[93],cube[92],cube[91],cube[90],cube[89],cube[88],cube[87],cube[86],cube[85],cube[84],cube[83],cube[82],cube[81],cube[80],cube[79],cube[78],cube[77],cube[76],cube[75],cube[74],cube[73],cube[72],cube[71],cube[70],cube[69],cube[68],cube[67],cube[66],cube[65],cube[64],cube[63],cube[62],cube[61],cube[60],cube[59],cube[58],cube[57],cube[56],cube[55],cube[54],cube[53],cube[52],cube[51],cube[50],cube[245]] + cube[100:106] + [cube[238]] + cube[107:113] + [cube[231]] + cube[114:120] + [cube[224]] + cube[121:127] + [cube[217]] + cube[128:134] + [cube[210]] + cube[135:141] + [cube[203]] + cube[142:203] + [cube[141]] + cube[204:210] + [cube[134]] + cube[211:217] + [cube[127]] + cube[218:224] + [cube[120]] + cube[225:231] + [cube[113]] + cube[232:238] + [cube[106]] + cube[239:245] + [cube[99],cube[1]] + cube[247:253] + [cube[8]] + cube[254:260] + [cube[15]] + cube[261:267] + [cube[22]] + cube[268:274] + [cube[29]] + cube[275:281] + [cube[36]] + cube[282:288] + [cube[43]] + cube[289:295]
-
-def rotate_777_Lw(cube):
-    return [cube[0],cube[245],cube[244]] + cube[3:8] + [cube[238],cube[237]] + cube[10:15] + [cube[231],cube[230]] + cube[17:22] + [cube[224],cube[223]] + cube[24:29] + [cube[217],cube[216]] + cube[31:36] + [cube[210],cube[209]] + cube[38:43] + [cube[203],cube[202]] + cube[45:50] + [cube[92],cube[85],cube[78],cube[71],cube[64],cube[57],cube[50],cube[93],cube[86],cube[79],cube[72],cube[65],cube[58],cube[51],cube[94],cube[87],cube[80],cube[73],cube[66],cube[59],cube[52],cube[95],cube[88],cube[81],cube[74],cube[67],cube[60],cube[53],cube[96],cube[89],cube[82],cube[75],cube[68],cube[61],cube[54],cube[97],cube[90],cube[83],cube[76],cube[69],cube[62],cube[55],cube[98],cube[91],cube[84],cube[77],cube[70],cube[63],cube[56]] + cube[1:3] + cube[101:106] + cube[8:10] + cube[108:113] + cube[15:17] + cube[115:120] + cube[22:24] + cube[122:127] + cube[29:31] + cube[129:134] + cube[36:38] + cube[136:141] + cube[43:45] + cube[143:202] + [cube[289],cube[288]] + cube[204:209] + [cube[282],cube[281]] + cube[211:216] + [cube[275],cube[274]] + cube[218:223] + [cube[268],cube[267]] + cube[225:230] + [cube[261],cube[260]] + cube[232:237] + [cube[254],cube[253]] + cube[239:244] + [cube[247],cube[246]] + cube[99:101] + cube[248:253] + cube[106:108] + cube[255:260] + cube[113:115] + cube[262:267] + cube[120:122] + cube[269:274] + cube[127:129] + cube[276:281] + cube[134:136] + cube[283:288] + cube[141:143] + cube[290:295]
-
-def rotate_777_Lw_prime(cube):
-    return [cube[0]] + cube[99:101] + cube[3:8] + cube[106:108] + cube[10:15] + cube[113:115] + cube[17:22] + cube[120:122] + cube[24:29] + cube[127:129] + cube[31:36] + cube[134:136] + cube[38:43] + cube[141:143] + cube[45:50] + [cube[56],cube[63],cube[70],cube[77],cube[84],cube[91],cube[98],cube[55],cube[62],cube[69],cube[76],cube[83],cube[90],cube[97],cube[54],cube[61],cube[68],cube[75],cube[82],cube[89],cube[96],cube[53],cube[60],cube[67],cube[74],cube[81],cube[88],cube[95],cube[52],cube[59],cube[66],cube[73],cube[80],cube[87],cube[94],cube[51],cube[58],cube[65],cube[72],cube[79],cube[86],cube[93],cube[50],cube[57],cube[64],cube[71],cube[78],cube[85],cube[92]] + cube[246:248] + cube[101:106] + cube[253:255] + cube[108:113] + cube[260:262] + cube[115:120] + cube[267:269] + cube[122:127] + cube[274:276] + cube[129:134] + cube[281:283] + cube[136:141] + cube[288:290] + cube[143:202] + [cube[44],cube[43]] + cube[204:209] + [cube[37],cube[36]] + cube[211:216] + [cube[30],cube[29]] + cube[218:223] + [cube[23],cube[22]] + cube[225:230] + [cube[16],cube[15]] + cube[232:237] + [cube[9],cube[8]] + cube[239:244] + [cube[2],cube[1],cube[245],cube[244]] + cube[248:253] + [cube[238],cube[237]] + cube[255:260] + [cube[231],cube[230]] + cube[262:267] + [cube[224],cube[223]] + cube[269:274] + [cube[217],cube[216]] + cube[276:281] + [cube[210],cube[209]] + cube[283:288] + [cube[203],cube[202]] + cube[290:295]
-
-def rotate_777_Lw2(cube):
-    return [cube[0]] + cube[246:248] + cube[3:8] + cube[253:255] + cube[10:15] + cube[260:262] + cube[17:22] + cube[267:269] + cube[24:29] + cube[274:276] + cube[31:36] + cube[281:283] + cube[38:43] + cube[288:290] + cube[45:50] + [cube[98],cube[97],cube[96],cube[95],cube[94],cube[93],cube[92],cube[91],cube[90],cube[89],cube[88],cube[87],cube[86],cube[85],cube[84],cube[83],cube[82],cube[81],cube[80],cube[79],cube[78],cube[77],cube[76],cube[75],cube[74],cube[73],cube[72],cube[71],cube[70],cube[69],cube[68],cube[67],cube[66],cube[65],cube[64],cube[63],cube[62],cube[61],cube[60],cube[59],cube[58],cube[57],cube[56],cube[55],cube[54],cube[53],cube[52],cube[51],cube[50],cube[245],cube[244]] + cube[101:106] + [cube[238],cube[237]] + cube[108:113] + [cube[231],cube[230]] + cube[115:120] + [cube[224],cube[223]] + cube[122:127] + [cube[217],cube[216]] + cube[129:134] + [cube[210],cube[209]] + cube[136:141] + [cube[203],cube[202]] + cube[143:202] + [cube[142],cube[141]] + cube[204:209] + [cube[135],cube[134]] + cube[211:216] + [cube[128],cube[127]] + cube[218:223] + [cube[121],cube[120]] + cube[225:230] + [cube[114],cube[113]] + cube[232:237] + [cube[107],cube[106]] + cube[239:244] + [cube[100],cube[99]] + cube[1:3] + cube[248:253] + cube[8:10] + cube[255:260] + cube[15:17] + cube[262:267] + cube[22:24] + cube[269:274] + cube[29:31] + cube[276:281] + cube[36:38] + cube[283:288] + cube[43:45] + cube[290:295]
-
-def rotate_777_3Lw(cube):
-    return [cube[0],cube[245],cube[244],cube[243]] + cube[4:8] + [cube[238],cube[237],cube[236]] + cube[11:15] + [cube[231],cube[230],cube[229]] + cube[18:22] + [cube[224],cube[223],cube[222]] + cube[25:29] + [cube[217],cube[216],cube[215]] + cube[32:36] + [cube[210],cube[209],cube[208]] + cube[39:43] + [cube[203],cube[202],cube[201]] + cube[46:50] + [cube[92],cube[85],cube[78],cube[71],cube[64],cube[57],cube[50],cube[93],cube[86],cube[79],cube[72],cube[65],cube[58],cube[51],cube[94],cube[87],cube[80],cube[73],cube[66],cube[59],cube[52],cube[95],cube[88],cube[81],cube[74],cube[67],cube[60],cube[53],cube[96],cube[89],cube[82],cube[75],cube[68],cube[61],cube[54],cube[97],cube[90],cube[83],cube[76],cube[69],cube[62],cube[55],cube[98],cube[91],cube[84],cube[77],cube[70],cube[63],cube[56]] + cube[1:4] + cube[102:106] + cube[8:11] + cube[109:113] + cube[15:18] + cube[116:120] + cube[22:25] + cube[123:127] + cube[29:32] + cube[130:134] + cube[36:39] + cube[137:141] + cube[43:46] + cube[144:201] + [cube[290],cube[289],cube[288]] + cube[204:208] + [cube[283],cube[282],cube[281]] + cube[211:215] + [cube[276],cube[275],cube[274]] + cube[218:222] + [cube[269],cube[268],cube[267]] + cube[225:229] + [cube[262],cube[261],cube[260]] + cube[232:236] + [cube[255],cube[254],cube[253]] + cube[239:243] + [cube[248],cube[247],cube[246]] + cube[99:102] + cube[249:253] + cube[106:109] + cube[256:260] + cube[113:116] + cube[263:267] + cube[120:123] + cube[270:274] + cube[127:130] + cube[277:281] + cube[134:137] + cube[284:288] + cube[141:144] + cube[291:295]
-
-def rotate_777_3Lw_prime(cube):
-    return [cube[0]] + cube[99:102] + cube[4:8] + cube[106:109] + cube[11:15] + cube[113:116] + cube[18:22] + cube[120:123] + cube[25:29] + cube[127:130] + cube[32:36] + cube[134:137] + cube[39:43] + cube[141:144] + cube[46:50] + [cube[56],cube[63],cube[70],cube[77],cube[84],cube[91],cube[98],cube[55],cube[62],cube[69],cube[76],cube[83],cube[90],cube[97],cube[54],cube[61],cube[68],cube[75],cube[82],cube[89],cube[96],cube[53],cube[60],cube[67],cube[74],cube[81],cube[88],cube[95],cube[52],cube[59],cube[66],cube[73],cube[80],cube[87],cube[94],cube[51],cube[58],cube[65],cube[72],cube[79],cube[86],cube[93],cube[50],cube[57],cube[64],cube[71],cube[78],cube[85],cube[92]] + cube[246:249] + cube[102:106] + cube[253:256] + cube[109:113] + cube[260:263] + cube[116:120] + cube[267:270] + cube[123:127] + cube[274:277] + cube[130:134] + cube[281:284] + cube[137:141] + cube[288:291] + cube[144:201] + [cube[45],cube[44],cube[43]] + cube[204:208] + [cube[38],cube[37],cube[36]] + cube[211:215] + [cube[31],cube[30],cube[29]] + cube[218:222] + [cube[24],cube[23],cube[22]] + cube[225:229] + [cube[17],cube[16],cube[15]] + cube[232:236] + [cube[10],cube[9],cube[8]] + cube[239:243] + [cube[3],cube[2],cube[1],cube[245],cube[244],cube[243]] + cube[249:253] + [cube[238],cube[237],cube[236]] + cube[256:260] + [cube[231],cube[230],cube[229]] + cube[263:267] + [cube[224],cube[223],cube[222]] + cube[270:274] + [cube[217],cube[216],cube[215]] + cube[277:281] + [cube[210],cube[209],cube[208]] + cube[284:288] + [cube[203],cube[202],cube[201]] + cube[291:295]
-
-def rotate_777_3Lw2(cube):
-    return [cube[0]] + cube[246:249] + cube[4:8] + cube[253:256] + cube[11:15] + cube[260:263] + cube[18:22] + cube[267:270] + cube[25:29] + cube[274:277] + cube[32:36] + cube[281:284] + cube[39:43] + cube[288:291] + cube[46:50] + [cube[98],cube[97],cube[96],cube[95],cube[94],cube[93],cube[92],cube[91],cube[90],cube[89],cube[88],cube[87],cube[86],cube[85],cube[84],cube[83],cube[82],cube[81],cube[80],cube[79],cube[78],cube[77],cube[76],cube[75],cube[74],cube[73],cube[72],cube[71],cube[70],cube[69],cube[68],cube[67],cube[66],cube[65],cube[64],cube[63],cube[62],cube[61],cube[60],cube[59],cube[58],cube[57],cube[56],cube[55],cube[54],cube[53],cube[52],cube[51],cube[50],cube[245],cube[244],cube[243]] + cube[102:106] + [cube[238],cube[237],cube[236]] + cube[109:113] + [cube[231],cube[230],cube[229]] + cube[116:120] + [cube[224],cube[223],cube[222]] + cube[123:127] + [cube[217],cube[216],cube[215]] + cube[130:134] + [cube[210],cube[209],cube[208]] + cube[137:141] + [cube[203],cube[202],cube[201]] + cube[144:201] + [cube[143],cube[142],cube[141]] + cube[204:208] + [cube[136],cube[135],cube[134]] + cube[211:215] + [cube[129],cube[128],cube[127]] + cube[218:222] + [cube[122],cube[121],cube[120]] + cube[225:229] + [cube[115],cube[114],cube[113]] + cube[232:236] + [cube[108],cube[107],cube[106]] + cube[239:243] + [cube[101],cube[100],cube[99]] + cube[1:4] + cube[249:253] + cube[8:11] + cube[256:260] + cube[15:18] + cube[263:267] + cube[22:25] + cube[270:274] + cube[29:32] + cube[277:281] + cube[36:39] + cube[284:288] + cube[43:46] + cube[291:295]
-
-def rotate_777_F(cube):
-    return cube[0:43] + [cube[98],cube[91],cube[84],cube[77],cube[70],cube[63],cube[56]] + cube[50:56] + [cube[246]] + cube[57:63] + [cube[247]] + cube[64:70] + [cube[248]] + cube[71:77] + [cube[249]] + cube[78:84] + [cube[250]] + cube[85:91] + [cube[251]] + cube[92:98] + [cube[252],cube[141],cube[134],cube[127],cube[120],cube[113],cube[106],cube[99],cube[142],cube[135],cube[128],cube[121],cube[114],cube[107],cube[100],cube[143],cube[136],cube[129],cube[122],cube[115],cube[108],cube[101],cube[144],cube[137],cube[130],cube[123],cube[116],cube[109],cube[102],cube[145],cube[138],cube[131],cube[124],cube[117],cube[110],cube[103],cube[146],cube[139],cube[132],cube[125],cube[118],cube[111],cube[104],cube[147],cube[140],cube[133],cube[126],cube[119],cube[112],cube[105],cube[43]] + cube[149:155] + [cube[44]] + cube[156:162] + [cube[45]] + cube[163:169] + [cube[46]] + cube[170:176] + [cube[47]] + cube[177:183] + [cube[48]] + cube[184:190] + [cube[49]] + cube[191:246] + [cube[190],cube[183],cube[176],cube[169],cube[162],cube[155],cube[148]] + cube[253:295]
-
-def rotate_777_F_prime(cube):
-    return cube[0:43] + [cube[148],cube[155],cube[162],cube[169],cube[176],cube[183],cube[190]] + cube[50:56] + [cube[49]] + cube[57:63] + [cube[48]] + cube[64:70] + [cube[47]] + cube[71:77] + [cube[46]] + cube[78:84] + [cube[45]] + cube[85:91] + [cube[44]] + cube[92:98] + [cube[43],cube[105],cube[112],cube[119],cube[126],cube[133],cube[140],cube[147],cube[104],cube[111],cube[118],cube[125],cube[132],cube[139],cube[146],cube[103],cube[110],cube[117],cube[124],cube[131],cube[138],cube[145],cube[102],cube[109],cube[116],cube[123],cube[130],cube[137],cube[144],cube[101],cube[108],cube[115],cube[122],cube[129],cube[136],cube[143],cube[100],cube[107],cube[114],cube[121],cube[128],cube[135],cube[142],cube[99],cube[106],cube[113],cube[120],cube[127],cube[134],cube[141],cube[252]] + cube[149:155] + [cube[251]] + cube[156:162] + [cube[250]] + cube[163:169] + [cube[249]] + cube[170:176] + [cube[248]] + cube[177:183] + [cube[247]] + cube[184:190] + [cube[246]] + cube[191:246] + [cube[56],cube[63],cube[70],cube[77],cube[84],cube[91],cube[98]] + cube[253:295]
-
-def rotate_777_F2(cube):
-    return cube[0:43] + [cube[252],cube[251],cube[250],cube[249],cube[248],cube[247],cube[246]] + cube[50:56] + [cube[190]] + cube[57:63] + [cube[183]] + cube[64:70] + [cube[176]] + cube[71:77] + [cube[169]] + cube[78:84] + [cube[162]] + cube[85:91] + [cube[155]] + cube[92:98] + [cube[148],cube[147],cube[146],cube[145],cube[144],cube[143],cube[142],cube[141],cube[140],cube[139],cube[138],cube[137],cube[136],cube[135],cube[134],cube[133],cube[132],cube[131],cube[130],cube[129],cube[128],cube[127],cube[126],cube[125],cube[124],cube[123],cube[122],cube[121],cube[120],cube[119],cube[118],cube[117],cube[116],cube[115],cube[114],cube[113],cube[112],cube[111],cube[110],cube[109],cube[108],cube[107],cube[106],cube[105],cube[104],cube[103],cube[102],cube[101],cube[100],cube[99],cube[98]] + cube[149:155] + [cube[91]] + cube[156:162] + [cube[84]] + cube[163:169] + [cube[77]] + cube[170:176] + [cube[70]] + cube[177:183] + [cube[63]] + cube[184:190] + [cube[56]] + cube[191:246] + [cube[49],cube[48],cube[47],cube[46],cube[45],cube[44],cube[43]] + cube[253:295]
-
-def rotate_777_Fw(cube):
-    return cube[0:36] + [cube[97],cube[90],cube[83],cube[76],cube[69],cube[62],cube[55],cube[98],cube[91],cube[84],cube[77],cube[70],cube[63],cube[56]] + cube[50:55] + [cube[253],cube[246]] + cube[57:62] + [cube[254],cube[247]] + cube[64:69] + [cube[255],cube[248]] + cube[71:76] + [cube[256],cube[249]] + cube[78:83] + [cube[257],cube[250]] + cube[85:90] + [cube[258],cube[251]] + cube[92:97] + [cube[259],cube[252],cube[141],cube[134],cube[127],cube[120],cube[113],cube[106],cube[99],cube[142],cube[135],cube[128],cube[121],cube[114],cube[107],cube[100],cube[143],cube[136],cube[129],cube[122],cube[115],cube[108],cube[101],cube[144],cube[137],cube[130],cube[123],cube[116],cube[109],cube[102],cube[145],cube[138],cube[131],cube[124],cube[117],cube[110],cube[103],cube[146],cube[139],cube[132],cube[125],cube[118],cube[111],cube[104],cube[147],cube[140],cube[133],cube[126],cube[119],cube[112],cube[105],cube[43],cube[36]] + cube[150:155] + [cube[44],cube[37]] + cube[157:162] + [cube[45],cube[38]] + cube[164:169] + [cube[46],cube[39]] + cube[171:176] + [cube[47],cube[40]] + cube[178:183] + [cube[48],cube[41]] + cube[185:190] + [cube[49],cube[42]] + cube[192:246] + [cube[190],cube[183],cube[176],cube[169],cube[162],cube[155],cube[148],cube[191],cube[184],cube[177],cube[170],cube[163],cube[156],cube[149]] + cube[260:295]
-
-def rotate_777_Fw_prime(cube):
-    return cube[0:36] + [cube[149],cube[156],cube[163],cube[170],cube[177],cube[184],cube[191],cube[148],cube[155],cube[162],cube[169],cube[176],cube[183],cube[190]] + cube[50:55] + [cube[42],cube[49]] + cube[57:62] + [cube[41],cube[48]] + cube[64:69] + [cube[40],cube[47]] + cube[71:76] + [cube[39],cube[46]] + cube[78:83] + [cube[38],cube[45]] + cube[85:90] + [cube[37],cube[44]] + cube[92:97] + [cube[36],cube[43],cube[105],cube[112],cube[119],cube[126],cube[133],cube[140],cube[147],cube[104],cube[111],cube[118],cube[125],cube[132],cube[139],cube[146],cube[103],cube[110],cube[117],cube[124],cube[131],cube[138],cube[145],cube[102],cube[109],cube[116],cube[123],cube[130],cube[137],cube[144],cube[101],cube[108],cube[115],cube[122],cube[129],cube[136],cube[143],cube[100],cube[107],cube[114],cube[121],cube[128],cube[135],cube[142],cube[99],cube[106],cube[113],cube[120],cube[127],cube[134],cube[141],cube[252],cube[259]] + cube[150:155] + [cube[251],cube[258]] + cube[157:162] + [cube[250],cube[257]] + cube[164:169] + [cube[249],cube[256]] + cube[171:176] + [cube[248],cube[255]] + cube[178:183] + [cube[247],cube[254]] + cube[185:190] + [cube[246],cube[253]] + cube[192:246] + [cube[56],cube[63],cube[70],cube[77],cube[84],cube[91],cube[98],cube[55],cube[62],cube[69],cube[76],cube[83],cube[90],cube[97]] + cube[260:295]
-
-def rotate_777_Fw2(cube):
-    return cube[0:36] + [cube[259],cube[258],cube[257],cube[256],cube[255],cube[254],cube[253],cube[252],cube[251],cube[250],cube[249],cube[248],cube[247],cube[246]] + cube[50:55] + [cube[191],cube[190]] + cube[57:62] + [cube[184],cube[183]] + cube[64:69] + [cube[177],cube[176]] + cube[71:76] + [cube[170],cube[169]] + cube[78:83] + [cube[163],cube[162]] + cube[85:90] + [cube[156],cube[155]] + cube[92:97] + [cube[149],cube[148],cube[147],cube[146],cube[145],cube[144],cube[143],cube[142],cube[141],cube[140],cube[139],cube[138],cube[137],cube[136],cube[135],cube[134],cube[133],cube[132],cube[131],cube[130],cube[129],cube[128],cube[127],cube[126],cube[125],cube[124],cube[123],cube[122],cube[121],cube[120],cube[119],cube[118],cube[117],cube[116],cube[115],cube[114],cube[113],cube[112],cube[111],cube[110],cube[109],cube[108],cube[107],cube[106],cube[105],cube[104],cube[103],cube[102],cube[101],cube[100],cube[99],cube[98],cube[97]] + cube[150:155] + [cube[91],cube[90]] + cube[157:162] + [cube[84],cube[83]] + cube[164:169] + [cube[77],cube[76]] + cube[171:176] + [cube[70],cube[69]] + cube[178:183] + [cube[63],cube[62]] + cube[185:190] + [cube[56],cube[55]] + cube[192:246] + [cube[49],cube[48],cube[47],cube[46],cube[45],cube[44],cube[43],cube[42],cube[41],cube[40],cube[39],cube[38],cube[37],cube[36]] + cube[260:295]
-
-def rotate_777_3Fw(cube):
-    return cube[0:29] + [cube[96],cube[89],cube[82],cube[75],cube[68],cube[61],cube[54],cube[97],cube[90],cube[83],cube[76],cube[69],cube[62],cube[55],cube[98],cube[91],cube[84],cube[77],cube[70],cube[63],cube[56]] + cube[50:54] + [cube[260],cube[253],cube[246]] + cube[57:61] + [cube[261],cube[254],cube[247]] + cube[64:68] + [cube[262],cube[255],cube[248]] + cube[71:75] + [cube[263],cube[256],cube[249]] + cube[78:82] + [cube[264],cube[257],cube[250]] + cube[85:89] + [cube[265],cube[258],cube[251]] + cube[92:96] + [cube[266],cube[259],cube[252],cube[141],cube[134],cube[127],cube[120],cube[113],cube[106],cube[99],cube[142],cube[135],cube[128],cube[121],cube[114],cube[107],cube[100],cube[143],cube[136],cube[129],cube[122],cube[115],cube[108],cube[101],cube[144],cube[137],cube[130],cube[123],cube[116],cube[109],cube[102],cube[145],cube[138],cube[131],cube[124],cube[117],cube[110],cube[103],cube[146],cube[139],cube[132],cube[125],cube[118],cube[111],cube[104],cube[147],cube[140],cube[133],cube[126],cube[119],cube[112],cube[105],cube[43],cube[36],cube[29]] + cube[151:155] + [cube[44],cube[37],cube[30]] + cube[158:162] + [cube[45],cube[38],cube[31]] + cube[165:169] + [cube[46],cube[39],cube[32]] + cube[172:176] + [cube[47],cube[40],cube[33]] + cube[179:183] + [cube[48],cube[41],cube[34]] + cube[186:190] + [cube[49],cube[42],cube[35]] + cube[193:246] + [cube[190],cube[183],cube[176],cube[169],cube[162],cube[155],cube[148],cube[191],cube[184],cube[177],cube[170],cube[163],cube[156],cube[149],cube[192],cube[185],cube[178],cube[171],cube[164],cube[157],cube[150]] + cube[267:295]
-
-def rotate_777_3Fw_prime(cube):
-    return cube[0:29] + [cube[150],cube[157],cube[164],cube[171],cube[178],cube[185],cube[192],cube[149],cube[156],cube[163],cube[170],cube[177],cube[184],cube[191],cube[148],cube[155],cube[162],cube[169],cube[176],cube[183],cube[190]] + cube[50:54] + [cube[35],cube[42],cube[49]] + cube[57:61] + [cube[34],cube[41],cube[48]] + cube[64:68] + [cube[33],cube[40],cube[47]] + cube[71:75] + [cube[32],cube[39],cube[46]] + cube[78:82] + [cube[31],cube[38],cube[45]] + cube[85:89] + [cube[30],cube[37],cube[44]] + cube[92:96] + [cube[29],cube[36],cube[43],cube[105],cube[112],cube[119],cube[126],cube[133],cube[140],cube[147],cube[104],cube[111],cube[118],cube[125],cube[132],cube[139],cube[146],cube[103],cube[110],cube[117],cube[124],cube[131],cube[138],cube[145],cube[102],cube[109],cube[116],cube[123],cube[130],cube[137],cube[144],cube[101],cube[108],cube[115],cube[122],cube[129],cube[136],cube[143],cube[100],cube[107],cube[114],cube[121],cube[128],cube[135],cube[142],cube[99],cube[106],cube[113],cube[120],cube[127],cube[134],cube[141],cube[252],cube[259],cube[266]] + cube[151:155] + [cube[251],cube[258],cube[265]] + cube[158:162] + [cube[250],cube[257],cube[264]] + cube[165:169] + [cube[249],cube[256],cube[263]] + cube[172:176] + [cube[248],cube[255],cube[262]] + cube[179:183] + [cube[247],cube[254],cube[261]] + cube[186:190] + [cube[246],cube[253],cube[260]] + cube[193:246] + [cube[56],cube[63],cube[70],cube[77],cube[84],cube[91],cube[98],cube[55],cube[62],cube[69],cube[76],cube[83],cube[90],cube[97],cube[54],cube[61],cube[68],cube[75],cube[82],cube[89],cube[96]] + cube[267:295]
-
-def rotate_777_3Fw2(cube):
-    return cube[0:29] + [cube[266],cube[265],cube[264],cube[263],cube[262],cube[261],cube[260],cube[259],cube[258],cube[257],cube[256],cube[255],cube[254],cube[253],cube[252],cube[251],cube[250],cube[249],cube[248],cube[247],cube[246]] + cube[50:54] + [cube[192],cube[191],cube[190]] + cube[57:61] + [cube[185],cube[184],cube[183]] + cube[64:68] + [cube[178],cube[177],cube[176]] + cube[71:75] + [cube[171],cube[170],cube[169]] + cube[78:82] + [cube[164],cube[163],cube[162]] + cube[85:89] + [cube[157],cube[156],cube[155]] + cube[92:96] + [cube[150],cube[149],cube[148],cube[147],cube[146],cube[145],cube[144],cube[143],cube[142],cube[141],cube[140],cube[139],cube[138],cube[137],cube[136],cube[135],cube[134],cube[133],cube[132],cube[131],cube[130],cube[129],cube[128],cube[127],cube[126],cube[125],cube[124],cube[123],cube[122],cube[121],cube[120],cube[119],cube[118],cube[117],cube[116],cube[115],cube[114],cube[113],cube[112],cube[111],cube[110],cube[109],cube[108],cube[107],cube[106],cube[105],cube[104],cube[103],cube[102],cube[101],cube[100],cube[99],cube[98],cube[97],cube[96]] + cube[151:155] + [cube[91],cube[90],cube[89]] + cube[158:162] + [cube[84],cube[83],cube[82]] + cube[165:169] + [cube[77],cube[76],cube[75]] + cube[172:176] + [cube[70],cube[69],cube[68]] + cube[179:183] + [cube[63],cube[62],cube[61]] + cube[186:190] + [cube[56],cube[55],cube[54]] + cube[193:246] + [cube[49],cube[48],cube[47],cube[46],cube[45],cube[44],cube[43],cube[42],cube[41],cube[40],cube[39],cube[38],cube[37],cube[36],cube[35],cube[34],cube[33],cube[32],cube[31],cube[30],cube[29]] + cube[267:295]
-
-def rotate_777_R(cube):
-    return cube[0:7] + [cube[105]] + cube[8:14] + [cube[112]] + cube[15:21] + [cube[119]] + cube[22:28] + [cube[126]] + cube[29:35] + [cube[133]] + cube[36:42] + [cube[140]] + cube[43:49] + [cube[147]] + cube[50:105] + [cube[252]] + cube[106:112] + [cube[259]] + cube[113:119] + [cube[266]] + cube[120:126] + [cube[273]] + cube[127:133] + [cube[280]] + cube[134:140] + [cube[287]] + cube[141:147] + [cube[294],cube[190],cube[183],cube[176],cube[169],cube[162],cube[155],cube[148],cube[191],cube[184],cube[177],cube[170],cube[163],cube[156],cube[149],cube[192],cube[185],cube[178],cube[171],cube[164],cube[157],cube[150],cube[193],cube[186],cube[179],cube[172],cube[165],cube[158],cube[151],cube[194],cube[187],cube[180],cube[173],cube[166],cube[159],cube[152],cube[195],cube[188],cube[181],cube[174],cube[167],cube[160],cube[153],cube[196],cube[189],cube[182],cube[175],cube[168],cube[161],cube[154],cube[49]] + cube[198:204] + [cube[42]] + cube[205:211] + [cube[35]] + cube[212:218] + [cube[28]] + cube[219:225] + [cube[21]] + cube[226:232] + [cube[14]] + cube[233:239] + [cube[7]] + cube[240:252] + [cube[239]] + cube[253:259] + [cube[232]] + cube[260:266] + [cube[225]] + cube[267:273] + [cube[218]] + cube[274:280] + [cube[211]] + cube[281:287] + [cube[204]] + cube[288:294] + [cube[197]]
-
-def rotate_777_R_prime(cube):
-    return cube[0:7] + [cube[239]] + cube[8:14] + [cube[232]] + cube[15:21] + [cube[225]] + cube[22:28] + [cube[218]] + cube[29:35] + [cube[211]] + cube[36:42] + [cube[204]] + cube[43:49] + [cube[197]] + cube[50:105] + [cube[7]] + cube[106:112] + [cube[14]] + cube[113:119] + [cube[21]] + cube[120:126] + [cube[28]] + cube[127:133] + [cube[35]] + cube[134:140] + [cube[42]] + cube[141:147] + [cube[49],cube[154],cube[161],cube[168],cube[175],cube[182],cube[189],cube[196],cube[153],cube[160],cube[167],cube[174],cube[181],cube[188],cube[195],cube[152],cube[159],cube[166],cube[173],cube[180],cube[187],cube[194],cube[151],cube[158],cube[165],cube[172],cube[179],cube[186],cube[193],cube[150],cube[157],cube[164],cube[171],cube[178],cube[185],cube[192],cube[149],cube[156],cube[163],cube[170],cube[177],cube[184],cube[191],cube[148],cube[155],cube[162],cube[169],cube[176],cube[183],cube[190],cube[294]] + cube[198:204] + [cube[287]] + cube[205:211] + [cube[280]] + cube[212:218] + [cube[273]] + cube[219:225] + [cube[266]] + cube[226:232] + [cube[259]] + cube[233:239] + [cube[252]] + cube[240:252] + [cube[105]] + cube[253:259] + [cube[112]] + cube[260:266] + [cube[119]] + cube[267:273] + [cube[126]] + cube[274:280] + [cube[133]] + cube[281:287] + [cube[140]] + cube[288:294] + [cube[147]]
-
-def rotate_777_R2(cube):
-    return cube[0:7] + [cube[252]] + cube[8:14] + [cube[259]] + cube[15:21] + [cube[266]] + cube[22:28] + [cube[273]] + cube[29:35] + [cube[280]] + cube[36:42] + [cube[287]] + cube[43:49] + [cube[294]] + cube[50:105] + [cube[239]] + cube[106:112] + [cube[232]] + cube[113:119] + [cube[225]] + cube[120:126] + [cube[218]] + cube[127:133] + [cube[211]] + cube[134:140] + [cube[204]] + cube[141:147] + [cube[197],cube[196],cube[195],cube[194],cube[193],cube[192],cube[191],cube[190],cube[189],cube[188],cube[187],cube[186],cube[185],cube[184],cube[183],cube[182],cube[181],cube[180],cube[179],cube[178],cube[177],cube[176],cube[175],cube[174],cube[173],cube[172],cube[171],cube[170],cube[169],cube[168],cube[167],cube[166],cube[165],cube[164],cube[163],cube[162],cube[161],cube[160],cube[159],cube[158],cube[157],cube[156],cube[155],cube[154],cube[153],cube[152],cube[151],cube[150],cube[149],cube[148],cube[147]] + cube[198:204] + [cube[140]] + cube[205:211] + [cube[133]] + cube[212:218] + [cube[126]] + cube[219:225] + [cube[119]] + cube[226:232] + [cube[112]] + cube[233:239] + [cube[105]] + cube[240:252] + [cube[7]] + cube[253:259] + [cube[14]] + cube[260:266] + [cube[21]] + cube[267:273] + [cube[28]] + cube[274:280] + [cube[35]] + cube[281:287] + [cube[42]] + cube[288:294] + [cube[49]]
-
-def rotate_777_Rw(cube):
-    return cube[0:6] + cube[104:106] + cube[8:13] + cube[111:113] + cube[15:20] + cube[118:120] + cube[22:27] + cube[125:127] + cube[29:34] + cube[132:134] + cube[36:41] + cube[139:141] + cube[43:48] + cube[146:148] + cube[50:104] + cube[251:253] + cube[106:111] + cube[258:260] + cube[113:118] + cube[265:267] + cube[120:125] + cube[272:274] + cube[127:132] + cube[279:281] + cube[134:139] + cube[286:288] + cube[141:146] + cube[293:295] + [cube[190],cube[183],cube[176],cube[169],cube[162],cube[155],cube[148],cube[191],cube[184],cube[177],cube[170],cube[163],cube[156],cube[149],cube[192],cube[185],cube[178],cube[171],cube[164],cube[157],cube[150],cube[193],cube[186],cube[179],cube[172],cube[165],cube[158],cube[151],cube[194],cube[187],cube[180],cube[173],cube[166],cube[159],cube[152],cube[195],cube[188],cube[181],cube[174],cube[167],cube[160],cube[153],cube[196],cube[189],cube[182],cube[175],cube[168],cube[161],cube[154],cube[49],cube[48]] + cube[199:204] + [cube[42],cube[41]] + cube[206:211] + [cube[35],cube[34]] + cube[213:218] + [cube[28],cube[27]] + cube[220:225] + [cube[21],cube[20]] + cube[227:232] + [cube[14],cube[13]] + cube[234:239] + [cube[7],cube[6]] + cube[241:251] + [cube[240],cube[239]] + cube[253:258] + [cube[233],cube[232]] + cube[260:265] + [cube[226],cube[225]] + cube[267:272] + [cube[219],cube[218]] + cube[274:279] + [cube[212],cube[211]] + cube[281:286] + [cube[205],cube[204]] + cube[288:293] + [cube[198],cube[197]]
-
-def rotate_777_Rw_prime(cube):
-    return cube[0:6] + [cube[240],cube[239]] + cube[8:13] + [cube[233],cube[232]] + cube[15:20] + [cube[226],cube[225]] + cube[22:27] + [cube[219],cube[218]] + cube[29:34] + [cube[212],cube[211]] + cube[36:41] + [cube[205],cube[204]] + cube[43:48] + [cube[198],cube[197]] + cube[50:104] + cube[6:8] + cube[106:111] + cube[13:15] + cube[113:118] + cube[20:22] + cube[120:125] + cube[27:29] + cube[127:132] + cube[34:36] + cube[134:139] + cube[41:43] + cube[141:146] + cube[48:50] + [cube[154],cube[161],cube[168],cube[175],cube[182],cube[189],cube[196],cube[153],cube[160],cube[167],cube[174],cube[181],cube[188],cube[195],cube[152],cube[159],cube[166],cube[173],cube[180],cube[187],cube[194],cube[151],cube[158],cube[165],cube[172],cube[179],cube[186],cube[193],cube[150],cube[157],cube[164],cube[171],cube[178],cube[185],cube[192],cube[149],cube[156],cube[163],cube[170],cube[177],cube[184],cube[191],cube[148],cube[155],cube[162],cube[169],cube[176],cube[183],cube[190],cube[294],cube[293]] + cube[199:204] + [cube[287],cube[286]] + cube[206:211] + [cube[280],cube[279]] + cube[213:218] + [cube[273],cube[272]] + cube[220:225] + [cube[266],cube[265]] + cube[227:232] + [cube[259],cube[258]] + cube[234:239] + [cube[252],cube[251]] + cube[241:251] + cube[104:106] + cube[253:258] + cube[111:113] + cube[260:265] + cube[118:120] + cube[267:272] + cube[125:127] + cube[274:279] + cube[132:134] + cube[281:286] + cube[139:141] + cube[288:293] + cube[146:148]
-
-def rotate_777_Rw2(cube):
-    return cube[0:6] + cube[251:253] + cube[8:13] + cube[258:260] + cube[15:20] + cube[265:267] + cube[22:27] + cube[272:274] + cube[29:34] + cube[279:281] + cube[36:41] + cube[286:288] + cube[43:48] + cube[293:295] + cube[50:104] + [cube[240],cube[239]] + cube[106:111] + [cube[233],cube[232]] + cube[113:118] + [cube[226],cube[225]] + cube[120:125] + [cube[219],cube[218]] + cube[127:132] + [cube[212],cube[211]] + cube[134:139] + [cube[205],cube[204]] + cube[141:146] + [cube[198],cube[197],cube[196],cube[195],cube[194],cube[193],cube[192],cube[191],cube[190],cube[189],cube[188],cube[187],cube[186],cube[185],cube[184],cube[183],cube[182],cube[181],cube[180],cube[179],cube[178],cube[177],cube[176],cube[175],cube[174],cube[173],cube[172],cube[171],cube[170],cube[169],cube[168],cube[167],cube[166],cube[165],cube[164],cube[163],cube[162],cube[161],cube[160],cube[159],cube[158],cube[157],cube[156],cube[155],cube[154],cube[153],cube[152],cube[151],cube[150],cube[149],cube[148],cube[147],cube[146]] + cube[199:204] + [cube[140],cube[139]] + cube[206:211] + [cube[133],cube[132]] + cube[213:218] + [cube[126],cube[125]] + cube[220:225] + [cube[119],cube[118]] + cube[227:232] + [cube[112],cube[111]] + cube[234:239] + [cube[105],cube[104]] + cube[241:251] + cube[6:8] + cube[253:258] + cube[13:15] + cube[260:265] + cube[20:22] + cube[267:272] + cube[27:29] + cube[274:279] + cube[34:36] + cube[281:286] + cube[41:43] + cube[288:293] + cube[48:50]
-
-def rotate_777_3Rw(cube):
-    return cube[0:5] + cube[103:106] + cube[8:12] + cube[110:113] + cube[15:19] + cube[117:120] + cube[22:26] + cube[124:127] + cube[29:33] + cube[131:134] + cube[36:40] + cube[138:141] + cube[43:47] + cube[145:148] + cube[50:103] + cube[250:253] + cube[106:110] + cube[257:260] + cube[113:117] + cube[264:267] + cube[120:124] + cube[271:274] + cube[127:131] + cube[278:281] + cube[134:138] + cube[285:288] + cube[141:145] + cube[292:295] + [cube[190],cube[183],cube[176],cube[169],cube[162],cube[155],cube[148],cube[191],cube[184],cube[177],cube[170],cube[163],cube[156],cube[149],cube[192],cube[185],cube[178],cube[171],cube[164],cube[157],cube[150],cube[193],cube[186],cube[179],cube[172],cube[165],cube[158],cube[151],cube[194],cube[187],cube[180],cube[173],cube[166],cube[159],cube[152],cube[195],cube[188],cube[181],cube[174],cube[167],cube[160],cube[153],cube[196],cube[189],cube[182],cube[175],cube[168],cube[161],cube[154],cube[49],cube[48],cube[47]] + cube[200:204] + [cube[42],cube[41],cube[40]] + cube[207:211] + [cube[35],cube[34],cube[33]] + cube[214:218] + [cube[28],cube[27],cube[26]] + cube[221:225] + [cube[21],cube[20],cube[19]] + cube[228:232] + [cube[14],cube[13],cube[12]] + cube[235:239] + [cube[7],cube[6],cube[5]] + cube[242:250] + [cube[241],cube[240],cube[239]] + cube[253:257] + [cube[234],cube[233],cube[232]] + cube[260:264] + [cube[227],cube[226],cube[225]] + cube[267:271] + [cube[220],cube[219],cube[218]] + cube[274:278] + [cube[213],cube[212],cube[211]] + cube[281:285] + [cube[206],cube[205],cube[204]] + cube[288:292] + [cube[199],cube[198],cube[197]]
-
-def rotate_777_3Rw_prime(cube):
-    return cube[0:5] + [cube[241],cube[240],cube[239]] + cube[8:12] + [cube[234],cube[233],cube[232]] + cube[15:19] + [cube[227],cube[226],cube[225]] + cube[22:26] + [cube[220],cube[219],cube[218]] + cube[29:33] + [cube[213],cube[212],cube[211]] + cube[36:40] + [cube[206],cube[205],cube[204]] + cube[43:47] + [cube[199],cube[198],cube[197]] + cube[50:103] + cube[5:8] + cube[106:110] + cube[12:15] + cube[113:117] + cube[19:22] + cube[120:124] + cube[26:29] + cube[127:131] + cube[33:36] + cube[134:138] + cube[40:43] + cube[141:145] + cube[47:50] + [cube[154],cube[161],cube[168],cube[175],cube[182],cube[189],cube[196],cube[153],cube[160],cube[167],cube[174],cube[181],cube[188],cube[195],cube[152],cube[159],cube[166],cube[173],cube[180],cube[187],cube[194],cube[151],cube[158],cube[165],cube[172],cube[179],cube[186],cube[193],cube[150],cube[157],cube[164],cube[171],cube[178],cube[185],cube[192],cube[149],cube[156],cube[163],cube[170],cube[177],cube[184],cube[191],cube[148],cube[155],cube[162],cube[169],cube[176],cube[183],cube[190],cube[294],cube[293],cube[292]] + cube[200:204] + [cube[287],cube[286],cube[285]] + cube[207:211] + [cube[280],cube[279],cube[278]] + cube[214:218] + [cube[273],cube[272],cube[271]] + cube[221:225] + [cube[266],cube[265],cube[264]] + cube[228:232] + [cube[259],cube[258],cube[257]] + cube[235:239] + [cube[252],cube[251],cube[250]] + cube[242:250] + cube[103:106] + cube[253:257] + cube[110:113] + cube[260:264] + cube[117:120] + cube[267:271] + cube[124:127] + cube[274:278] + cube[131:134] + cube[281:285] + cube[138:141] + cube[288:292] + cube[145:148]
-
-def rotate_777_3Rw2(cube):
-    return cube[0:5] + cube[250:253] + cube[8:12] + cube[257:260] + cube[15:19] + cube[264:267] + cube[22:26] + cube[271:274] + cube[29:33] + cube[278:281] + cube[36:40] + cube[285:288] + cube[43:47] + cube[292:295] + cube[50:103] + [cube[241],cube[240],cube[239]] + cube[106:110] + [cube[234],cube[233],cube[232]] + cube[113:117] + [cube[227],cube[226],cube[225]] + cube[120:124] + [cube[220],cube[219],cube[218]] + cube[127:131] + [cube[213],cube[212],cube[211]] + cube[134:138] + [cube[206],cube[205],cube[204]] + cube[141:145] + [cube[199],cube[198],cube[197],cube[196],cube[195],cube[194],cube[193],cube[192],cube[191],cube[190],cube[189],cube[188],cube[187],cube[186],cube[185],cube[184],cube[183],cube[182],cube[181],cube[180],cube[179],cube[178],cube[177],cube[176],cube[175],cube[174],cube[173],cube[172],cube[171],cube[170],cube[169],cube[168],cube[167],cube[166],cube[165],cube[164],cube[163],cube[162],cube[161],cube[160],cube[159],cube[158],cube[157],cube[156],cube[155],cube[154],cube[153],cube[152],cube[151],cube[150],cube[149],cube[148],cube[147],cube[146],cube[145]] + cube[200:204] + [cube[140],cube[139],cube[138]] + cube[207:211] + [cube[133],cube[132],cube[131]] + cube[214:218] + [cube[126],cube[125],cube[124]] + cube[221:225] + [cube[119],cube[118],cube[117]] + cube[228:232] + [cube[112],cube[111],cube[110]] + cube[235:239] + [cube[105],cube[104],cube[103]] + cube[242:250] + cube[5:8] + cube[253:257] + cube[12:15] + cube[260:264] + cube[19:22] + cube[267:271] + cube[26:29] + cube[274:278] + cube[33:36] + cube[281:285] + cube[40:43] + cube[288:292] + cube[47:50]
-
-def rotate_777_B(cube):
-    return [cube[0],cube[154],cube[161],cube[168],cube[175],cube[182],cube[189],cube[196]] + cube[8:50] + [cube[7]] + cube[51:57] + [cube[6]] + cube[58:64] + [cube[5]] + cube[65:71] + [cube[4]] + cube[72:78] + [cube[3]] + cube[79:85] + [cube[2]] + cube[86:92] + [cube[1]] + cube[93:154] + [cube[294]] + cube[155:161] + [cube[293]] + cube[162:168] + [cube[292]] + cube[169:175] + [cube[291]] + cube[176:182] + [cube[290]] + cube[183:189] + [cube[289]] + cube[190:196] + [cube[288],cube[239],cube[232],cube[225],cube[218],cube[211],cube[204],cube[197],cube[240],cube[233],cube[226],cube[219],cube[212],cube[205],cube[198],cube[241],cube[234],cube[227],cube[220],cube[213],cube[206],cube[199],cube[242],cube[235],cube[228],cube[221],cube[214],cube[207],cube[200],cube[243],cube[236],cube[229],cube[222],cube[215],cube[208],cube[201],cube[244],cube[237],cube[230],cube[223],cube[216],cube[209],cube[202],cube[245],cube[238],cube[231],cube[224],cube[217],cube[210],cube[203]] + cube[246:288] + [cube[50],cube[57],cube[64],cube[71],cube[78],cube[85],cube[92]]
-
-def rotate_777_B_prime(cube):
-    return [cube[0],cube[92],cube[85],cube[78],cube[71],cube[64],cube[57],cube[50]] + cube[8:50] + [cube[288]] + cube[51:57] + [cube[289]] + cube[58:64] + [cube[290]] + cube[65:71] + [cube[291]] + cube[72:78] + [cube[292]] + cube[79:85] + [cube[293]] + cube[86:92] + [cube[294]] + cube[93:154] + [cube[1]] + cube[155:161] + [cube[2]] + cube[162:168] + [cube[3]] + cube[169:175] + [cube[4]] + cube[176:182] + [cube[5]] + cube[183:189] + [cube[6]] + cube[190:196] + [cube[7],cube[203],cube[210],cube[217],cube[224],cube[231],cube[238],cube[245],cube[202],cube[209],cube[216],cube[223],cube[230],cube[237],cube[244],cube[201],cube[208],cube[215],cube[222],cube[229],cube[236],cube[243],cube[200],cube[207],cube[214],cube[221],cube[228],cube[235],cube[242],cube[199],cube[206],cube[213],cube[220],cube[227],cube[234],cube[241],cube[198],cube[205],cube[212],cube[219],cube[226],cube[233],cube[240],cube[197],cube[204],cube[211],cube[218],cube[225],cube[232],cube[239]] + cube[246:288] + [cube[196],cube[189],cube[182],cube[175],cube[168],cube[161],cube[154]]
-
-def rotate_777_B2(cube):
-    return [cube[0],cube[294],cube[293],cube[292],cube[291],cube[290],cube[289],cube[288]] + cube[8:50] + [cube[196]] + cube[51:57] + [cube[189]] + cube[58:64] + [cube[182]] + cube[65:71] + [cube[175]] + cube[72:78] + [cube[168]] + cube[79:85] + [cube[161]] + cube[86:92] + [cube[154]] + cube[93:154] + [cube[92]] + cube[155:161] + [cube[85]] + cube[162:168] + [cube[78]] + cube[169:175] + [cube[71]] + cube[176:182] + [cube[64]] + cube[183:189] + [cube[57]] + cube[190:196] + [cube[50],cube[245],cube[244],cube[243],cube[242],cube[241],cube[240],cube[239],cube[238],cube[237],cube[236],cube[235],cube[234],cube[233],cube[232],cube[231],cube[230],cube[229],cube[228],cube[227],cube[226],cube[225],cube[224],cube[223],cube[222],cube[221],cube[220],cube[219],cube[218],cube[217],cube[216],cube[215],cube[214],cube[213],cube[212],cube[211],cube[210],cube[209],cube[208],cube[207],cube[206],cube[205],cube[204],cube[203],cube[202],cube[201],cube[200],cube[199],cube[198],cube[197]] + cube[246:288] + [cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]]
-
-def rotate_777_Bw(cube):
-    return [cube[0],cube[154],cube[161],cube[168],cube[175],cube[182],cube[189],cube[196],cube[153],cube[160],cube[167],cube[174],cube[181],cube[188],cube[195]] + cube[15:50] + [cube[7],cube[14]] + cube[52:57] + [cube[6],cube[13]] + cube[59:64] + [cube[5],cube[12]] + cube[66:71] + [cube[4],cube[11]] + cube[73:78] + [cube[3],cube[10]] + cube[80:85] + [cube[2],cube[9]] + cube[87:92] + [cube[1],cube[8]] + cube[94:153] + [cube[287],cube[294]] + cube[155:160] + [cube[286],cube[293]] + cube[162:167] + [cube[285],cube[292]] + cube[169:174] + [cube[284],cube[291]] + cube[176:181] + [cube[283],cube[290]] + cube[183:188] + [cube[282],cube[289]] + cube[190:195] + [cube[281],cube[288],cube[239],cube[232],cube[225],cube[218],cube[211],cube[204],cube[197],cube[240],cube[233],cube[226],cube[219],cube[212],cube[205],cube[198],cube[241],cube[234],cube[227],cube[220],cube[213],cube[206],cube[199],cube[242],cube[235],cube[228],cube[221],cube[214],cube[207],cube[200],cube[243],cube[236],cube[229],cube[222],cube[215],cube[208],cube[201],cube[244],cube[237],cube[230],cube[223],cube[216],cube[209],cube[202],cube[245],cube[238],cube[231],cube[224],cube[217],cube[210],cube[203]] + cube[246:281] + [cube[51],cube[58],cube[65],cube[72],cube[79],cube[86],cube[93],cube[50],cube[57],cube[64],cube[71],cube[78],cube[85],cube[92]]
-
-def rotate_777_Bw_prime(cube):
-    return [cube[0],cube[92],cube[85],cube[78],cube[71],cube[64],cube[57],cube[50],cube[93],cube[86],cube[79],cube[72],cube[65],cube[58],cube[51]] + cube[15:50] + [cube[288],cube[281]] + cube[52:57] + [cube[289],cube[282]] + cube[59:64] + [cube[290],cube[283]] + cube[66:71] + [cube[291],cube[284]] + cube[73:78] + [cube[292],cube[285]] + cube[80:85] + [cube[293],cube[286]] + cube[87:92] + [cube[294],cube[287]] + cube[94:153] + [cube[8],cube[1]] + cube[155:160] + [cube[9],cube[2]] + cube[162:167] + [cube[10],cube[3]] + cube[169:174] + [cube[11],cube[4]] + cube[176:181] + [cube[12],cube[5]] + cube[183:188] + [cube[13],cube[6]] + cube[190:195] + [cube[14],cube[7],cube[203],cube[210],cube[217],cube[224],cube[231],cube[238],cube[245],cube[202],cube[209],cube[216],cube[223],cube[230],cube[237],cube[244],cube[201],cube[208],cube[215],cube[222],cube[229],cube[236],cube[243],cube[200],cube[207],cube[214],cube[221],cube[228],cube[235],cube[242],cube[199],cube[206],cube[213],cube[220],cube[227],cube[234],cube[241],cube[198],cube[205],cube[212],cube[219],cube[226],cube[233],cube[240],cube[197],cube[204],cube[211],cube[218],cube[225],cube[232],cube[239]] + cube[246:281] + [cube[195],cube[188],cube[181],cube[174],cube[167],cube[160],cube[153],cube[196],cube[189],cube[182],cube[175],cube[168],cube[161],cube[154]]
-
-def rotate_777_Bw2(cube):
-    return [cube[0],cube[294],cube[293],cube[292],cube[291],cube[290],cube[289],cube[288],cube[287],cube[286],cube[285],cube[284],cube[283],cube[282],cube[281]] + cube[15:50] + [cube[196],cube[195]] + cube[52:57] + [cube[189],cube[188]] + cube[59:64] + [cube[182],cube[181]] + cube[66:71] + [cube[175],cube[174]] + cube[73:78] + [cube[168],cube[167]] + cube[80:85] + [cube[161],cube[160]] + cube[87:92] + [cube[154],cube[153]] + cube[94:153] + [cube[93],cube[92]] + cube[155:160] + [cube[86],cube[85]] + cube[162:167] + [cube[79],cube[78]] + cube[169:174] + [cube[72],cube[71]] + cube[176:181] + [cube[65],cube[64]] + cube[183:188] + [cube[58],cube[57]] + cube[190:195] + [cube[51],cube[50],cube[245],cube[244],cube[243],cube[242],cube[241],cube[240],cube[239],cube[238],cube[237],cube[236],cube[235],cube[234],cube[233],cube[232],cube[231],cube[230],cube[229],cube[228],cube[227],cube[226],cube[225],cube[224],cube[223],cube[222],cube[221],cube[220],cube[219],cube[218],cube[217],cube[216],cube[215],cube[214],cube[213],cube[212],cube[211],cube[210],cube[209],cube[208],cube[207],cube[206],cube[205],cube[204],cube[203],cube[202],cube[201],cube[200],cube[199],cube[198],cube[197]] + cube[246:281] + [cube[14],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]]
-
-def rotate_777_3Bw(cube):
-    return [cube[0],cube[154],cube[161],cube[168],cube[175],cube[182],cube[189],cube[196],cube[153],cube[160],cube[167],cube[174],cube[181],cube[188],cube[195],cube[152],cube[159],cube[166],cube[173],cube[180],cube[187],cube[194]] + cube[22:50] + [cube[7],cube[14],cube[21]] + cube[53:57] + [cube[6],cube[13],cube[20]] + cube[60:64] + [cube[5],cube[12],cube[19]] + cube[67:71] + [cube[4],cube[11],cube[18]] + cube[74:78] + [cube[3],cube[10],cube[17]] + cube[81:85] + [cube[2],cube[9],cube[16]] + cube[88:92] + [cube[1],cube[8],cube[15]] + cube[95:152] + [cube[280],cube[287],cube[294]] + cube[155:159] + [cube[279],cube[286],cube[293]] + cube[162:166] + [cube[278],cube[285],cube[292]] + cube[169:173] + [cube[277],cube[284],cube[291]] + cube[176:180] + [cube[276],cube[283],cube[290]] + cube[183:187] + [cube[275],cube[282],cube[289]] + cube[190:194] + [cube[274],cube[281],cube[288],cube[239],cube[232],cube[225],cube[218],cube[211],cube[204],cube[197],cube[240],cube[233],cube[226],cube[219],cube[212],cube[205],cube[198],cube[241],cube[234],cube[227],cube[220],cube[213],cube[206],cube[199],cube[242],cube[235],cube[228],cube[221],cube[214],cube[207],cube[200],cube[243],cube[236],cube[229],cube[222],cube[215],cube[208],cube[201],cube[244],cube[237],cube[230],cube[223],cube[216],cube[209],cube[202],cube[245],cube[238],cube[231],cube[224],cube[217],cube[210],cube[203]] + cube[246:274] + [cube[52],cube[59],cube[66],cube[73],cube[80],cube[87],cube[94],cube[51],cube[58],cube[65],cube[72],cube[79],cube[86],cube[93],cube[50],cube[57],cube[64],cube[71],cube[78],cube[85],cube[92]]
-
-def rotate_777_3Bw_prime(cube):
-    return [cube[0],cube[92],cube[85],cube[78],cube[71],cube[64],cube[57],cube[50],cube[93],cube[86],cube[79],cube[72],cube[65],cube[58],cube[51],cube[94],cube[87],cube[80],cube[73],cube[66],cube[59],cube[52]] + cube[22:50] + [cube[288],cube[281],cube[274]] + cube[53:57] + [cube[289],cube[282],cube[275]] + cube[60:64] + [cube[290],cube[283],cube[276]] + cube[67:71] + [cube[291],cube[284],cube[277]] + cube[74:78] + [cube[292],cube[285],cube[278]] + cube[81:85] + [cube[293],cube[286],cube[279]] + cube[88:92] + [cube[294],cube[287],cube[280]] + cube[95:152] + [cube[15],cube[8],cube[1]] + cube[155:159] + [cube[16],cube[9],cube[2]] + cube[162:166] + [cube[17],cube[10],cube[3]] + cube[169:173] + [cube[18],cube[11],cube[4]] + cube[176:180] + [cube[19],cube[12],cube[5]] + cube[183:187] + [cube[20],cube[13],cube[6]] + cube[190:194] + [cube[21],cube[14],cube[7],cube[203],cube[210],cube[217],cube[224],cube[231],cube[238],cube[245],cube[202],cube[209],cube[216],cube[223],cube[230],cube[237],cube[244],cube[201],cube[208],cube[215],cube[222],cube[229],cube[236],cube[243],cube[200],cube[207],cube[214],cube[221],cube[228],cube[235],cube[242],cube[199],cube[206],cube[213],cube[220],cube[227],cube[234],cube[241],cube[198],cube[205],cube[212],cube[219],cube[226],cube[233],cube[240],cube[197],cube[204],cube[211],cube[218],cube[225],cube[232],cube[239]] + cube[246:274] + [cube[194],cube[187],cube[180],cube[173],cube[166],cube[159],cube[152],cube[195],cube[188],cube[181],cube[174],cube[167],cube[160],cube[153],cube[196],cube[189],cube[182],cube[175],cube[168],cube[161],cube[154]]
-
-def rotate_777_3Bw2(cube):
-    return [cube[0],cube[294],cube[293],cube[292],cube[291],cube[290],cube[289],cube[288],cube[287],cube[286],cube[285],cube[284],cube[283],cube[282],cube[281],cube[280],cube[279],cube[278],cube[277],cube[276],cube[275],cube[274]] + cube[22:50] + [cube[196],cube[195],cube[194]] + cube[53:57] + [cube[189],cube[188],cube[187]] + cube[60:64] + [cube[182],cube[181],cube[180]] + cube[67:71] + [cube[175],cube[174],cube[173]] + cube[74:78] + [cube[168],cube[167],cube[166]] + cube[81:85] + [cube[161],cube[160],cube[159]] + cube[88:92] + [cube[154],cube[153],cube[152]] + cube[95:152] + [cube[94],cube[93],cube[92]] + cube[155:159] + [cube[87],cube[86],cube[85]] + cube[162:166] + [cube[80],cube[79],cube[78]] + cube[169:173] + [cube[73],cube[72],cube[71]] + cube[176:180] + [cube[66],cube[65],cube[64]] + cube[183:187] + [cube[59],cube[58],cube[57]] + cube[190:194] + [cube[52],cube[51],cube[50],cube[245],cube[244],cube[243],cube[242],cube[241],cube[240],cube[239],cube[238],cube[237],cube[236],cube[235],cube[234],cube[233],cube[232],cube[231],cube[230],cube[229],cube[228],cube[227],cube[226],cube[225],cube[224],cube[223],cube[222],cube[221],cube[220],cube[219],cube[218],cube[217],cube[216],cube[215],cube[214],cube[213],cube[212],cube[211],cube[210],cube[209],cube[208],cube[207],cube[206],cube[205],cube[204],cube[203],cube[202],cube[201],cube[200],cube[199],cube[198],cube[197]] + cube[246:274] + [cube[21],cube[20],cube[19],cube[18],cube[17],cube[16],cube[15],cube[14],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1]]
-
-def rotate_777_D(cube):
-    return cube[0:92] + cube[239:246] + cube[99:141] + cube[92:99] + cube[148:190] + cube[141:148] + cube[197:239] + cube[190:197] + [cube[288],cube[281],cube[274],cube[267],cube[260],cube[253],cube[246],cube[289],cube[282],cube[275],cube[268],cube[261],cube[254],cube[247],cube[290],cube[283],cube[276],cube[269],cube[262],cube[255],cube[248],cube[291],cube[284],cube[277],cube[270],cube[263],cube[256],cube[249],cube[292],cube[285],cube[278],cube[271],cube[264],cube[257],cube[250],cube[293],cube[286],cube[279],cube[272],cube[265],cube[258],cube[251],cube[294],cube[287],cube[280],cube[273],cube[266],cube[259],cube[252]]
-
-def rotate_777_D_prime(cube):
-    return cube[0:92] + cube[141:148] + cube[99:141] + cube[190:197] + cube[148:190] + cube[239:246] + cube[197:239] + cube[92:99] + [cube[252],cube[259],cube[266],cube[273],cube[280],cube[287],cube[294],cube[251],cube[258],cube[265],cube[272],cube[279],cube[286],cube[293],cube[250],cube[257],cube[264],cube[271],cube[278],cube[285],cube[292],cube[249],cube[256],cube[263],cube[270],cube[277],cube[284],cube[291],cube[248],cube[255],cube[262],cube[269],cube[276],cube[283],cube[290],cube[247],cube[254],cube[261],cube[268],cube[275],cube[282],cube[289],cube[246],cube[253],cube[260],cube[267],cube[274],cube[281],cube[288]]
-
-def rotate_777_D2(cube):
-    return cube[0:92] + cube[190:197] + cube[99:141] + cube[239:246] + cube[148:190] + cube[92:99] + cube[197:239] + cube[141:148] + [cube[294],cube[293],cube[292],cube[291],cube[290],cube[289],cube[288],cube[287],cube[286],cube[285],cube[284],cube[283],cube[282],cube[281],cube[280],cube[279],cube[278],cube[277],cube[276],cube[275],cube[274],cube[273],cube[272],cube[271],cube[270],cube[269],cube[268],cube[267],cube[266],cube[265],cube[264],cube[263],cube[262],cube[261],cube[260],cube[259],cube[258],cube[257],cube[256],cube[255],cube[254],cube[253],cube[252],cube[251],cube[250],cube[249],cube[248],cube[247],cube[246]]
-
-def rotate_777_Dw(cube):
-    return cube[0:85] + cube[232:246] + cube[99:134] + cube[85:99] + cube[148:183] + cube[134:148] + cube[197:232] + cube[183:197] + [cube[288],cube[281],cube[274],cube[267],cube[260],cube[253],cube[246],cube[289],cube[282],cube[275],cube[268],cube[261],cube[254],cube[247],cube[290],cube[283],cube[276],cube[269],cube[262],cube[255],cube[248],cube[291],cube[284],cube[277],cube[270],cube[263],cube[256],cube[249],cube[292],cube[285],cube[278],cube[271],cube[264],cube[257],cube[250],cube[293],cube[286],cube[279],cube[272],cube[265],cube[258],cube[251],cube[294],cube[287],cube[280],cube[273],cube[266],cube[259],cube[252]]
-
-def rotate_777_Dw_prime(cube):
-    return cube[0:85] + cube[134:148] + cube[99:134] + cube[183:197] + cube[148:183] + cube[232:246] + cube[197:232] + cube[85:99] + [cube[252],cube[259],cube[266],cube[273],cube[280],cube[287],cube[294],cube[251],cube[258],cube[265],cube[272],cube[279],cube[286],cube[293],cube[250],cube[257],cube[264],cube[271],cube[278],cube[285],cube[292],cube[249],cube[256],cube[263],cube[270],cube[277],cube[284],cube[291],cube[248],cube[255],cube[262],cube[269],cube[276],cube[283],cube[290],cube[247],cube[254],cube[261],cube[268],cube[275],cube[282],cube[289],cube[246],cube[253],cube[260],cube[267],cube[274],cube[281],cube[288]]
-
-def rotate_777_Dw2(cube):
-    return cube[0:85] + cube[183:197] + cube[99:134] + cube[232:246] + cube[148:183] + cube[85:99] + cube[197:232] + cube[134:148] + [cube[294],cube[293],cube[292],cube[291],cube[290],cube[289],cube[288],cube[287],cube[286],cube[285],cube[284],cube[283],cube[282],cube[281],cube[280],cube[279],cube[278],cube[277],cube[276],cube[275],cube[274],cube[273],cube[272],cube[271],cube[270],cube[269],cube[268],cube[267],cube[266],cube[265],cube[264],cube[263],cube[262],cube[261],cube[260],cube[259],cube[258],cube[257],cube[256],cube[255],cube[254],cube[253],cube[252],cube[251],cube[250],cube[249],cube[248],cube[247],cube[246]]
-
-def rotate_777_3Dw(cube):
-    return cube[0:78] + cube[225:246] + cube[99:127] + cube[78:99] + cube[148:176] + cube[127:148] + cube[197:225] + cube[176:197] + [cube[288],cube[281],cube[274],cube[267],cube[260],cube[253],cube[246],cube[289],cube[282],cube[275],cube[268],cube[261],cube[254],cube[247],cube[290],cube[283],cube[276],cube[269],cube[262],cube[255],cube[248],cube[291],cube[284],cube[277],cube[270],cube[263],cube[256],cube[249],cube[292],cube[285],cube[278],cube[271],cube[264],cube[257],cube[250],cube[293],cube[286],cube[279],cube[272],cube[265],cube[258],cube[251],cube[294],cube[287],cube[280],cube[273],cube[266],cube[259],cube[252]]
-
-def rotate_777_3Dw_prime(cube):
-    return cube[0:78] + cube[127:148] + cube[99:127] + cube[176:197] + cube[148:176] + cube[225:246] + cube[197:225] + cube[78:99] + [cube[252],cube[259],cube[266],cube[273],cube[280],cube[287],cube[294],cube[251],cube[258],cube[265],cube[272],cube[279],cube[286],cube[293],cube[250],cube[257],cube[264],cube[271],cube[278],cube[285],cube[292],cube[249],cube[256],cube[263],cube[270],cube[277],cube[284],cube[291],cube[248],cube[255],cube[262],cube[269],cube[276],cube[283],cube[290],cube[247],cube[254],cube[261],cube[268],cube[275],cube[282],cube[289],cube[246],cube[253],cube[260],cube[267],cube[274],cube[281],cube[288]]
-
-def rotate_777_3Dw2(cube):
-    return cube[0:78] + cube[176:197] + cube[99:127] + cube[225:246] + cube[148:176] + cube[78:99] + cube[197:225] + cube[127:148] + [cube[294],cube[293],cube[292],cube[291],cube[290],cube[289],cube[288],cube[287],cube[286],cube[285],cube[284],cube[283],cube[282],cube[281],cube[280],cube[279],cube[278],cube[277],cube[276],cube[275],cube[274],cube[273],cube[272],cube[271],cube[270],cube[269],cube[268],cube[267],cube[266],cube[265],cube[264],cube[263],cube[262],cube[261],cube[260],cube[259],cube[258],cube[257],cube[256],cube[255],cube[254],cube[253],cube[252],cube[251],cube[250],cube[249],cube[248],cube[247],cube[246]]
-
-def rotate_777_x(cube):
-    return [cube[0]] + cube[99:148] + [cube[56],cube[63],cube[70],cube[77],cube[84],cube[91],cube[98],cube[55],cube[62],cube[69],cube[76],cube[83],cube[90],cube[97],cube[54],cube[61],cube[68],cube[75],cube[82],cube[89],cube[96],cube[53],cube[60],cube[67],cube[74],cube[81],cube[88],cube[95],cube[52],cube[59],cube[66],cube[73],cube[80],cube[87],cube[94],cube[51],cube[58],cube[65],cube[72],cube[79],cube[86],cube[93],cube[50],cube[57],cube[64],cube[71],cube[78],cube[85],cube[92]] + cube[246:295] + [cube[190],cube[183],cube[176],cube[169],cube[162],cube[155],cube[148],cube[191],cube[184],cube[177],cube[170],cube[163],cube[156],cube[149],cube[192],cube[185],cube[178],cube[171],cube[164],cube[157],cube[150],cube[193],cube[186],cube[179],cube[172],cube[165],cube[158],cube[151],cube[194],cube[187],cube[180],cube[173],cube[166],cube[159],cube[152],cube[195],cube[188],cube[181],cube[174],cube[167],cube[160],cube[153],cube[196],cube[189],cube[182],cube[175],cube[168],cube[161],cube[154],cube[49],cube[48],cube[47],cube[46],cube[45],cube[44],cube[43],cube[42],cube[41],cube[40],cube[39],cube[38],cube[37],cube[36],cube[35],cube[34],cube[33],cube[32],cube[31],cube[30],cube[29],cube[28],cube[27],cube[26],cube[25],cube[24],cube[23],cube[22],cube[21],cube[20],cube[19],cube[18],cube[17],cube[16],cube[15],cube[14],cube[13],cube[12],cube[11],cube[10],cube[9],cube[8],cube[7],cube[6],cube[5],cube[4],cube[3],cube[2],cube[1],cube[245],cube[244],cube[243],cube[242],cube[241],cube[240],cube[239],cube[238],cube[237],cube[236],cube[235],cube[234],cube[233],cube[232],cube[231],cube[230],cube[229],cube[228],cube[227],cube[226],cube[225],cube[224],cube[223],cube[222],cube[221],cube[220],cube[219],cube[218],cube[217],cube[216],cube[215],cube[214],cube[213],cube[212],cube[211],cube[210],cube[209],cube[208],cube[207],cube[206],cube[205],cube[204],cube[203],cube[202],cube[201],cube[200],cube[199],cube[198],cube[197]]
-
-def rotate_777_x_prime(cube):
-    return [cube[0],cube[245],cube[244],cube[243],cube[242],cube[241],cube[240],cube[239],cube[238],cube[237],cube[236],cube[235],cube[234],cube[233],cube[232],cube[231],cube[230],cube[229],cube[228],cube[227],cube[226],cube[225],cube[224],cube[223],cube[222],cube[221],cube[220],cube[219],cube[218],cube[217],cube[216],cube[215],cube[214],cube[213],cube[212],cube[211],cube[210],cube[209],cube[208],cube[207],cube[206],cube[205],cube[204],cube[203],cube[202],cube[201],cube[200],cube[199],cube[198],cube[197],cube[92],cube[85],cube[78],cube[71],cube[64],cube[57],cube[50],cube[93],cube[86],cube[79],cube[72],cube[65],cube[58],cube[51],cube[94],cube[87],cube[80],cube[73],cube[66],cube[59],cube[52],cube[95],cube[88],cube[81],cube[74],cube[67],cube[60],cube[53],cube[96],cube[89],cube[82],cube[75],cube[68],cube[61],cube[54],cube[97],cube[90],cube[83],cube[76],cube[69],cube[62],cube[55],cube[98],cube[91],cube[84],cube[77],cube[70],cube[63],cube[56]] + cube[1:50] + [cube[154],cube[161],cube[168],cube[175],cube[182],cube[189],cube[196],cube[153],cube[160],cube[167],cube[174],cube[181],cube[188],cube[195],cube[152],cube[159],cube[166],cube[173],cube[180],cube[187],cube[194],cube[151],cube[158],cube[165],cube[172],cube[179],cube[186],cube[193],cube[150],cube[157],cube[164],cube[171],cube[178],cube[185],cube[192],cube[149],cube[156],cube[163],cube[170],cube[177],cube[184],cube[191],cube[148],cube[155],cube[162],cube[169],cube[176],cube[183],cube[190],cube[294],cube[293],cube[292],cube[291],cube[290],cube[289],cube[288],cube[287],cube[286],cube[285],cube[284],cube[283],cube[282],cube[281],cube[280],cube[279],cube[278],cube[277],cube[276],cube[275],cube[274],cube[273],cube[272],cube[271],cube[270],cube[269],cube[268],cube[267],cube[266],cube[265],cube[264],cube[263],cube[262],cube[261],cube[260],cube[259],cube[258],cube[257],cube[256],cube[255],cube[254],cube[253],cube[252],cube[251],cube[250],cube[249],cube[248],cube[247],cube[246]] + cube[99:148]
-
-def rotate_777_y(cube):
-    return [cube[0],cube[43],cube[36],cube[29],cube[22],cube[15],cube[8],cube[1],cube[44],cube[37],cube[30],cube[23],cube[16],cube[9],cube[2],cube[45],cube[38],cube[31],cube[24],cube[17],cube[10],cube[3],cube[46],cube[39],cube[32],cube[25],cube[18],cube[11],cube[4],cube[47],cube[40],cube[33],cube[26],cube[19],cube[12],cube[5],cube[48],cube[41],cube[34],cube[27],cube[20],cube[13],cube[6],cube[49],cube[42],cube[35],cube[28],cube[21],cube[14],cube[7]] + cube[99:246] + cube[50:99] + [cube[252],cube[259],cube[266],cube[273],cube[280],cube[287],cube[294],cube[251],cube[258],cube[265],cube[272],cube[279],cube[286],cube[293],cube[250],cube[257],cube[264],cube[271],cube[278],cube[285],cube[292],cube[249],cube[256],cube[263],cube[270],cube[277],cube[284],cube[291],cube[248],cube[255],cube[262],cube[269],cube[276],cube[283],cube[290],cube[247],cube[254],cube[261],cube[268],cube[275],cube[282],cube[289],cube[246],cube[253],cube[260],cube[267],cube[274],cube[281],cube[288]]
-
-def rotate_777_y_prime(cube):
-    return [cube[0],cube[7],cube[14],cube[21],cube[28],cube[35],cube[42],cube[49],cube[6],cube[13],cube[20],cube[27],cube[34],cube[41],cube[48],cube[5],cube[12],cube[19],cube[26],cube[33],cube[40],cube[47],cube[4],cube[11],cube[18],cube[25],cube[32],cube[39],cube[46],cube[3],cube[10],cube[17],cube[24],cube[31],cube[38],cube[45],cube[2],cube[9],cube[16],cube[23],cube[30],cube[37],cube[44],cube[1],cube[8],cube[15],cube[22],cube[29],cube[36],cube[43]] + cube[197:246] + cube[50:197] + [cube[288],cube[281],cube[274],cube[267],cube[260],cube[253],cube[246],cube[289],cube[282],cube[275],cube[268],cube[261],cube[254],cube[247],cube[290],cube[283],cube[276],cube[269],cube[262],cube[255],cube[248],cube[291],cube[284],cube[277],cube[270],cube[263],cube[256],cube[249],cube[292],cube[285],cube[278],cube[271],cube[264],cube[257],cube[250],cube[293],cube[286],cube[279],cube[272],cube[265],cube[258],cube[251],cube[294],cube[287],cube[280],cube[273],cube[266],cube[259],cube[252]]
-
-def rotate_777_z(cube):
-    return [cube[0],cube[92],cube[85],cube[78],cube[71],cube[64],cube[57],cube[50],cube[93],cube[86],cube[79],cube[72],cube[65],cube[58],cube[51],cube[94],cube[87],cube[80],cube[73],cube[66],cube[59],cube[52],cube[95],cube[88],cube[81],cube[74],cube[67],cube[60],cube[53],cube[96],cube[89],cube[82],cube[75],cube[68],cube[61],cube[54],cube[97],cube[90],cube[83],cube[76],cube[69],cube[62],cube[55],cube[98],cube[91],cube[84],cube[77],cube[70],cube[63],cube[56],cube[288],cube[281],cube[274],cube[267],cube[260],cube[253],cube[246],cube[289],cube[282],cube[275],cube[268],cube[261],cube[254],cube[247],cube[290],cube[283],cube[276],cube[269],cube[262],cube[255],cube[248],cube[291],cube[284],cube[277],cube[270],cube[263],cube[256],cube[249],cube[292],cube[285],cube[278],cube[271],cube[264],cube[257],cube[250],cube[293],cube[286],cube[279],cube[272],cube[265],cube[258],cube[251],cube[294],cube[287],cube[280],cube[273],cube[266],cube[259],cube[252],cube[141],cube[134],cube[127],cube[120],cube[113],cube[106],cube[99],cube[142],cube[135],cube[128],cube[121],cube[114],cube[107],cube[100],cube[143],cube[136],cube[129],cube[122],cube[115],cube[108],cube[101],cube[144],cube[137],cube[130],cube[123],cube[116],cube[109],cube[102],cube[145],cube[138],cube[131],cube[124],cube[117],cube[110],cube[103],cube[146],cube[139],cube[132],cube[125],cube[118],cube[111],cube[104],cube[147],cube[140],cube[133],cube[126],cube[119],cube[112],cube[105],cube[43],cube[36],cube[29],cube[22],cube[15],cube[8],cube[1],cube[44],cube[37],cube[30],cube[23],cube[16],cube[9],cube[2],cube[45],cube[38],cube[31],cube[24],cube[17],cube[10],cube[3],cube[46],cube[39],cube[32],cube[25],cube[18],cube[11],cube[4],cube[47],cube[40],cube[33],cube[26],cube[19],cube[12],cube[5],cube[48],cube[41],cube[34],cube[27],cube[20],cube[13],cube[6],cube[49],cube[42],cube[35],cube[28],cube[21],cube[14],cube[7],cube[203],cube[210],cube[217],cube[224],cube[231],cube[238],cube[245],cube[202],cube[209],cube[216],cube[223],cube[230],cube[237],cube[244],cube[201],cube[208],cube[215],cube[222],cube[229],cube[236],cube[243],cube[200],cube[207],cube[214],cube[221],cube[228],cube[235],cube[242],cube[199],cube[206],cube[213],cube[220],cube[227],cube[234],cube[241],cube[198],cube[205],cube[212],cube[219],cube[226],cube[233],cube[240],cube[197],cube[204],cube[211],cube[218],cube[225],cube[232],cube[239],cube[190],cube[183],cube[176],cube[169],cube[162],cube[155],cube[148],cube[191],cube[184],cube[177],cube[170],cube[163],cube[156],cube[149],cube[192],cube[185],cube[178],cube[171],cube[164],cube[157],cube[150],cube[193],cube[186],cube[179],cube[172],cube[165],cube[158],cube[151],cube[194],cube[187],cube[180],cube[173],cube[166],cube[159],cube[152],cube[195],cube[188],cube[181],cube[174],cube[167],cube[160],cube[153],cube[196],cube[189],cube[182],cube[175],cube[168],cube[161],cube[154]]
-
-def rotate_777_z_prime(cube):
-    return [cube[0],cube[154],cube[161],cube[168],cube[175],cube[182],cube[189],cube[196],cube[153],cube[160],cube[167],cube[174],cube[181],cube[188],cube[195],cube[152],cube[159],cube[166],cube[173],cube[180],cube[187],cube[194],cube[151],cube[158],cube[165],cube[172],cube[179],cube[186],cube[193],cube[150],cube[157],cube[164],cube[171],cube[178],cube[185],cube[192],cube[149],cube[156],cube[163],cube[170],cube[177],cube[184],cube[191],cube[148],cube[155],cube[162],cube[169],cube[176],cube[183],cube[190],cube[7],cube[14],cube[21],cube[28],cube[35],cube[42],cube[49],cube[6],cube[13],cube[20],cube[27],cube[34],cube[41],cube[48],cube[5],cube[12],cube[19],cube[26],cube[33],cube[40],cube[47],cube[4],cube[11],cube[18],cube[25],cube[32],cube[39],cube[46],cube[3],cube[10],cube[17],cube[24],cube[31],cube[38],cube[45],cube[2],cube[9],cube[16],cube[23],cube[30],cube[37],cube[44],cube[1],cube[8],cube[15],cube[22],cube[29],cube[36],cube[43],cube[105],cube[112],cube[119],cube[126],cube[133],cube[140],cube[147],cube[104],cube[111],cube[118],cube[125],cube[132],cube[139],cube[146],cube[103],cube[110],cube[117],cube[124],cube[131],cube[138],cube[145],cube[102],cube[109],cube[116],cube[123],cube[130],cube[137],cube[144],cube[101],cube[108],cube[115],cube[122],cube[129],cube[136],cube[143],cube[100],cube[107],cube[114],cube[121],cube[128],cube[135],cube[142],cube[99],cube[106],cube[113],cube[120],cube[127],cube[134],cube[141],cube[252],cube[259],cube[266],cube[273],cube[280],cube[287],cube[294],cube[251],cube[258],cube[265],cube[272],cube[279],cube[286],cube[293],cube[250],cube[257],cube[264],cube[271],cube[278],cube[285],cube[292],cube[249],cube[256],cube[263],cube[270],cube[277],cube[284],cube[291],cube[248],cube[255],cube[262],cube[269],cube[276],cube[283],cube[290],cube[247],cube[254],cube[261],cube[268],cube[275],cube[282],cube[289],cube[246],cube[253],cube[260],cube[267],cube[274],cube[281],cube[288],cube[239],cube[232],cube[225],cube[218],cube[211],cube[204],cube[197],cube[240],cube[233],cube[226],cube[219],cube[212],cube[205],cube[198],cube[241],cube[234],cube[227],cube[220],cube[213],cube[206],cube[199],cube[242],cube[235],cube[228],cube[221],cube[214],cube[207],cube[200],cube[243],cube[236],cube[229],cube[222],cube[215],cube[208],cube[201],cube[244],cube[237],cube[230],cube[223],cube[216],cube[209],cube[202],cube[245],cube[238],cube[231],cube[224],cube[217],cube[210],cube[203],cube[56],cube[63],cube[70],cube[77],cube[84],cube[91],cube[98],cube[55],cube[62],cube[69],cube[76],cube[83],cube[90],cube[97],cube[54],cube[61],cube[68],cube[75],cube[82],cube[89],cube[96],cube[53],cube[60],cube[67],cube[74],cube[81],cube[88],cube[95],cube[52],cube[59],cube[66],cube[73],cube[80],cube[87],cube[94],cube[51],cube[58],cube[65],cube[72],cube[79],cube[86],cube[93],cube[50],cube[57],cube[64],cube[71],cube[78],cube[85],cube[92]]
-
-rotate_mapper_777 = {
-    "3Bw" : rotate_777_3Bw,
-    "3Bw'" : rotate_777_3Bw_prime,
-    "3Bw2" : rotate_777_3Bw2,
-    "3Dw" : rotate_777_3Dw,
-    "3Dw'" : rotate_777_3Dw_prime,
-    "3Dw2" : rotate_777_3Dw2,
-    "3Fw" : rotate_777_3Fw,
-    "3Fw'" : rotate_777_3Fw_prime,
-    "3Fw2" : rotate_777_3Fw2,
-    "3Lw" : rotate_777_3Lw,
-    "3Lw'" : rotate_777_3Lw_prime,
-    "3Lw2" : rotate_777_3Lw2,
-    "3Rw" : rotate_777_3Rw,
-    "3Rw'" : rotate_777_3Rw_prime,
-    "3Rw2" : rotate_777_3Rw2,
-    "3Uw" : rotate_777_3Uw,
-    "3Uw'" : rotate_777_3Uw_prime,
-    "3Uw2" : rotate_777_3Uw2,
-    "B" : rotate_777_B,
-    "B'" : rotate_777_B_prime,
-    "B2" : rotate_777_B2,
-    "Bw" : rotate_777_Bw,
-    "Bw'" : rotate_777_Bw_prime,
-    "Bw2" : rotate_777_Bw2,
-    "D" : rotate_777_D,
-    "D'" : rotate_777_D_prime,
-    "D2" : rotate_777_D2,
-    "Dw" : rotate_777_Dw,
-    "Dw'" : rotate_777_Dw_prime,
-    "Dw2" : rotate_777_Dw2,
-    "F" : rotate_777_F,
-    "F'" : rotate_777_F_prime,
-    "F2" : rotate_777_F2,
-    "Fw" : rotate_777_Fw,
-    "Fw'" : rotate_777_Fw_prime,
-    "Fw2" : rotate_777_Fw2,
-    "L" : rotate_777_L,
-    "L'" : rotate_777_L_prime,
-    "L2" : rotate_777_L2,
-    "Lw" : rotate_777_Lw,
-    "Lw'" : rotate_777_Lw_prime,
-    "Lw2" : rotate_777_Lw2,
-    "R" : rotate_777_R,
-    "R'" : rotate_777_R_prime,
-    "R2" : rotate_777_R2,
-    "Rw" : rotate_777_Rw,
-    "Rw'" : rotate_777_Rw_prime,
-    "Rw2" : rotate_777_Rw2,
-    "U" : rotate_777_U,
-    "U'" : rotate_777_U_prime,
-    "U2" : rotate_777_U2,
-    "Uw" : rotate_777_Uw,
-    "Uw'" : rotate_777_Uw_prime,
-    "Uw2" : rotate_777_Uw2,
-    "x" : rotate_777_x,
-    "x'" : rotate_777_x_prime,
-    "y" : rotate_777_y,
-    "y'" : rotate_777_y_prime,
-    "z" : rotate_777_z,
-    "z'" : rotate_777_z_prime,
+        log.info("kociemba: %s" % self.get_kociemba_string(True))
+        log.info("%s: LR centers horizontal bars, UD centers vertical bars, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+        # Test the pruning tables
+        #self.lt_step61.solve()
+        #self.lt_step62.solve()
+        #self.print_cube()
+        #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        #sys.exit(0)
+
+        self.lt_step60.solve()
+        self.print_cube()
+        log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+
+swaps_777 = {'3Bw': (0, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 7, 14, 21, 53, 54, 55, 56, 6, 13, 20, 60, 61, 62, 63, 5, 12, 19, 67, 68, 69, 70, 4, 11, 18, 74, 75, 76, 77, 3, 10, 17, 81, 82, 83, 84, 2, 9, 16, 88, 89, 90, 91, 1, 8, 15, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 280, 287, 294, 155, 156, 157, 158, 279, 286, 293, 162, 163, 164, 165, 278, 285, 292, 169, 170, 171, 172, 277, 284, 291, 176, 177, 178, 179, 276, 283, 290, 183, 184, 185, 186, 275, 282, 289, 190, 191, 192, 193, 274, 281, 288, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92),
+ "3Bw'": (0, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 288, 281, 274, 53, 54, 55, 56, 289, 282, 275, 60, 61, 62, 63, 290, 283, 276, 67, 68, 69, 70, 291, 284, 277, 74, 75, 76, 77, 292, 285, 278, 81, 82, 83, 84, 293, 286, 279, 88, 89, 90, 91, 294, 287, 280, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 15, 8, 1, 155, 156, 157, 158, 16, 9, 2, 162, 163, 164, 165, 17, 10, 3, 169, 170, 171, 172, 18, 11, 4, 176, 177, 178, 179, 19, 12, 5, 183, 184, 185, 186, 20, 13, 6, 190, 191, 192, 193, 21, 14, 7, 203, 210, 217, 224, 231, 238, 245, 202, 209, 216, 223, 230, 237, 244, 201, 208, 215, 222, 229, 236, 243, 200, 207, 214, 221, 228, 235, 242, 199, 206, 213, 220, 227, 234, 241, 198, 205, 212, 219, 226, 233, 240, 197, 204, 211, 218, 225, 232, 239, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154),
+ '3Bw2': (0, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 196, 195, 194, 53, 54, 55, 56, 189, 188, 187, 60, 61, 62, 63, 182, 181, 180, 67, 68, 69, 70, 175, 174, 173, 74, 75, 76, 77, 168, 167, 166, 81, 82, 83, 84, 161, 160, 159, 88, 89, 90, 91, 154, 153, 152, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 94, 93, 92, 155, 156, 157, 158, 87, 86, 85, 162, 163, 164, 165, 80, 79, 78, 169, 170, 171, 172, 73, 72, 71, 176, 177, 178, 179, 66, 65, 64, 183, 184, 185, 186, 59, 58, 57, 190, 191, 192, 193, 52, 51, 50, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1),
+ '3Dw': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 288, 281, 274, 267, 260, 253, 246, 289, 282, 275, 268, 261, 254, 247, 290, 283, 276, 269, 262, 255, 248, 291, 284, 277, 270, 263, 256, 249, 292, 285, 278, 271, 264, 257, 250, 293, 286, 279, 272, 265, 258, 251, 294, 287, 280, 273, 266, 259, 252),
+ "3Dw'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 252, 259, 266, 273, 280, 287, 294, 251, 258, 265, 272, 279, 286, 293, 250, 257, 264, 271, 278, 285, 292, 249, 256, 263, 270, 277, 284, 291, 248, 255, 262, 269, 276, 283, 290, 247, 254, 261, 268, 275, 282, 289, 246, 253, 260, 267, 274, 281, 288),
+ '3Dw2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246),
+ '3Fw': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56, 50, 51, 52, 53, 260, 253, 246, 57, 58, 59, 60, 261, 254, 247, 64, 65, 66, 67, 262, 255, 248, 71, 72, 73, 74, 263, 256, 249, 78, 79, 80, 81, 264, 257, 250, 85, 86, 87, 88, 265, 258, 251, 92, 93, 94, 95, 266, 259, 252, 141, 134, 127, 120, 113, 106, 99, 142, 135, 128, 121, 114, 107, 100, 143, 136, 129, 122, 115, 108, 101, 144, 137, 130, 123, 116, 109, 102, 145, 138, 131, 124, 117, 110, 103, 146, 139, 132, 125, 118, 111, 104, 147, 140, 133, 126, 119, 112, 105, 43, 36, 29, 151, 152, 153, 154, 44, 37, 30, 158, 159, 160, 161, 45, 38, 31, 165, 166, 167, 168, 46, 39, 32, 172, 173, 174, 175, 47, 40, 33, 179, 180, 181, 182, 48, 41, 34, 186, 187, 188, 189, 49, 42, 35, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ "3Fw'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190, 50, 51, 52, 53, 35, 42, 49, 57, 58, 59, 60, 34, 41, 48, 64, 65, 66, 67, 33, 40, 47, 71, 72, 73, 74, 32, 39, 46, 78, 79, 80, 81, 31, 38, 45, 85, 86, 87, 88, 30, 37, 44, 92, 93, 94, 95, 29, 36, 43, 105, 112, 119, 126, 133, 140, 147, 104, 111, 118, 125, 132, 139, 146, 103, 110, 117, 124, 131, 138, 145, 102, 109, 116, 123, 130, 137, 144, 101, 108, 115, 122, 129, 136, 143, 100, 107, 114, 121, 128, 135, 142, 99, 106, 113, 120, 127, 134, 141, 252, 259, 266, 151, 152, 153, 154, 251, 258, 265, 158, 159, 160, 161, 250, 257, 264, 165, 166, 167, 168, 249, 256, 263, 172, 173, 174, 175, 248, 255, 262, 179, 180, 181, 182, 247, 254, 261, 186, 187, 188, 189, 246, 253, 260, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ '3Fw2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246, 50, 51, 52, 53, 192, 191, 190, 57, 58, 59, 60, 185, 184, 183, 64, 65, 66, 67, 178, 177, 176, 71, 72, 73, 74, 171, 170, 169, 78, 79, 80, 81, 164, 163, 162, 85, 86, 87, 88, 157, 156, 155, 92, 93, 94, 95, 150, 149, 148, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 151, 152, 153, 154, 91, 90, 89, 158, 159, 160, 161, 84, 83, 82, 165, 166, 167, 168, 77, 76, 75, 172, 173, 174, 175, 70, 69, 68, 179, 180, 181, 182, 63, 62, 61, 186, 187, 188, 189, 56, 55, 54, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ '3Lw': (0, 245, 244, 243, 4, 5, 6, 7, 238, 237, 236, 11, 12, 13, 14, 231, 230, 229, 18, 19, 20, 21, 224, 223, 222, 25, 26, 27, 28, 217, 216, 215, 32, 33, 34, 35, 210, 209, 208, 39, 40, 41, 42, 203, 202, 201, 46, 47, 48, 49, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 95, 88, 81, 74, 67, 60, 53, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56, 1, 2, 3, 102, 103, 104, 105, 8, 9, 10, 109, 110, 111, 112, 15, 16, 17, 116, 117, 118, 119, 22, 23, 24, 123, 124, 125, 126, 29, 30, 31, 130, 131, 132, 133, 36, 37, 38, 137, 138, 139, 140, 43, 44, 45, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 290, 289, 288, 204, 205, 206, 207, 283, 282, 281, 211, 212, 213, 214, 276, 275, 274, 218, 219, 220, 221, 269, 268, 267, 225, 226, 227, 228, 262, 261, 260, 232, 233, 234, 235, 255, 254, 253, 239, 240, 241, 242, 248, 247, 246, 99, 100, 101, 249, 250, 251, 252, 106, 107, 108, 256, 257, 258, 259, 113, 114, 115, 263, 264, 265, 266, 120, 121, 122, 270, 271, 272, 273, 127, 128, 129, 277, 278, 279, 280, 134, 135, 136, 284, 285, 286, 287, 141, 142, 143, 291, 292, 293, 294),
+ "3Lw'": (0, 99, 100, 101, 4, 5, 6, 7, 106, 107, 108, 11, 12, 13, 14, 113, 114, 115, 18, 19, 20, 21, 120, 121, 122, 25, 26, 27, 28, 127, 128, 129, 32, 33, 34, 35, 134, 135, 136, 39, 40, 41, 42, 141, 142, 143, 46, 47, 48, 49, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 53, 60, 67, 74, 81, 88, 95, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92, 246, 247, 248, 102, 103, 104, 105, 253, 254, 255, 109, 110, 111, 112, 260, 261, 262, 116, 117, 118, 119, 267, 268, 269, 123, 124, 125, 126, 274, 275, 276, 130, 131, 132, 133, 281, 282, 283, 137, 138, 139, 140, 288, 289, 290, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 45, 44, 43, 204, 205, 206, 207, 38, 37, 36, 211, 212, 213, 214, 31, 30, 29, 218, 219, 220, 221, 24, 23, 22, 225, 226, 227, 228, 17, 16, 15, 232, 233, 234, 235, 10, 9, 8, 239, 240, 241, 242, 3, 2, 1, 245, 244, 243, 249, 250, 251, 252, 238, 237, 236, 256, 257, 258, 259, 231, 230, 229, 263, 264, 265, 266, 224, 223, 222, 270, 271, 272, 273, 217, 216, 215, 277, 278, 279, 280, 210, 209, 208, 284, 285, 286, 287, 203, 202, 201, 291, 292, 293, 294),
+ '3Lw2': (0, 246, 247, 248, 4, 5, 6, 7, 253, 254, 255, 11, 12, 13, 14, 260, 261, 262, 18, 19, 20, 21, 267, 268, 269, 25, 26, 27, 28, 274, 275, 276, 32, 33, 34, 35, 281, 282, 283, 39, 40, 41, 42, 288, 289, 290, 46, 47, 48, 49, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 245, 244, 243, 102, 103, 104, 105, 238, 237, 236, 109, 110, 111, 112, 231, 230, 229, 116, 117, 118, 119, 224, 223, 222, 123, 124, 125, 126, 217, 216, 215, 130, 131, 132, 133, 210, 209, 208, 137, 138, 139, 140, 203, 202, 201, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 143, 142, 141, 204, 205, 206, 207, 136, 135, 134, 211, 212, 213, 214, 129, 128, 127, 218, 219, 220, 221, 122, 121, 120, 225, 226, 227, 228, 115, 114, 113, 232, 233, 234, 235, 108, 107, 106, 239, 240, 241, 242, 101, 100, 99, 1, 2, 3, 249, 250, 251, 252, 8, 9, 10, 256, 257, 258, 259, 15, 16, 17, 263, 264, 265, 266, 22, 23, 24, 270, 271, 272, 273, 29, 30, 31, 277, 278, 279, 280, 36, 37, 38, 284, 285, 286, 287, 43, 44, 45, 291, 292, 293, 294),
+ '3Rw': (0, 1, 2, 3, 4, 103, 104, 105, 8, 9, 10, 11, 110, 111, 112, 15, 16, 17, 18, 117, 118, 119, 22, 23, 24, 25, 124, 125, 126, 29, 30, 31, 32, 131, 132, 133, 36, 37, 38, 39, 138, 139, 140, 43, 44, 45, 46, 145, 146, 147, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 250, 251, 252, 106, 107, 108, 109, 257, 258, 259, 113, 114, 115, 116, 264, 265, 266, 120, 121, 122, 123, 271, 272, 273, 127, 128, 129, 130, 278, 279, 280, 134, 135, 136, 137, 285, 286, 287, 141, 142, 143, 144, 292, 293, 294, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 193, 186, 179, 172, 165, 158, 151, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154, 49, 48, 47, 200, 201, 202, 203, 42, 41, 40, 207, 208, 209, 210, 35, 34, 33, 214, 215, 216, 217, 28, 27, 26, 221, 222, 223, 224, 21, 20, 19, 228, 229, 230, 231, 14, 13, 12, 235, 236, 237, 238, 7, 6, 5, 242, 243, 244, 245, 246, 247, 248, 249, 241, 240, 239, 253, 254, 255, 256, 234, 233, 232, 260, 261, 262, 263, 227, 226, 225, 267, 268, 269, 270, 220, 219, 218, 274, 275, 276, 277, 213, 212, 211, 281, 282, 283, 284, 206, 205, 204, 288, 289, 290, 291, 199, 198, 197),
+ "3Rw'": (0, 1, 2, 3, 4, 241, 240, 239, 8, 9, 10, 11, 234, 233, 232, 15, 16, 17, 18, 227, 226, 225, 22, 23, 24, 25, 220, 219, 218, 29, 30, 31, 32, 213, 212, 211, 36, 37, 38, 39, 206, 205, 204, 43, 44, 45, 46, 199, 198, 197, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 5, 6, 7, 106, 107, 108, 109, 12, 13, 14, 113, 114, 115, 116, 19, 20, 21, 120, 121, 122, 123, 26, 27, 28, 127, 128, 129, 130, 33, 34, 35, 134, 135, 136, 137, 40, 41, 42, 141, 142, 143, 144, 47, 48, 49, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 151, 158, 165, 172, 179, 186, 193, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190, 294, 293, 292, 200, 201, 202, 203, 287, 286, 285, 207, 208, 209, 210, 280, 279, 278, 214, 215, 216, 217, 273, 272, 271, 221, 222, 223, 224, 266, 265, 264, 228, 229, 230, 231, 259, 258, 257, 235, 236, 237, 238, 252, 251, 250, 242, 243, 244, 245, 246, 247, 248, 249, 103, 104, 105, 253, 254, 255, 256, 110, 111, 112, 260, 261, 262, 263, 117, 118, 119, 267, 268, 269, 270, 124, 125, 126, 274, 275, 276, 277, 131, 132, 133, 281, 282, 283, 284, 138, 139, 140, 288, 289, 290, 291, 145, 146, 147),
+ '3Rw2': (0, 1, 2, 3, 4, 250, 251, 252, 8, 9, 10, 11, 257, 258, 259, 15, 16, 17, 18, 264, 265, 266, 22, 23, 24, 25, 271, 272, 273, 29, 30, 31, 32, 278, 279, 280, 36, 37, 38, 39, 285, 286, 287, 43, 44, 45, 46, 292, 293, 294, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 241, 240, 239, 106, 107, 108, 109, 234, 233, 232, 113, 114, 115, 116, 227, 226, 225, 120, 121, 122, 123, 220, 219, 218, 127, 128, 129, 130, 213, 212, 211, 134, 135, 136, 137, 206, 205, 204, 141, 142, 143, 144, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 200, 201, 202, 203, 140, 139, 138, 207, 208, 209, 210, 133, 132, 131, 214, 215, 216, 217, 126, 125, 124, 221, 222, 223, 224, 119, 118, 117, 228, 229, 230, 231, 112, 111, 110, 235, 236, 237, 238, 105, 104, 103, 242, 243, 244, 245, 246, 247, 248, 249, 5, 6, 7, 253, 254, 255, 256, 12, 13, 14, 260, 261, 262, 263, 19, 20, 21, 267, 268, 269, 270, 26, 27, 28, 274, 275, 276, 277, 33, 34, 35, 281, 282, 283, 284, 40, 41, 42, 288, 289, 290, 291, 47, 48, 49),
+ '3Uw': (0, 43, 36, 29, 22, 15, 8, 1, 44, 37, 30, 23, 16, 9, 2, 45, 38, 31, 24, 17, 10, 3, 46, 39, 32, 25, 18, 11, 4, 47, 40, 33, 26, 19, 12, 5, 48, 41, 34, 27, 20, 13, 6, 49, 42, 35, 28, 21, 14, 7, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ "3Uw'": (0, 7, 14, 21, 28, 35, 42, 49, 6, 13, 20, 27, 34, 41, 48, 5, 12, 19, 26, 33, 40, 47, 4, 11, 18, 25, 32, 39, 46, 3, 10, 17, 24, 31, 38, 45, 2, 9, 16, 23, 30, 37, 44, 1, 8, 15, 22, 29, 36, 43, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ '3Uw2': (0, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ 'B': (0, 154, 161, 168, 175, 182, 189, 196, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 7, 51, 52, 53, 54, 55, 56, 6, 58, 59, 60, 61, 62, 63, 5, 65, 66, 67, 68, 69, 70, 4, 72, 73, 74, 75, 76, 77, 3, 79, 80, 81, 82, 83, 84, 2, 86, 87, 88, 89, 90, 91, 1, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 294, 155, 156, 157, 158, 159, 160, 293, 162, 163, 164, 165, 166, 167, 292, 169, 170, 171, 172, 173, 174, 291, 176, 177, 178, 179, 180, 181, 290, 183, 184, 185, 186, 187, 188, 289, 190, 191, 192, 193, 194, 195, 288, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 50, 57, 64, 71, 78, 85, 92),
+ "B'": (0, 92, 85, 78, 71, 64, 57, 50, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 288, 51, 52, 53, 54, 55, 56, 289, 58, 59, 60, 61, 62, 63, 290, 65, 66, 67, 68, 69, 70, 291, 72, 73, 74, 75, 76, 77, 292, 79, 80, 81, 82, 83, 84, 293, 86, 87, 88, 89, 90, 91, 294, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 1, 155, 156, 157, 158, 159, 160, 2, 162, 163, 164, 165, 166, 167, 3, 169, 170, 171, 172, 173, 174, 4, 176, 177, 178, 179, 180, 181, 5, 183, 184, 185, 186, 187, 188, 6, 190, 191, 192, 193, 194, 195, 7, 203, 210, 217, 224, 231, 238, 245, 202, 209, 216, 223, 230, 237, 244, 201, 208, 215, 222, 229, 236, 243, 200, 207, 214, 221, 228, 235, 242, 199, 206, 213, 220, 227, 234, 241, 198, 205, 212, 219, 226, 233, 240, 197, 204, 211, 218, 225, 232, 239, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 196, 189, 182, 175, 168, 161, 154),
+ 'B2': (0, 294, 293, 292, 291, 290, 289, 288, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 196, 51, 52, 53, 54, 55, 56, 189, 58, 59, 60, 61, 62, 63, 182, 65, 66, 67, 68, 69, 70, 175, 72, 73, 74, 75, 76, 77, 168, 79, 80, 81, 82, 83, 84, 161, 86, 87, 88, 89, 90, 91, 154, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 92, 155, 156, 157, 158, 159, 160, 85, 162, 163, 164, 165, 166, 167, 78, 169, 170, 171, 172, 173, 174, 71, 176, 177, 178, 179, 180, 181, 64, 183, 184, 185, 186, 187, 188, 57, 190, 191, 192, 193, 194, 195, 50, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 7, 6, 5, 4, 3, 2, 1),
+ 'Bw': (0, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 7, 14, 52, 53, 54, 55, 56, 6, 13, 59, 60, 61, 62, 63, 5, 12, 66, 67, 68, 69, 70, 4, 11, 73, 74, 75, 76, 77, 3, 10, 80, 81, 82, 83, 84, 2, 9, 87, 88, 89, 90, 91, 1, 8, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 287, 294, 155, 156, 157, 158, 159, 286, 293, 162, 163, 164, 165, 166, 285, 292, 169, 170, 171, 172, 173, 284, 291, 176, 177, 178, 179, 180, 283, 290, 183, 184, 185, 186, 187, 282, 289, 190, 191, 192, 193, 194, 281, 288, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92),
+ "Bw'": (0, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 288, 281, 52, 53, 54, 55, 56, 289, 282, 59, 60, 61, 62, 63, 290, 283, 66, 67, 68, 69, 70, 291, 284, 73, 74, 75, 76, 77, 292, 285, 80, 81, 82, 83, 84, 293, 286, 87, 88, 89, 90, 91, 294, 287, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 8, 1, 155, 156, 157, 158, 159, 9, 2, 162, 163, 164, 165, 166, 10, 3, 169, 170, 171, 172, 173, 11, 4, 176, 177, 178, 179, 180, 12, 5, 183, 184, 185, 186, 187, 13, 6, 190, 191, 192, 193, 194, 14, 7, 203, 210, 217, 224, 231, 238, 245, 202, 209, 216, 223, 230, 237, 244, 201, 208, 215, 222, 229, 236, 243, 200, 207, 214, 221, 228, 235, 242, 199, 206, 213, 220, 227, 234, 241, 198, 205, 212, 219, 226, 233, 240, 197, 204, 211, 218, 225, 232, 239, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154),
+ 'Bw2': (0, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 196, 195, 52, 53, 54, 55, 56, 189, 188, 59, 60, 61, 62, 63, 182, 181, 66, 67, 68, 69, 70, 175, 174, 73, 74, 75, 76, 77, 168, 167, 80, 81, 82, 83, 84, 161, 160, 87, 88, 89, 90, 91, 154, 153, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 93, 92, 155, 156, 157, 158, 159, 86, 85, 162, 163, 164, 165, 166, 79, 78, 169, 170, 171, 172, 173, 72, 71, 176, 177, 178, 179, 180, 65, 64, 183, 184, 185, 186, 187, 58, 57, 190, 191, 192, 193, 194, 51, 50, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1),
+ 'D': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 239, 240, 241, 242, 243, 244, 245, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 92, 93, 94, 95, 96, 97, 98, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 141, 142, 143, 144, 145, 146, 147, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 190, 191, 192, 193, 194, 195, 196, 288, 281, 274, 267, 260, 253, 246, 289, 282, 275, 268, 261, 254, 247, 290, 283, 276, 269, 262, 255, 248, 291, 284, 277, 270, 263, 256, 249, 292, 285, 278, 271, 264, 257, 250, 293, 286, 279, 272, 265, 258, 251, 294, 287, 280, 273, 266, 259, 252),
+ "D'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 141, 142, 143, 144, 145, 146, 147, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 190, 191, 192, 193, 194, 195, 196, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 239, 240, 241, 242, 243, 244, 245, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 92, 93, 94, 95, 96, 97, 98, 252, 259, 266, 273, 280, 287, 294, 251, 258, 265, 272, 279, 286, 293, 250, 257, 264, 271, 278, 285, 292, 249, 256, 263, 270, 277, 284, 291, 248, 255, 262, 269, 276, 283, 290, 247, 254, 261, 268, 275, 282, 289, 246, 253, 260, 267, 274, 281, 288),
+ 'D2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 190, 191, 192, 193, 194, 195, 196, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 239, 240, 241, 242, 243, 244, 245, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 92, 93, 94, 95, 96, 97, 98, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 141, 142, 143, 144, 145, 146, 147, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246),
+ 'Dw': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 288, 281, 274, 267, 260, 253, 246, 289, 282, 275, 268, 261, 254, 247, 290, 283, 276, 269, 262, 255, 248, 291, 284, 277, 270, 263, 256, 249, 292, 285, 278, 271, 264, 257, 250, 293, 286, 279, 272, 265, 258, 251, 294, 287, 280, 273, 266, 259, 252),
+ "Dw'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 252, 259, 266, 273, 280, 287, 294, 251, 258, 265, 272, 279, 286, 293, 250, 257, 264, 271, 278, 285, 292, 249, 256, 263, 270, 277, 284, 291, 248, 255, 262, 269, 276, 283, 290, 247, 254, 261, 268, 275, 282, 289, 246, 253, 260, 267, 274, 281, 288),
+ 'Dw2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246),
+ 'F': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 98, 91, 84, 77, 70, 63, 56, 50, 51, 52, 53, 54, 55, 246, 57, 58, 59, 60, 61, 62, 247, 64, 65, 66, 67, 68, 69, 248, 71, 72, 73, 74, 75, 76, 249, 78, 79, 80, 81, 82, 83, 250, 85, 86, 87, 88, 89, 90, 251, 92, 93, 94, 95, 96, 97, 252, 141, 134, 127, 120, 113, 106, 99, 142, 135, 128, 121, 114, 107, 100, 143, 136, 129, 122, 115, 108, 101, 144, 137, 130, 123, 116, 109, 102, 145, 138, 131, 124, 117, 110, 103, 146, 139, 132, 125, 118, 111, 104, 147, 140, 133, 126, 119, 112, 105, 43, 149, 150, 151, 152, 153, 154, 44, 156, 157, 158, 159, 160, 161, 45, 163, 164, 165, 166, 167, 168, 46, 170, 171, 172, 173, 174, 175, 47, 177, 178, 179, 180, 181, 182, 48, 184, 185, 186, 187, 188, 189, 49, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 190, 183, 176, 169, 162, 155, 148, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ "F'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 148, 155, 162, 169, 176, 183, 190, 50, 51, 52, 53, 54, 55, 49, 57, 58, 59, 60, 61, 62, 48, 64, 65, 66, 67, 68, 69, 47, 71, 72, 73, 74, 75, 76, 46, 78, 79, 80, 81, 82, 83, 45, 85, 86, 87, 88, 89, 90, 44, 92, 93, 94, 95, 96, 97, 43, 105, 112, 119, 126, 133, 140, 147, 104, 111, 118, 125, 132, 139, 146, 103, 110, 117, 124, 131, 138, 145, 102, 109, 116, 123, 130, 137, 144, 101, 108, 115, 122, 129, 136, 143, 100, 107, 114, 121, 128, 135, 142, 99, 106, 113, 120, 127, 134, 141, 252, 149, 150, 151, 152, 153, 154, 251, 156, 157, 158, 159, 160, 161, 250, 163, 164, 165, 166, 167, 168, 249, 170, 171, 172, 173, 174, 175, 248, 177, 178, 179, 180, 181, 182, 247, 184, 185, 186, 187, 188, 189, 246, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 56, 63, 70, 77, 84, 91, 98, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ 'F2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 252, 251, 250, 249, 248, 247, 246, 50, 51, 52, 53, 54, 55, 190, 57, 58, 59, 60, 61, 62, 183, 64, 65, 66, 67, 68, 69, 176, 71, 72, 73, 74, 75, 76, 169, 78, 79, 80, 81, 82, 83, 162, 85, 86, 87, 88, 89, 90, 155, 92, 93, 94, 95, 96, 97, 148, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 149, 150, 151, 152, 153, 154, 91, 156, 157, 158, 159, 160, 161, 84, 163, 164, 165, 166, 167, 168, 77, 170, 171, 172, 173, 174, 175, 70, 177, 178, 179, 180, 181, 182, 63, 184, 185, 186, 187, 188, 189, 56, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 49, 48, 47, 46, 45, 44, 43, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ 'Fw': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56, 50, 51, 52, 53, 54, 253, 246, 57, 58, 59, 60, 61, 254, 247, 64, 65, 66, 67, 68, 255, 248, 71, 72, 73, 74, 75, 256, 249, 78, 79, 80, 81, 82, 257, 250, 85, 86, 87, 88, 89, 258, 251, 92, 93, 94, 95, 96, 259, 252, 141, 134, 127, 120, 113, 106, 99, 142, 135, 128, 121, 114, 107, 100, 143, 136, 129, 122, 115, 108, 101, 144, 137, 130, 123, 116, 109, 102, 145, 138, 131, 124, 117, 110, 103, 146, 139, 132, 125, 118, 111, 104, 147, 140, 133, 126, 119, 112, 105, 43, 36, 150, 151, 152, 153, 154, 44, 37, 157, 158, 159, 160, 161, 45, 38, 164, 165, 166, 167, 168, 46, 39, 171, 172, 173, 174, 175, 47, 40, 178, 179, 180, 181, 182, 48, 41, 185, 186, 187, 188, 189, 49, 42, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ "Fw'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190, 50, 51, 52, 53, 54, 42, 49, 57, 58, 59, 60, 61, 41, 48, 64, 65, 66, 67, 68, 40, 47, 71, 72, 73, 74, 75, 39, 46, 78, 79, 80, 81, 82, 38, 45, 85, 86, 87, 88, 89, 37, 44, 92, 93, 94, 95, 96, 36, 43, 105, 112, 119, 126, 133, 140, 147, 104, 111, 118, 125, 132, 139, 146, 103, 110, 117, 124, 131, 138, 145, 102, 109, 116, 123, 130, 137, 144, 101, 108, 115, 122, 129, 136, 143, 100, 107, 114, 121, 128, 135, 142, 99, 106, 113, 120, 127, 134, 141, 252, 259, 150, 151, 152, 153, 154, 251, 258, 157, 158, 159, 160, 161, 250, 257, 164, 165, 166, 167, 168, 249, 256, 171, 172, 173, 174, 175, 248, 255, 178, 179, 180, 181, 182, 247, 254, 185, 186, 187, 188, 189, 246, 253, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ 'Fw2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246, 50, 51, 52, 53, 54, 191, 190, 57, 58, 59, 60, 61, 184, 183, 64, 65, 66, 67, 68, 177, 176, 71, 72, 73, 74, 75, 170, 169, 78, 79, 80, 81, 82, 163, 162, 85, 86, 87, 88, 89, 156, 155, 92, 93, 94, 95, 96, 149, 148, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 150, 151, 152, 153, 154, 91, 90, 157, 158, 159, 160, 161, 84, 83, 164, 165, 166, 167, 168, 77, 76, 171, 172, 173, 174, 175, 70, 69, 178, 179, 180, 181, 182, 63, 62, 185, 186, 187, 188, 189, 56, 55, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ 'L': (0, 245, 2, 3, 4, 5, 6, 7, 238, 9, 10, 11, 12, 13, 14, 231, 16, 17, 18, 19, 20, 21, 224, 23, 24, 25, 26, 27, 28, 217, 30, 31, 32, 33, 34, 35, 210, 37, 38, 39, 40, 41, 42, 203, 44, 45, 46, 47, 48, 49, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 95, 88, 81, 74, 67, 60, 53, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56, 1, 100, 101, 102, 103, 104, 105, 8, 107, 108, 109, 110, 111, 112, 15, 114, 115, 116, 117, 118, 119, 22, 121, 122, 123, 124, 125, 126, 29, 128, 129, 130, 131, 132, 133, 36, 135, 136, 137, 138, 139, 140, 43, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 288, 204, 205, 206, 207, 208, 209, 281, 211, 212, 213, 214, 215, 216, 274, 218, 219, 220, 221, 222, 223, 267, 225, 226, 227, 228, 229, 230, 260, 232, 233, 234, 235, 236, 237, 253, 239, 240, 241, 242, 243, 244, 246, 99, 247, 248, 249, 250, 251, 252, 106, 254, 255, 256, 257, 258, 259, 113, 261, 262, 263, 264, 265, 266, 120, 268, 269, 270, 271, 272, 273, 127, 275, 276, 277, 278, 279, 280, 134, 282, 283, 284, 285, 286, 287, 141, 289, 290, 291, 292, 293, 294),
+ "L'": (0, 99, 2, 3, 4, 5, 6, 7, 106, 9, 10, 11, 12, 13, 14, 113, 16, 17, 18, 19, 20, 21, 120, 23, 24, 25, 26, 27, 28, 127, 30, 31, 32, 33, 34, 35, 134, 37, 38, 39, 40, 41, 42, 141, 44, 45, 46, 47, 48, 49, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 53, 60, 67, 74, 81, 88, 95, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92, 246, 100, 101, 102, 103, 104, 105, 253, 107, 108, 109, 110, 111, 112, 260, 114, 115, 116, 117, 118, 119, 267, 121, 122, 123, 124, 125, 126, 274, 128, 129, 130, 131, 132, 133, 281, 135, 136, 137, 138, 139, 140, 288, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 43, 204, 205, 206, 207, 208, 209, 36, 211, 212, 213, 214, 215, 216, 29, 218, 219, 220, 221, 222, 223, 22, 225, 226, 227, 228, 229, 230, 15, 232, 233, 234, 235, 236, 237, 8, 239, 240, 241, 242, 243, 244, 1, 245, 247, 248, 249, 250, 251, 252, 238, 254, 255, 256, 257, 258, 259, 231, 261, 262, 263, 264, 265, 266, 224, 268, 269, 270, 271, 272, 273, 217, 275, 276, 277, 278, 279, 280, 210, 282, 283, 284, 285, 286, 287, 203, 289, 290, 291, 292, 293, 294),
+ 'L2': (0, 246, 2, 3, 4, 5, 6, 7, 253, 9, 10, 11, 12, 13, 14, 260, 16, 17, 18, 19, 20, 21, 267, 23, 24, 25, 26, 27, 28, 274, 30, 31, 32, 33, 34, 35, 281, 37, 38, 39, 40, 41, 42, 288, 44, 45, 46, 47, 48, 49, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 245, 100, 101, 102, 103, 104, 105, 238, 107, 108, 109, 110, 111, 112, 231, 114, 115, 116, 117, 118, 119, 224, 121, 122, 123, 124, 125, 126, 217, 128, 129, 130, 131, 132, 133, 210, 135, 136, 137, 138, 139, 140, 203, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 141, 204, 205, 206, 207, 208, 209, 134, 211, 212, 213, 214, 215, 216, 127, 218, 219, 220, 221, 222, 223, 120, 225, 226, 227, 228, 229, 230, 113, 232, 233, 234, 235, 236, 237, 106, 239, 240, 241, 242, 243, 244, 99, 1, 247, 248, 249, 250, 251, 252, 8, 254, 255, 256, 257, 258, 259, 15, 261, 262, 263, 264, 265, 266, 22, 268, 269, 270, 271, 272, 273, 29, 275, 276, 277, 278, 279, 280, 36, 282, 283, 284, 285, 286, 287, 43, 289, 290, 291, 292, 293, 294),
+ 'Lw': (0, 245, 244, 3, 4, 5, 6, 7, 238, 237, 10, 11, 12, 13, 14, 231, 230, 17, 18, 19, 20, 21, 224, 223, 24, 25, 26, 27, 28, 217, 216, 31, 32, 33, 34, 35, 210, 209, 38, 39, 40, 41, 42, 203, 202, 45, 46, 47, 48, 49, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 95, 88, 81, 74, 67, 60, 53, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56, 1, 2, 101, 102, 103, 104, 105, 8, 9, 108, 109, 110, 111, 112, 15, 16, 115, 116, 117, 118, 119, 22, 23, 122, 123, 124, 125, 126, 29, 30, 129, 130, 131, 132, 133, 36, 37, 136, 137, 138, 139, 140, 43, 44, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 289, 288, 204, 205, 206, 207, 208, 282, 281, 211, 212, 213, 214, 215, 275, 274, 218, 219, 220, 221, 222, 268, 267, 225, 226, 227, 228, 229, 261, 260, 232, 233, 234, 235, 236, 254, 253, 239, 240, 241, 242, 243, 247, 246, 99, 100, 248, 249, 250, 251, 252, 106, 107, 255, 256, 257, 258, 259, 113, 114, 262, 263, 264, 265, 266, 120, 121, 269, 270, 271, 272, 273, 127, 128, 276, 277, 278, 279, 280, 134, 135, 283, 284, 285, 286, 287, 141, 142, 290, 291, 292, 293, 294),
+ "Lw'": (0, 99, 100, 3, 4, 5, 6, 7, 106, 107, 10, 11, 12, 13, 14, 113, 114, 17, 18, 19, 20, 21, 120, 121, 24, 25, 26, 27, 28, 127, 128, 31, 32, 33, 34, 35, 134, 135, 38, 39, 40, 41, 42, 141, 142, 45, 46, 47, 48, 49, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 53, 60, 67, 74, 81, 88, 95, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92, 246, 247, 101, 102, 103, 104, 105, 253, 254, 108, 109, 110, 111, 112, 260, 261, 115, 116, 117, 118, 119, 267, 268, 122, 123, 124, 125, 126, 274, 275, 129, 130, 131, 132, 133, 281, 282, 136, 137, 138, 139, 140, 288, 289, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 44, 43, 204, 205, 206, 207, 208, 37, 36, 211, 212, 213, 214, 215, 30, 29, 218, 219, 220, 221, 222, 23, 22, 225, 226, 227, 228, 229, 16, 15, 232, 233, 234, 235, 236, 9, 8, 239, 240, 241, 242, 243, 2, 1, 245, 244, 248, 249, 250, 251, 252, 238, 237, 255, 256, 257, 258, 259, 231, 230, 262, 263, 264, 265, 266, 224, 223, 269, 270, 271, 272, 273, 217, 216, 276, 277, 278, 279, 280, 210, 209, 283, 284, 285, 286, 287, 203, 202, 290, 291, 292, 293, 294),
+ 'Lw2': (0, 246, 247, 3, 4, 5, 6, 7, 253, 254, 10, 11, 12, 13, 14, 260, 261, 17, 18, 19, 20, 21, 267, 268, 24, 25, 26, 27, 28, 274, 275, 31, 32, 33, 34, 35, 281, 282, 38, 39, 40, 41, 42, 288, 289, 45, 46, 47, 48, 49, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 245, 244, 101, 102, 103, 104, 105, 238, 237, 108, 109, 110, 111, 112, 231, 230, 115, 116, 117, 118, 119, 224, 223, 122, 123, 124, 125, 126, 217, 216, 129, 130, 131, 132, 133, 210, 209, 136, 137, 138, 139, 140, 203, 202, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 142, 141, 204, 205, 206, 207, 208, 135, 134, 211, 212, 213, 214, 215, 128, 127, 218, 219, 220, 221, 222, 121, 120, 225, 226, 227, 228, 229, 114, 113, 232, 233, 234, 235, 236, 107, 106, 239, 240, 241, 242, 243, 100, 99, 1, 2, 248, 249, 250, 251, 252, 8, 9, 255, 256, 257, 258, 259, 15, 16, 262, 263, 264, 265, 266, 22, 23, 269, 270, 271, 272, 273, 29, 30, 276, 277, 278, 279, 280, 36, 37, 283, 284, 285, 286, 287, 43, 44, 290, 291, 292, 293, 294),
+ 'R': (0, 1, 2, 3, 4, 5, 6, 105, 8, 9, 10, 11, 12, 13, 112, 15, 16, 17, 18, 19, 20, 119, 22, 23, 24, 25, 26, 27, 126, 29, 30, 31, 32, 33, 34, 133, 36, 37, 38, 39, 40, 41, 140, 43, 44, 45, 46, 47, 48, 147, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 252, 106, 107, 108, 109, 110, 111, 259, 113, 114, 115, 116, 117, 118, 266, 120, 121, 122, 123, 124, 125, 273, 127, 128, 129, 130, 131, 132, 280, 134, 135, 136, 137, 138, 139, 287, 141, 142, 143, 144, 145, 146, 294, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 193, 186, 179, 172, 165, 158, 151, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154, 49, 198, 199, 200, 201, 202, 203, 42, 205, 206, 207, 208, 209, 210, 35, 212, 213, 214, 215, 216, 217, 28, 219, 220, 221, 222, 223, 224, 21, 226, 227, 228, 229, 230, 231, 14, 233, 234, 235, 236, 237, 238, 7, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 239, 253, 254, 255, 256, 257, 258, 232, 260, 261, 262, 263, 264, 265, 225, 267, 268, 269, 270, 271, 272, 218, 274, 275, 276, 277, 278, 279, 211, 281, 282, 283, 284, 285, 286, 204, 288, 289, 290, 291, 292, 293, 197),
+ "R'": (0, 1, 2, 3, 4, 5, 6, 239, 8, 9, 10, 11, 12, 13, 232, 15, 16, 17, 18, 19, 20, 225, 22, 23, 24, 25, 26, 27, 218, 29, 30, 31, 32, 33, 34, 211, 36, 37, 38, 39, 40, 41, 204, 43, 44, 45, 46, 47, 48, 197, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 7, 106, 107, 108, 109, 110, 111, 14, 113, 114, 115, 116, 117, 118, 21, 120, 121, 122, 123, 124, 125, 28, 127, 128, 129, 130, 131, 132, 35, 134, 135, 136, 137, 138, 139, 42, 141, 142, 143, 144, 145, 146, 49, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 151, 158, 165, 172, 179, 186, 193, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190, 294, 198, 199, 200, 201, 202, 203, 287, 205, 206, 207, 208, 209, 210, 280, 212, 213, 214, 215, 216, 217, 273, 219, 220, 221, 222, 223, 224, 266, 226, 227, 228, 229, 230, 231, 259, 233, 234, 235, 236, 237, 238, 252, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 105, 253, 254, 255, 256, 257, 258, 112, 260, 261, 262, 263, 264, 265, 119, 267, 268, 269, 270, 271, 272, 126, 274, 275, 276, 277, 278, 279, 133, 281, 282, 283, 284, 285, 286, 140, 288, 289, 290, 291, 292, 293, 147),
+ 'R2': (0, 1, 2, 3, 4, 5, 6, 252, 8, 9, 10, 11, 12, 13, 259, 15, 16, 17, 18, 19, 20, 266, 22, 23, 24, 25, 26, 27, 273, 29, 30, 31, 32, 33, 34, 280, 36, 37, 38, 39, 40, 41, 287, 43, 44, 45, 46, 47, 48, 294, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 239, 106, 107, 108, 109, 110, 111, 232, 113, 114, 115, 116, 117, 118, 225, 120, 121, 122, 123, 124, 125, 218, 127, 128, 129, 130, 131, 132, 211, 134, 135, 136, 137, 138, 139, 204, 141, 142, 143, 144, 145, 146, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 198, 199, 200, 201, 202, 203, 140, 205, 206, 207, 208, 209, 210, 133, 212, 213, 214, 215, 216, 217, 126, 219, 220, 221, 222, 223, 224, 119, 226, 227, 228, 229, 230, 231, 112, 233, 234, 235, 236, 237, 238, 105, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 7, 253, 254, 255, 256, 257, 258, 14, 260, 261, 262, 263, 264, 265, 21, 267, 268, 269, 270, 271, 272, 28, 274, 275, 276, 277, 278, 279, 35, 281, 282, 283, 284, 285, 286, 42, 288, 289, 290, 291, 292, 293, 49),
+ 'Rw': (0, 1, 2, 3, 4, 5, 104, 105, 8, 9, 10, 11, 12, 111, 112, 15, 16, 17, 18, 19, 118, 119, 22, 23, 24, 25, 26, 125, 126, 29, 30, 31, 32, 33, 132, 133, 36, 37, 38, 39, 40, 139, 140, 43, 44, 45, 46, 47, 146, 147, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 251, 252, 106, 107, 108, 109, 110, 258, 259, 113, 114, 115, 116, 117, 265, 266, 120, 121, 122, 123, 124, 272, 273, 127, 128, 129, 130, 131, 279, 280, 134, 135, 136, 137, 138, 286, 287, 141, 142, 143, 144, 145, 293, 294, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 193, 186, 179, 172, 165, 158, 151, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154, 49, 48, 199, 200, 201, 202, 203, 42, 41, 206, 207, 208, 209, 210, 35, 34, 213, 214, 215, 216, 217, 28, 27, 220, 221, 222, 223, 224, 21, 20, 227, 228, 229, 230, 231, 14, 13, 234, 235, 236, 237, 238, 7, 6, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 240, 239, 253, 254, 255, 256, 257, 233, 232, 260, 261, 262, 263, 264, 226, 225, 267, 268, 269, 270, 271, 219, 218, 274, 275, 276, 277, 278, 212, 211, 281, 282, 283, 284, 285, 205, 204, 288, 289, 290, 291, 292, 198, 197),
+ "Rw'": (0, 1, 2, 3, 4, 5, 240, 239, 8, 9, 10, 11, 12, 233, 232, 15, 16, 17, 18, 19, 226, 225, 22, 23, 24, 25, 26, 219, 218, 29, 30, 31, 32, 33, 212, 211, 36, 37, 38, 39, 40, 205, 204, 43, 44, 45, 46, 47, 198, 197, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 6, 7, 106, 107, 108, 109, 110, 13, 14, 113, 114, 115, 116, 117, 20, 21, 120, 121, 122, 123, 124, 27, 28, 127, 128, 129, 130, 131, 34, 35, 134, 135, 136, 137, 138, 41, 42, 141, 142, 143, 144, 145, 48, 49, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 151, 158, 165, 172, 179, 186, 193, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190, 294, 293, 199, 200, 201, 202, 203, 287, 286, 206, 207, 208, 209, 210, 280, 279, 213, 214, 215, 216, 217, 273, 272, 220, 221, 222, 223, 224, 266, 265, 227, 228, 229, 230, 231, 259, 258, 234, 235, 236, 237, 238, 252, 251, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 104, 105, 253, 254, 255, 256, 257, 111, 112, 260, 261, 262, 263, 264, 118, 119, 267, 268, 269, 270, 271, 125, 126, 274, 275, 276, 277, 278, 132, 133, 281, 282, 283, 284, 285, 139, 140, 288, 289, 290, 291, 292, 146, 147),
+ 'Rw2': (0, 1, 2, 3, 4, 5, 251, 252, 8, 9, 10, 11, 12, 258, 259, 15, 16, 17, 18, 19, 265, 266, 22, 23, 24, 25, 26, 272, 273, 29, 30, 31, 32, 33, 279, 280, 36, 37, 38, 39, 40, 286, 287, 43, 44, 45, 46, 47, 293, 294, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 240, 239, 106, 107, 108, 109, 110, 233, 232, 113, 114, 115, 116, 117, 226, 225, 120, 121, 122, 123, 124, 219, 218, 127, 128, 129, 130, 131, 212, 211, 134, 135, 136, 137, 138, 205, 204, 141, 142, 143, 144, 145, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 199, 200, 201, 202, 203, 140, 139, 206, 207, 208, 209, 210, 133, 132, 213, 214, 215, 216, 217, 126, 125, 220, 221, 222, 223, 224, 119, 118, 227, 228, 229, 230, 231, 112, 111, 234, 235, 236, 237, 238, 105, 104, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 6, 7, 253, 254, 255, 256, 257, 13, 14, 260, 261, 262, 263, 264, 20, 21, 267, 268, 269, 270, 271, 27, 28, 274, 275, 276, 277, 278, 34, 35, 281, 282, 283, 284, 285, 41, 42, 288, 289, 290, 291, 292, 48, 49),
+ 'U': (0, 43, 36, 29, 22, 15, 8, 1, 44, 37, 30, 23, 16, 9, 2, 45, 38, 31, 24, 17, 10, 3, 46, 39, 32, 25, 18, 11, 4, 47, 40, 33, 26, 19, 12, 5, 48, 41, 34, 27, 20, 13, 6, 49, 42, 35, 28, 21, 14, 7, 99, 100, 101, 102, 103, 104, 105, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 148, 149, 150, 151, 152, 153, 154, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 197, 198, 199, 200, 201, 202, 203, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 50, 51, 52, 53, 54, 55, 56, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ "U'": (0, 7, 14, 21, 28, 35, 42, 49, 6, 13, 20, 27, 34, 41, 48, 5, 12, 19, 26, 33, 40, 47, 4, 11, 18, 25, 32, 39, 46, 3, 10, 17, 24, 31, 38, 45, 2, 9, 16, 23, 30, 37, 44, 1, 8, 15, 22, 29, 36, 43, 197, 198, 199, 200, 201, 202, 203, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 50, 51, 52, 53, 54, 55, 56, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 99, 100, 101, 102, 103, 104, 105, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 148, 149, 150, 151, 152, 153, 154, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ 'U2': (0, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 148, 149, 150, 151, 152, 153, 154, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 197, 198, 199, 200, 201, 202, 203, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 50, 51, 52, 53, 54, 55, 56, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 99, 100, 101, 102, 103, 104, 105, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ 'Uw': (0, 43, 36, 29, 22, 15, 8, 1, 44, 37, 30, 23, 16, 9, 2, 45, 38, 31, 24, 17, 10, 3, 46, 39, 32, 25, 18, 11, 4, 47, 40, 33, 26, 19, 12, 5, 48, 41, 34, 27, 20, 13, 6, 49, 42, 35, 28, 21, 14, 7, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ "Uw'": (0, 7, 14, 21, 28, 35, 42, 49, 6, 13, 20, 27, 34, 41, 48, 5, 12, 19, 26, 33, 40, 47, 4, 11, 18, 25, 32, 39, 46, 3, 10, 17, 24, 31, 38, 45, 2, 9, 16, 23, 30, 37, 44, 1, 8, 15, 22, 29, 36, 43, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ 'Uw2': (0, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ 'x': (0, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 53, 60, 67, 74, 81, 88, 95, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 193, 186, 179, 172, 165, 158, 151, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197),
+ "x'": (0, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 95, 88, 81, 74, 67, 60, 53, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 151, 158, 165, 172, 179, 186, 193, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147),
+ 'y': (0, 43, 36, 29, 22, 15, 8, 1, 44, 37, 30, 23, 16, 9, 2, 45, 38, 31, 24, 17, 10, 3, 46, 39, 32, 25, 18, 11, 4, 47, 40, 33, 26, 19, 12, 5, 48, 41, 34, 27, 20, 13, 6, 49, 42, 35, 28, 21, 14, 7, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 252, 259, 266, 273, 280, 287, 294, 251, 258, 265, 272, 279, 286, 293, 250, 257, 264, 271, 278, 285, 292, 249, 256, 263, 270, 277, 284, 291, 248, 255, 262, 269, 276, 283, 290, 247, 254, 261, 268, 275, 282, 289, 246, 253, 260, 267, 274, 281, 288),
+ "y'": (0, 7, 14, 21, 28, 35, 42, 49, 6, 13, 20, 27, 34, 41, 48, 5, 12, 19, 26, 33, 40, 47, 4, 11, 18, 25, 32, 39, 46, 3, 10, 17, 24, 31, 38, 45, 2, 9, 16, 23, 30, 37, 44, 1, 8, 15, 22, 29, 36, 43, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 288, 281, 274, 267, 260, 253, 246, 289, 282, 275, 268, 261, 254, 247, 290, 283, 276, 269, 262, 255, 248, 291, 284, 277, 270, 263, 256, 249, 292, 285, 278, 271, 264, 257, 250, 293, 286, 279, 272, 265, 258, 251, 294, 287, 280, 273, 266, 259, 252),
+ 'z': (0, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 95, 88, 81, 74, 67, 60, 53, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56, 288, 281, 274, 267, 260, 253, 246, 289, 282, 275, 268, 261, 254, 247, 290, 283, 276, 269, 262, 255, 248, 291, 284, 277, 270, 263, 256, 249, 292, 285, 278, 271, 264, 257, 250, 293, 286, 279, 272, 265, 258, 251, 294, 287, 280, 273, 266, 259, 252, 141, 134, 127, 120, 113, 106, 99, 142, 135, 128, 121, 114, 107, 100, 143, 136, 129, 122, 115, 108, 101, 144, 137, 130, 123, 116, 109, 102, 145, 138, 131, 124, 117, 110, 103, 146, 139, 132, 125, 118, 111, 104, 147, 140, 133, 126, 119, 112, 105, 43, 36, 29, 22, 15, 8, 1, 44, 37, 30, 23, 16, 9, 2, 45, 38, 31, 24, 17, 10, 3, 46, 39, 32, 25, 18, 11, 4, 47, 40, 33, 26, 19, 12, 5, 48, 41, 34, 27, 20, 13, 6, 49, 42, 35, 28, 21, 14, 7, 203, 210, 217, 224, 231, 238, 245, 202, 209, 216, 223, 230, 237, 244, 201, 208, 215, 222, 229, 236, 243, 200, 207, 214, 221, 228, 235, 242, 199, 206, 213, 220, 227, 234, 241, 198, 205, 212, 219, 226, 233, 240, 197, 204, 211, 218, 225, 232, 239, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 193, 186, 179, 172, 165, 158, 151, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154),
+ "z'": (0, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 151, 158, 165, 172, 179, 186, 193, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190, 7, 14, 21, 28, 35, 42, 49, 6, 13, 20, 27, 34, 41, 48, 5, 12, 19, 26, 33, 40, 47, 4, 11, 18, 25, 32, 39, 46, 3, 10, 17, 24, 31, 38, 45, 2, 9, 16, 23, 30, 37, 44, 1, 8, 15, 22, 29, 36, 43, 105, 112, 119, 126, 133, 140, 147, 104, 111, 118, 125, 132, 139, 146, 103, 110, 117, 124, 131, 138, 145, 102, 109, 116, 123, 130, 137, 144, 101, 108, 115, 122, 129, 136, 143, 100, 107, 114, 121, 128, 135, 142, 99, 106, 113, 120, 127, 134, 141, 252, 259, 266, 273, 280, 287, 294, 251, 258, 265, 272, 279, 286, 293, 250, 257, 264, 271, 278, 285, 292, 249, 256, 263, 270, 277, 284, 291, 248, 255, 262, 269, 276, 283, 290, 247, 254, 261, 268, 275, 282, 289, 246, 253, 260, 267, 274, 281, 288, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 53, 60, 67, 74, 81, 88, 95, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92),
+    "x x" : (0, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49),
+    "y y" : (0, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246),
+    "z z" : (0, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1),
+    "x y" : (0, 141, 134, 127, 120, 113, 106, 99, 142, 135, 128, 121, 114, 107, 100, 143, 136, 129, 122, 115, 108, 101, 144, 137, 130, 123, 116, 109, 102, 145, 138, 131, 124, 117, 110, 103, 146, 139, 132, 125, 118, 111, 104, 147, 140, 133, 126, 119, 112, 105, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 193, 186, 179, 172, 165, 158, 151, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 53, 60, 67, 74, 81, 88, 95, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203),
+    "x y'" : (0, 105, 112, 119, 126, 133, 140, 147, 104, 111, 118, 125, 132, 139, 146, 103, 110, 117, 124, 131, 138, 145, 102, 109, 116, 123, 130, 137, 144, 101, 108, 115, 122, 129, 136, 143, 100, 107, 114, 121, 128, 135, 142, 99, 106, 113, 120, 127, 134, 141, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 53, 60, 67, 74, 81, 88, 95, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 193, 186, 179, 172, 165, 158, 151, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154, 203, 210, 217, 224, 231, 238, 245, 202, 209, 216, 223, 230, 237, 244, 201, 208, 215, 222, 229, 236, 243, 200, 207, 214, 221, 228, 235, 242, 199, 206, 213, 220, 227, 234, 241, 198, 205, 212, 219, 226, 233, 240, 197, 204, 211, 218, 225, 232, 239),
+    "x z" : (0, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 203, 210, 217, 224, 231, 238, 245, 202, 209, 216, 223, 230, 237, 244, 201, 208, 215, 222, 229, 236, 243, 200, 207, 214, 221, 228, 235, 242, 199, 206, 213, 220, 227, 234, 241, 198, 205, 212, 219, 226, 233, 240, 197, 204, 211, 218, 225, 232, 239, 288, 281, 274, 267, 260, 253, 246, 289, 282, 275, 268, 261, 254, 247, 290, 283, 276, 269, 262, 255, 248, 291, 284, 277, 270, 263, 256, 249, 292, 285, 278, 271, 264, 257, 250, 293, 286, 279, 272, 265, 258, 251, 294, 287, 280, 273, 266, 259, 252, 141, 134, 127, 120, 113, 106, 99, 142, 135, 128, 121, 114, 107, 100, 143, 136, 129, 122, 115, 108, 101, 144, 137, 130, 123, 116, 109, 102, 145, 138, 131, 124, 117, 110, 103, 146, 139, 132, 125, 118, 111, 104, 147, 140, 133, 126, 119, 112, 105, 43, 36, 29, 22, 15, 8, 1, 44, 37, 30, 23, 16, 9, 2, 45, 38, 31, 24, 17, 10, 3, 46, 39, 32, 25, 18, 11, 4, 47, 40, 33, 26, 19, 12, 5, 48, 41, 34, 27, 20, 13, 6, 49, 42, 35, 28, 21, 14, 7, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148),
+    "x z'" : (0, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 105, 112, 119, 126, 133, 140, 147, 104, 111, 118, 125, 132, 139, 146, 103, 110, 117, 124, 131, 138, 145, 102, 109, 116, 123, 130, 137, 144, 101, 108, 115, 122, 129, 136, 143, 100, 107, 114, 121, 128, 135, 142, 99, 106, 113, 120, 127, 134, 141, 252, 259, 266, 273, 280, 287, 294, 251, 258, 265, 272, 279, 286, 293, 250, 257, 264, 271, 278, 285, 292, 249, 256, 263, 270, 277, 284, 291, 248, 255, 262, 269, 276, 283, 290, 247, 254, 261, 268, 275, 282, 289, 246, 253, 260, 267, 274, 281, 288, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203, 7, 14, 21, 28, 35, 42, 49, 6, 13, 20, 27, 34, 41, 48, 5, 12, 19, 26, 33, 40, 47, 4, 11, 18, 25, 32, 39, 46, 3, 10, 17, 24, 31, 38, 45, 2, 9, 16, 23, 30, 37, 44, 1, 8, 15, 22, 29, 36, 43, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50),
+    "x y y" : (0, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 193, 186, 179, 172, 165, 158, 151, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 53, 60, 67, 74, 81, 88, 95, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245),
+    "x z z" : (0, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 151, 158, 165, 172, 179, 186, 193, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 95, 88, 81, 74, 67, 60, 53, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99),
+    "x' y" : (0, 203, 210, 217, 224, 231, 238, 245, 202, 209, 216, 223, 230, 237, 244, 201, 208, 215, 222, 229, 236, 243, 200, 207, 214, 221, 228, 235, 242, 199, 206, 213, 220, 227, 234, 241, 198, 205, 212, 219, 226, 233, 240, 197, 204, 211, 218, 225, 232, 239, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 151, 158, 165, 172, 179, 186, 193, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 95, 88, 81, 74, 67, 60, 53, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56, 105, 112, 119, 126, 133, 140, 147, 104, 111, 118, 125, 132, 139, 146, 103, 110, 117, 124, 131, 138, 145, 102, 109, 116, 123, 130, 137, 144, 101, 108, 115, 122, 129, 136, 143, 100, 107, 114, 121, 128, 135, 142, 99, 106, 113, 120, 127, 134, 141),
+    "x' y'" : (0, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 95, 88, 81, 74, 67, 60, 53, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 151, 158, 165, 172, 179, 186, 193, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190, 141, 134, 127, 120, 113, 106, 99, 142, 135, 128, 121, 114, 107, 100, 143, 136, 129, 122, 115, 108, 101, 144, 137, 130, 123, 116, 109, 102, 145, 138, 131, 124, 117, 110, 103, 146, 139, 132, 125, 118, 111, 104, 147, 140, 133, 126, 119, 112, 105),
+    "x' z" : (0, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 141, 134, 127, 120, 113, 106, 99, 142, 135, 128, 121, 114, 107, 100, 143, 136, 129, 122, 115, 108, 101, 144, 137, 130, 123, 116, 109, 102, 145, 138, 131, 124, 117, 110, 103, 146, 139, 132, 125, 118, 111, 104, 147, 140, 133, 126, 119, 112, 105, 43, 36, 29, 22, 15, 8, 1, 44, 37, 30, 23, 16, 9, 2, 45, 38, 31, 24, 17, 10, 3, 46, 39, 32, 25, 18, 11, 4, 47, 40, 33, 26, 19, 12, 5, 48, 41, 34, 27, 20, 13, 6, 49, 42, 35, 28, 21, 14, 7, 203, 210, 217, 224, 231, 238, 245, 202, 209, 216, 223, 230, 237, 244, 201, 208, 215, 222, 229, 236, 243, 200, 207, 214, 221, 228, 235, 242, 199, 206, 213, 220, 227, 234, 241, 198, 205, 212, 219, 226, 233, 240, 197, 204, 211, 218, 225, 232, 239, 288, 281, 274, 267, 260, 253, 246, 289, 282, 275, 268, 261, 254, 247, 290, 283, 276, 269, 262, 255, 248, 291, 284, 277, 270, 263, 256, 249, 292, 285, 278, 271, 264, 257, 250, 293, 286, 279, 272, 265, 258, 251, 294, 287, 280, 273, 266, 259, 252, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196),
+    "x' z'" : (0, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203, 7, 14, 21, 28, 35, 42, 49, 6, 13, 20, 27, 34, 41, 48, 5, 12, 19, 26, 33, 40, 47, 4, 11, 18, 25, 32, 39, 46, 3, 10, 17, 24, 31, 38, 45, 2, 9, 16, 23, 30, 37, 44, 1, 8, 15, 22, 29, 36, 43, 105, 112, 119, 126, 133, 140, 147, 104, 111, 118, 125, 132, 139, 146, 103, 110, 117, 124, 131, 138, 145, 102, 109, 116, 123, 130, 137, 144, 101, 108, 115, 122, 129, 136, 143, 100, 107, 114, 121, 128, 135, 142, 99, 106, 113, 120, 127, 134, 141, 252, 259, 266, 273, 280, 287, 294, 251, 258, 265, 272, 279, 286, 293, 250, 257, 264, 271, 278, 285, 292, 249, 256, 263, 270, 277, 284, 291, 248, 255, 262, 269, 276, 283, 290, 247, 254, 261, 268, 275, 282, 289, 246, 253, 260, 267, 274, 281, 288, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98),
+    "y x x" : (0, 252, 259, 266, 273, 280, 287, 294, 251, 258, 265, 272, 279, 286, 293, 250, 257, 264, 271, 278, 285, 292, 249, 256, 263, 270, 277, 284, 291, 248, 255, 262, 269, 276, 283, 290, 247, 254, 261, 268, 275, 282, 289, 246, 253, 260, 267, 274, 281, 288, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 43, 36, 29, 22, 15, 8, 1, 44, 37, 30, 23, 16, 9, 2, 45, 38, 31, 24, 17, 10, 3, 46, 39, 32, 25, 18, 11, 4, 47, 40, 33, 26, 19, 12, 5, 48, 41, 34, 27, 20, 13, 6, 49, 42, 35, 28, 21, 14, 7),
+    "y z z" : (0, 288, 281, 274, 267, 260, 253, 246, 289, 282, 275, 268, 261, 254, 247, 290, 283, 276, 269, 262, 255, 248, 291, 284, 277, 270, 263, 256, 249, 292, 285, 278, 271, 264, 257, 250, 293, 286, 279, 272, 265, 258, 251, 294, 287, 280, 273, 266, 259, 252, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 7, 14, 21, 28, 35, 42, 49, 6, 13, 20, 27, 34, 41, 48, 5, 12, 19, 26, 33, 40, 47, 4, 11, 18, 25, 32, 39, 46, 3, 10, 17, 24, 31, 38, 45, 2, 9, 16, 23, 30, 37, 44, 1, 8, 15, 22, 29, 36, 43),
+    "z x x" : (0, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 193, 186, 179, 172, 165, 158, 151, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154, 252, 259, 266, 273, 280, 287, 294, 251, 258, 265, 272, 279, 286, 293, 250, 257, 264, 271, 278, 285, 292, 249, 256, 263, 270, 277, 284, 291, 248, 255, 262, 269, 276, 283, 290, 247, 254, 261, 268, 275, 282, 289, 246, 253, 260, 267, 274, 281, 288, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203, 7, 14, 21, 28, 35, 42, 49, 6, 13, 20, 27, 34, 41, 48, 5, 12, 19, 26, 33, 40, 47, 4, 11, 18, 25, 32, 39, 46, 3, 10, 17, 24, 31, 38, 45, 2, 9, 16, 23, 30, 37, 44, 1, 8, 15, 22, 29, 36, 43, 105, 112, 119, 126, 133, 140, 147, 104, 111, 118, 125, 132, 139, 146, 103, 110, 117, 124, 131, 138, 145, 102, 109, 116, 123, 130, 137, 144, 101, 108, 115, 122, 129, 136, 143, 100, 107, 114, 121, 128, 135, 142, 99, 106, 113, 120, 127, 134, 141, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 95, 88, 81, 74, 67, 60, 53, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56),
+    "z y y" : (0, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 53, 60, 67, 74, 81, 88, 95, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92, 43, 36, 29, 22, 15, 8, 1, 44, 37, 30, 23, 16, 9, 2, 45, 38, 31, 24, 17, 10, 3, 46, 39, 32, 25, 18, 11, 4, 47, 40, 33, 26, 19, 12, 5, 48, 41, 34, 27, 20, 13, 6, 49, 42, 35, 28, 21, 14, 7, 203, 210, 217, 224, 231, 238, 245, 202, 209, 216, 223, 230, 237, 244, 201, 208, 215, 222, 229, 236, 243, 200, 207, 214, 221, 228, 235, 242, 199, 206, 213, 220, 227, 234, 241, 198, 205, 212, 219, 226, 233, 240, 197, 204, 211, 218, 225, 232, 239, 288, 281, 274, 267, 260, 253, 246, 289, 282, 275, 268, 261, 254, 247, 290, 283, 276, 269, 262, 255, 248, 291, 284, 277, 270, 263, 256, 249, 292, 285, 278, 271, 264, 257, 250, 293, 286, 279, 272, 265, 258, 251, 294, 287, 280, 273, 266, 259, 252, 141, 134, 127, 120, 113, 106, 99, 142, 135, 128, 121, 114, 107, 100, 143, 136, 129, 122, 115, 108, 101, 144, 137, 130, 123, 116, 109, 102, 145, 138, 131, 124, 117, 110, 103, 146, 139, 132, 125, 118, 111, 104, 147, 140, 133, 126, 119, 112, 105, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 151, 158, 165, 172, 179, 186, 193, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190),
+    "reflect-x" : (0, 288, 289, 290, 291, 292, 293, 294, 281, 282, 283, 284, 285, 286, 287, 274, 275, 276, 277, 278, 279, 280, 267, 268, 269, 270, 271, 272, 273, 260, 261, 262, 263, 264, 265, 266, 253, 254, 255, 256, 257, 258, 259, 246, 247, 248, 249, 250, 251, 252, 92, 93, 94, 95, 96, 97, 98, 85, 86, 87, 88, 89, 90, 91, 78, 79, 80, 81, 82, 83, 84, 71, 72, 73, 74, 75, 76, 77, 64, 65, 66, 67, 68, 69, 70, 57, 58, 59, 60, 61, 62, 63, 50, 51, 52, 53, 54, 55, 56, 141, 142, 143, 144, 145, 146, 147, 134, 135, 136, 137, 138, 139, 140, 127, 128, 129, 130, 131, 132, 133, 120, 121, 122, 123, 124, 125, 126, 113, 114, 115, 116, 117, 118, 119, 106, 107, 108, 109, 110, 111, 112, 99, 100, 101, 102, 103, 104, 105, 190, 191, 192, 193, 194, 195, 196, 183, 184, 185, 186, 187, 188, 189, 176, 177, 178, 179, 180, 181, 182, 169, 170, 171, 172, 173, 174, 175, 162, 163, 164, 165, 166, 167, 168, 155, 156, 157, 158, 159, 160, 161, 148, 149, 150, 151, 152, 153, 154, 239, 240, 241, 242, 243, 244, 245, 232, 233, 234, 235, 236, 237, 238, 225, 226, 227, 228, 229, 230, 231, 218, 219, 220, 221, 222, 223, 224, 211, 212, 213, 214, 215, 216, 217, 204, 205, 206, 207, 208, 209, 210, 197, 198, 199, 200, 201, 202, 203, 43, 44, 45, 46, 47, 48, 49, 36, 37, 38, 39, 40, 41, 42, 29, 30, 31, 32, 33, 34, 35, 22, 23, 24, 25, 26, 27, 28, 15, 16, 17, 18, 19, 20, 21, 8, 9, 10, 11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7),
+    "reflect-x x" : (0, 141, 142, 143, 144, 145, 146, 147, 134, 135, 136, 137, 138, 139, 140, 127, 128, 129, 130, 131, 132, 133, 120, 121, 122, 123, 124, 125, 126, 113, 114, 115, 116, 117, 118, 119, 106, 107, 108, 109, 110, 111, 112, 99, 100, 101, 102, 103, 104, 105, 98, 91, 84, 77, 70, 63, 56, 97, 90, 83, 76, 69, 62, 55, 96, 89, 82, 75, 68, 61, 54, 95, 88, 81, 74, 67, 60, 53, 94, 87, 80, 73, 66, 59, 52, 93, 86, 79, 72, 65, 58, 51, 92, 85, 78, 71, 64, 57, 50, 43, 44, 45, 46, 47, 48, 49, 36, 37, 38, 39, 40, 41, 42, 29, 30, 31, 32, 33, 34, 35, 22, 23, 24, 25, 26, 27, 28, 15, 16, 17, 18, 19, 20, 21, 8, 9, 10, 11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7, 148, 155, 162, 169, 176, 183, 190, 149, 156, 163, 170, 177, 184, 191, 150, 157, 164, 171, 178, 185, 192, 151, 158, 165, 172, 179, 186, 193, 152, 159, 166, 173, 180, 187, 194, 153, 160, 167, 174, 181, 188, 195, 154, 161, 168, 175, 182, 189, 196, 252, 251, 250, 249, 248, 247, 246, 259, 258, 257, 256, 255, 254, 253, 266, 265, 264, 263, 262, 261, 260, 273, 272, 271, 270, 269, 268, 267, 280, 279, 278, 277, 276, 275, 274, 287, 286, 285, 284, 283, 282, 281, 294, 293, 292, 291, 290, 289, 288, 203, 202, 201, 200, 199, 198, 197, 210, 209, 208, 207, 206, 205, 204, 217, 216, 215, 214, 213, 212, 211, 224, 223, 222, 221, 220, 219, 218, 231, 230, 229, 228, 227, 226, 225, 238, 237, 236, 235, 234, 233, 232, 245, 244, 243, 242, 241, 240, 239),
+    "reflect-x x'" : (0, 203, 202, 201, 200, 199, 198, 197, 210, 209, 208, 207, 206, 205, 204, 217, 216, 215, 214, 213, 212, 211, 224, 223, 222, 221, 220, 219, 218, 231, 230, 229, 228, 227, 226, 225, 238, 237, 236, 235, 234, 233, 232, 245, 244, 243, 242, 241, 240, 239, 50, 57, 64, 71, 78, 85, 92, 51, 58, 65, 72, 79, 86, 93, 52, 59, 66, 73, 80, 87, 94, 53, 60, 67, 74, 81, 88, 95, 54, 61, 68, 75, 82, 89, 96, 55, 62, 69, 76, 83, 90, 97, 56, 63, 70, 77, 84, 91, 98, 288, 289, 290, 291, 292, 293, 294, 281, 282, 283, 284, 285, 286, 287, 274, 275, 276, 277, 278, 279, 280, 267, 268, 269, 270, 271, 272, 273, 260, 261, 262, 263, 264, 265, 266, 253, 254, 255, 256, 257, 258, 259, 246, 247, 248, 249, 250, 251, 252, 196, 189, 182, 175, 168, 161, 154, 195, 188, 181, 174, 167, 160, 153, 194, 187, 180, 173, 166, 159, 152, 193, 186, 179, 172, 165, 158, 151, 192, 185, 178, 171, 164, 157, 150, 191, 184, 177, 170, 163, 156, 149, 190, 183, 176, 169, 162, 155, 148, 7, 6, 5, 4, 3, 2, 1, 14, 13, 12, 11, 10, 9, 8, 21, 20, 19, 18, 17, 16, 15, 28, 27, 26, 25, 24, 23, 22, 35, 34, 33, 32, 31, 30, 29, 42, 41, 40, 39, 38, 37, 36, 49, 48, 47, 46, 45, 44, 43, 141, 142, 143, 144, 145, 146, 147, 134, 135, 136, 137, 138, 139, 140, 127, 128, 129, 130, 131, 132, 133, 120, 121, 122, 123, 124, 125, 126, 113, 114, 115, 116, 117, 118, 119, 106, 107, 108, 109, 110, 111, 112, 99, 100, 101, 102, 103, 104, 105),
+    "reflect-x y" : (0, 246, 253, 260, 267, 274, 281, 288, 247, 254, 261, 268, 275, 282, 289, 248, 255, 262, 269, 276, 283, 290, 249, 256, 263, 270, 277, 284, 291, 250, 257, 264, 271, 278, 285, 292, 251, 258, 265, 272, 279, 286, 293, 252, 259, 266, 273, 280, 287, 294, 141, 142, 143, 144, 145, 146, 147, 134, 135, 136, 137, 138, 139, 140, 127, 128, 129, 130, 131, 132, 133, 120, 121, 122, 123, 124, 125, 126, 113, 114, 115, 116, 117, 118, 119, 106, 107, 108, 109, 110, 111, 112, 99, 100, 101, 102, 103, 104, 105, 190, 191, 192, 193, 194, 195, 196, 183, 184, 185, 186, 187, 188, 189, 176, 177, 178, 179, 180, 181, 182, 169, 170, 171, 172, 173, 174, 175, 162, 163, 164, 165, 166, 167, 168, 155, 156, 157, 158, 159, 160, 161, 148, 149, 150, 151, 152, 153, 154, 239, 240, 241, 242, 243, 244, 245, 232, 233, 234, 235, 236, 237, 238, 225, 226, 227, 228, 229, 230, 231, 218, 219, 220, 221, 222, 223, 224, 211, 212, 213, 214, 215, 216, 217, 204, 205, 206, 207, 208, 209, 210, 197, 198, 199, 200, 201, 202, 203, 92, 93, 94, 95, 96, 97, 98, 85, 86, 87, 88, 89, 90, 91, 78, 79, 80, 81, 82, 83, 84, 71, 72, 73, 74, 75, 76, 77, 64, 65, 66, 67, 68, 69, 70, 57, 58, 59, 60, 61, 62, 63, 50, 51, 52, 53, 54, 55, 56, 49, 42, 35, 28, 21, 14, 7, 48, 41, 34, 27, 20, 13, 6, 47, 40, 33, 26, 19, 12, 5, 46, 39, 32, 25, 18, 11, 4, 45, 38, 31, 24, 17, 10, 3, 44, 37, 30, 23, 16, 9, 2, 43, 36, 29, 22, 15, 8, 1),
+    "reflect-x y'" : (0, 294, 287, 280, 273, 266, 259, 252, 293, 286, 279, 272, 265, 258, 251, 292, 285, 278, 271, 264, 257, 250, 291, 284, 277, 270, 263, 256, 249, 290, 283, 276, 269, 262, 255, 248, 289, 282, 275, 268, 261, 254, 247, 288, 281, 274, 267, 260, 253, 246, 239, 240, 241, 242, 243, 244, 245, 232, 233, 234, 235, 236, 237, 238, 225, 226, 227, 228, 229, 230, 231, 218, 219, 220, 221, 222, 223, 224, 211, 212, 213, 214, 215, 216, 217, 204, 205, 206, 207, 208, 209, 210, 197, 198, 199, 200, 201, 202, 203, 92, 93, 94, 95, 96, 97, 98, 85, 86, 87, 88, 89, 90, 91, 78, 79, 80, 81, 82, 83, 84, 71, 72, 73, 74, 75, 76, 77, 64, 65, 66, 67, 68, 69, 70, 57, 58, 59, 60, 61, 62, 63, 50, 51, 52, 53, 54, 55, 56, 141, 142, 143, 144, 145, 146, 147, 134, 135, 136, 137, 138, 139, 140, 127, 128, 129, 130, 131, 132, 133, 120, 121, 122, 123, 124, 125, 126, 113, 114, 115, 116, 117, 118, 119, 106, 107, 108, 109, 110, 111, 112, 99, 100, 101, 102, 103, 104, 105, 190, 191, 192, 193, 194, 195, 196, 183, 184, 185, 186, 187, 188, 189, 176, 177, 178, 179, 180, 181, 182, 169, 170, 171, 172, 173, 174, 175, 162, 163, 164, 165, 166, 167, 168, 155, 156, 157, 158, 159, 160, 161, 148, 149, 150, 151, 152, 153, 154, 1, 8, 15, 22, 29, 36, 43, 2, 9, 16, 23, 30, 37, 44, 3, 10, 17, 24, 31, 38, 45, 4, 11, 18, 25, 32, 39, 46, 5, 12, 19, 26, 33, 40, 47, 6, 13, 20, 27, 34, 41, 48, 7, 14, 21, 28, 35, 42, 49),
+    "reflect-x z" : (0, 50, 57, 64, 71, 78, 85, 92, 51, 58, 65, 72, 79, 86, 93, 52, 59, 66, 73, 80, 87, 94, 53, 60, 67, 74, 81, 88, 95, 54, 61, 68, 75, 82, 89, 96, 55, 62, 69, 76, 83, 90, 97, 56, 63, 70, 77, 84, 91, 98, 1, 8, 15, 22, 29, 36, 43, 2, 9, 16, 23, 30, 37, 44, 3, 10, 17, 24, 31, 38, 45, 4, 11, 18, 25, 32, 39, 46, 5, 12, 19, 26, 33, 40, 47, 6, 13, 20, 27, 34, 41, 48, 7, 14, 21, 28, 35, 42, 49, 99, 106, 113, 120, 127, 134, 141, 100, 107, 114, 121, 128, 135, 142, 101, 108, 115, 122, 129, 136, 143, 102, 109, 116, 123, 130, 137, 144, 103, 110, 117, 124, 131, 138, 145, 104, 111, 118, 125, 132, 139, 146, 105, 112, 119, 126, 133, 140, 147, 246, 253, 260, 267, 274, 281, 288, 247, 254, 261, 268, 275, 282, 289, 248, 255, 262, 269, 276, 283, 290, 249, 256, 263, 270, 277, 284, 291, 250, 257, 264, 271, 278, 285, 292, 251, 258, 265, 272, 279, 286, 293, 252, 259, 266, 273, 280, 287, 294, 245, 238, 231, 224, 217, 210, 203, 244, 237, 230, 223, 216, 209, 202, 243, 236, 229, 222, 215, 208, 201, 242, 235, 228, 221, 214, 207, 200, 241, 234, 227, 220, 213, 206, 199, 240, 233, 226, 219, 212, 205, 198, 239, 232, 225, 218, 211, 204, 197, 148, 155, 162, 169, 176, 183, 190, 149, 156, 163, 170, 177, 184, 191, 150, 157, 164, 171, 178, 185, 192, 151, 158, 165, 172, 179, 186, 193, 152, 159, 166, 173, 180, 187, 194, 153, 160, 167, 174, 181, 188, 195, 154, 161, 168, 175, 182, 189, 196),
+    "reflect-x z'" : (0, 196, 189, 182, 175, 168, 161, 154, 195, 188, 181, 174, 167, 160, 153, 194, 187, 180, 173, 166, 159, 152, 193, 186, 179, 172, 165, 158, 151, 192, 185, 178, 171, 164, 157, 150, 191, 184, 177, 170, 163, 156, 149, 190, 183, 176, 169, 162, 155, 148, 294, 287, 280, 273, 266, 259, 252, 293, 286, 279, 272, 265, 258, 251, 292, 285, 278, 271, 264, 257, 250, 291, 284, 277, 270, 263, 256, 249, 290, 283, 276, 269, 262, 255, 248, 289, 282, 275, 268, 261, 254, 247, 288, 281, 274, 267, 260, 253, 246, 147, 140, 133, 126, 119, 112, 105, 146, 139, 132, 125, 118, 111, 104, 145, 138, 131, 124, 117, 110, 103, 144, 137, 130, 123, 116, 109, 102, 143, 136, 129, 122, 115, 108, 101, 142, 135, 128, 121, 114, 107, 100, 141, 134, 127, 120, 113, 106, 99, 49, 42, 35, 28, 21, 14, 7, 48, 41, 34, 27, 20, 13, 6, 47, 40, 33, 26, 19, 12, 5, 46, 39, 32, 25, 18, 11, 4, 45, 38, 31, 24, 17, 10, 3, 44, 37, 30, 23, 16, 9, 2, 43, 36, 29, 22, 15, 8, 1, 197, 204, 211, 218, 225, 232, 239, 198, 205, 212, 219, 226, 233, 240, 199, 206, 213, 220, 227, 234, 241, 200, 207, 214, 221, 228, 235, 242, 201, 208, 215, 222, 229, 236, 243, 202, 209, 216, 223, 230, 237, 244, 203, 210, 217, 224, 231, 238, 245, 98, 91, 84, 77, 70, 63, 56, 97, 90, 83, 76, 69, 62, 55, 96, 89, 82, 75, 68, 61, 54, 95, 88, 81, 74, 67, 60, 53, 94, 87, 80, 73, 66, 59, 52, 93, 86, 79, 72, 65, 58, 51, 92, 85, 78, 71, 64, 57, 50),
+    "reflect-x x x" : (0, 43, 44, 45, 46, 47, 48, 49, 36, 37, 38, 39, 40, 41, 42, 29, 30, 31, 32, 33, 34, 35, 22, 23, 24, 25, 26, 27, 28, 15, 16, 17, 18, 19, 20, 21, 8, 9, 10, 11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7, 56, 55, 54, 53, 52, 51, 50, 63, 62, 61, 60, 59, 58, 57, 70, 69, 68, 67, 66, 65, 64, 77, 76, 75, 74, 73, 72, 71, 84, 83, 82, 81, 80, 79, 78, 91, 90, 89, 88, 87, 86, 85, 98, 97, 96, 95, 94, 93, 92, 203, 202, 201, 200, 199, 198, 197, 210, 209, 208, 207, 206, 205, 204, 217, 216, 215, 214, 213, 212, 211, 224, 223, 222, 221, 220, 219, 218, 231, 230, 229, 228, 227, 226, 225, 238, 237, 236, 235, 234, 233, 232, 245, 244, 243, 242, 241, 240, 239, 154, 153, 152, 151, 150, 149, 148, 161, 160, 159, 158, 157, 156, 155, 168, 167, 166, 165, 164, 163, 162, 175, 174, 173, 172, 171, 170, 169, 182, 181, 180, 179, 178, 177, 176, 189, 188, 187, 186, 185, 184, 183, 196, 195, 194, 193, 192, 191, 190, 105, 104, 103, 102, 101, 100, 99, 112, 111, 110, 109, 108, 107, 106, 119, 118, 117, 116, 115, 114, 113, 126, 125, 124, 123, 122, 121, 120, 133, 132, 131, 130, 129, 128, 127, 140, 139, 138, 137, 136, 135, 134, 147, 146, 145, 144, 143, 142, 141, 288, 289, 290, 291, 292, 293, 294, 281, 282, 283, 284, 285, 286, 287, 274, 275, 276, 277, 278, 279, 280, 267, 268, 269, 270, 271, 272, 273, 260, 261, 262, 263, 264, 265, 266, 253, 254, 255, 256, 257, 258, 259, 246, 247, 248, 249, 250, 251, 252),
+    "reflect-x y y" : (0, 252, 251, 250, 249, 248, 247, 246, 259, 258, 257, 256, 255, 254, 253, 266, 265, 264, 263, 262, 261, 260, 273, 272, 271, 270, 269, 268, 267, 280, 279, 278, 277, 276, 275, 274, 287, 286, 285, 284, 283, 282, 281, 294, 293, 292, 291, 290, 289, 288, 190, 191, 192, 193, 194, 195, 196, 183, 184, 185, 186, 187, 188, 189, 176, 177, 178, 179, 180, 181, 182, 169, 170, 171, 172, 173, 174, 175, 162, 163, 164, 165, 166, 167, 168, 155, 156, 157, 158, 159, 160, 161, 148, 149, 150, 151, 152, 153, 154, 239, 240, 241, 242, 243, 244, 245, 232, 233, 234, 235, 236, 237, 238, 225, 226, 227, 228, 229, 230, 231, 218, 219, 220, 221, 222, 223, 224, 211, 212, 213, 214, 215, 216, 217, 204, 205, 206, 207, 208, 209, 210, 197, 198, 199, 200, 201, 202, 203, 92, 93, 94, 95, 96, 97, 98, 85, 86, 87, 88, 89, 90, 91, 78, 79, 80, 81, 82, 83, 84, 71, 72, 73, 74, 75, 76, 77, 64, 65, 66, 67, 68, 69, 70, 57, 58, 59, 60, 61, 62, 63, 50, 51, 52, 53, 54, 55, 56, 141, 142, 143, 144, 145, 146, 147, 134, 135, 136, 137, 138, 139, 140, 127, 128, 129, 130, 131, 132, 133, 120, 121, 122, 123, 124, 125, 126, 113, 114, 115, 116, 117, 118, 119, 106, 107, 108, 109, 110, 111, 112, 99, 100, 101, 102, 103, 104, 105, 7, 6, 5, 4, 3, 2, 1, 14, 13, 12, 11, 10, 9, 8, 21, 20, 19, 18, 17, 16, 15, 28, 27, 26, 25, 24, 23, 22, 35, 34, 33, 32, 31, 30, 29, 42, 41, 40, 39, 38, 37, 36, 49, 48, 47, 46, 45, 44, 43),
+    "reflect-x z z" : (0, 7, 6, 5, 4, 3, 2, 1, 14, 13, 12, 11, 10, 9, 8, 21, 20, 19, 18, 17, 16, 15, 28, 27, 26, 25, 24, 23, 22, 35, 34, 33, 32, 31, 30, 29, 42, 41, 40, 39, 38, 37, 36, 49, 48, 47, 46, 45, 44, 43, 154, 153, 152, 151, 150, 149, 148, 161, 160, 159, 158, 157, 156, 155, 168, 167, 166, 165, 164, 163, 162, 175, 174, 173, 172, 171, 170, 169, 182, 181, 180, 179, 178, 177, 176, 189, 188, 187, 186, 185, 184, 183, 196, 195, 194, 193, 192, 191, 190, 105, 104, 103, 102, 101, 100, 99, 112, 111, 110, 109, 108, 107, 106, 119, 118, 117, 116, 115, 114, 113, 126, 125, 124, 123, 122, 121, 120, 133, 132, 131, 130, 129, 128, 127, 140, 139, 138, 137, 136, 135, 134, 147, 146, 145, 144, 143, 142, 141, 56, 55, 54, 53, 52, 51, 50, 63, 62, 61, 60, 59, 58, 57, 70, 69, 68, 67, 66, 65, 64, 77, 76, 75, 74, 73, 72, 71, 84, 83, 82, 81, 80, 79, 78, 91, 90, 89, 88, 87, 86, 85, 98, 97, 96, 95, 94, 93, 92, 203, 202, 201, 200, 199, 198, 197, 210, 209, 208, 207, 206, 205, 204, 217, 216, 215, 214, 213, 212, 211, 224, 223, 222, 221, 220, 219, 218, 231, 230, 229, 228, 227, 226, 225, 238, 237, 236, 235, 234, 233, 232, 245, 244, 243, 242, 241, 240, 239, 252, 251, 250, 249, 248, 247, 246, 259, 258, 257, 256, 255, 254, 253, 266, 265, 264, 263, 262, 261, 260, 273, 272, 271, 270, 269, 268, 267, 280, 279, 278, 277, 276, 275, 274, 287, 286, 285, 284, 283, 282, 281, 294, 293, 292, 291, 290, 289, 288),
+    "reflect-x x y" : (0, 99, 106, 113, 120, 127, 134, 141, 100, 107, 114, 121, 128, 135, 142, 101, 108, 115, 122, 129, 136, 143, 102, 109, 116, 123, 130, 137, 144, 103, 110, 117, 124, 131, 138, 145, 104, 111, 118, 125, 132, 139, 146, 105, 112, 119, 126, 133, 140, 147, 43, 44, 45, 46, 47, 48, 49, 36, 37, 38, 39, 40, 41, 42, 29, 30, 31, 32, 33, 34, 35, 22, 23, 24, 25, 26, 27, 28, 15, 16, 17, 18, 19, 20, 21, 8, 9, 10, 11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7, 148, 155, 162, 169, 176, 183, 190, 149, 156, 163, 170, 177, 184, 191, 150, 157, 164, 171, 178, 185, 192, 151, 158, 165, 172, 179, 186, 193, 152, 159, 166, 173, 180, 187, 194, 153, 160, 167, 174, 181, 188, 195, 154, 161, 168, 175, 182, 189, 196, 252, 251, 250, 249, 248, 247, 246, 259, 258, 257, 256, 255, 254, 253, 266, 265, 264, 263, 262, 261, 260, 273, 272, 271, 270, 269, 268, 267, 280, 279, 278, 277, 276, 275, 274, 287, 286, 285, 284, 283, 282, 281, 294, 293, 292, 291, 290, 289, 288, 98, 91, 84, 77, 70, 63, 56, 97, 90, 83, 76, 69, 62, 55, 96, 89, 82, 75, 68, 61, 54, 95, 88, 81, 74, 67, 60, 53, 94, 87, 80, 73, 66, 59, 52, 93, 86, 79, 72, 65, 58, 51, 92, 85, 78, 71, 64, 57, 50, 197, 204, 211, 218, 225, 232, 239, 198, 205, 212, 219, 226, 233, 240, 199, 206, 213, 220, 227, 234, 241, 200, 207, 214, 221, 228, 235, 242, 201, 208, 215, 222, 229, 236, 243, 202, 209, 216, 223, 230, 237, 244, 203, 210, 217, 224, 231, 238, 245),
+    "reflect-x x y'" : (0, 147, 140, 133, 126, 119, 112, 105, 146, 139, 132, 125, 118, 111, 104, 145, 138, 131, 124, 117, 110, 103, 144, 137, 130, 123, 116, 109, 102, 143, 136, 129, 122, 115, 108, 101, 142, 135, 128, 121, 114, 107, 100, 141, 134, 127, 120, 113, 106, 99, 252, 251, 250, 249, 248, 247, 246, 259, 258, 257, 256, 255, 254, 253, 266, 265, 264, 263, 262, 261, 260, 273, 272, 271, 270, 269, 268, 267, 280, 279, 278, 277, 276, 275, 274, 287, 286, 285, 284, 283, 282, 281, 294, 293, 292, 291, 290, 289, 288, 98, 91, 84, 77, 70, 63, 56, 97, 90, 83, 76, 69, 62, 55, 96, 89, 82, 75, 68, 61, 54, 95, 88, 81, 74, 67, 60, 53, 94, 87, 80, 73, 66, 59, 52, 93, 86, 79, 72, 65, 58, 51, 92, 85, 78, 71, 64, 57, 50, 43, 44, 45, 46, 47, 48, 49, 36, 37, 38, 39, 40, 41, 42, 29, 30, 31, 32, 33, 34, 35, 22, 23, 24, 25, 26, 27, 28, 15, 16, 17, 18, 19, 20, 21, 8, 9, 10, 11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7, 148, 155, 162, 169, 176, 183, 190, 149, 156, 163, 170, 177, 184, 191, 150, 157, 164, 171, 178, 185, 192, 151, 158, 165, 172, 179, 186, 193, 152, 159, 166, 173, 180, 187, 194, 153, 160, 167, 174, 181, 188, 195, 154, 161, 168, 175, 182, 189, 196, 245, 238, 231, 224, 217, 210, 203, 244, 237, 230, 223, 216, 209, 202, 243, 236, 229, 222, 215, 208, 201, 242, 235, 228, 221, 214, 207, 200, 241, 234, 227, 220, 213, 206, 199, 240, 233, 226, 219, 212, 205, 198, 239, 232, 225, 218, 211, 204, 197),
+    "reflect-x x z" : (0, 92, 93, 94, 95, 96, 97, 98, 85, 86, 87, 88, 89, 90, 91, 78, 79, 80, 81, 82, 83, 84, 71, 72, 73, 74, 75, 76, 77, 64, 65, 66, 67, 68, 69, 70, 57, 58, 59, 60, 61, 62, 63, 50, 51, 52, 53, 54, 55, 56, 245, 238, 231, 224, 217, 210, 203, 244, 237, 230, 223, 216, 209, 202, 243, 236, 229, 222, 215, 208, 201, 242, 235, 228, 221, 214, 207, 200, 241, 234, 227, 220, 213, 206, 199, 240, 233, 226, 219, 212, 205, 198, 239, 232, 225, 218, 211, 204, 197, 1, 8, 15, 22, 29, 36, 43, 2, 9, 16, 23, 30, 37, 44, 3, 10, 17, 24, 31, 38, 45, 4, 11, 18, 25, 32, 39, 46, 5, 12, 19, 26, 33, 40, 47, 6, 13, 20, 27, 34, 41, 48, 7, 14, 21, 28, 35, 42, 49, 99, 106, 113, 120, 127, 134, 141, 100, 107, 114, 121, 128, 135, 142, 101, 108, 115, 122, 129, 136, 143, 102, 109, 116, 123, 130, 137, 144, 103, 110, 117, 124, 131, 138, 145, 104, 111, 118, 125, 132, 139, 146, 105, 112, 119, 126, 133, 140, 147, 246, 253, 260, 267, 274, 281, 288, 247, 254, 261, 268, 275, 282, 289, 248, 255, 262, 269, 276, 283, 290, 249, 256, 263, 270, 277, 284, 291, 250, 257, 264, 271, 278, 285, 292, 251, 258, 265, 272, 279, 286, 293, 252, 259, 266, 273, 280, 287, 294, 154, 153, 152, 151, 150, 149, 148, 161, 160, 159, 158, 157, 156, 155, 168, 167, 166, 165, 164, 163, 162, 175, 174, 173, 172, 171, 170, 169, 182, 181, 180, 179, 178, 177, 176, 189, 188, 187, 186, 185, 184, 183, 196, 195, 194, 193, 192, 191, 190),
+    "reflect-x x z'" : (0, 190, 191, 192, 193, 194, 195, 196, 183, 184, 185, 186, 187, 188, 189, 176, 177, 178, 179, 180, 181, 182, 169, 170, 171, 172, 173, 174, 175, 162, 163, 164, 165, 166, 167, 168, 155, 156, 157, 158, 159, 160, 161, 148, 149, 150, 151, 152, 153, 154, 147, 140, 133, 126, 119, 112, 105, 146, 139, 132, 125, 118, 111, 104, 145, 138, 131, 124, 117, 110, 103, 144, 137, 130, 123, 116, 109, 102, 143, 136, 129, 122, 115, 108, 101, 142, 135, 128, 121, 114, 107, 100, 141, 134, 127, 120, 113, 106, 99, 49, 42, 35, 28, 21, 14, 7, 48, 41, 34, 27, 20, 13, 6, 47, 40, 33, 26, 19, 12, 5, 46, 39, 32, 25, 18, 11, 4, 45, 38, 31, 24, 17, 10, 3, 44, 37, 30, 23, 16, 9, 2, 43, 36, 29, 22, 15, 8, 1, 197, 204, 211, 218, 225, 232, 239, 198, 205, 212, 219, 226, 233, 240, 199, 206, 213, 220, 227, 234, 241, 200, 207, 214, 221, 228, 235, 242, 201, 208, 215, 222, 229, 236, 243, 202, 209, 216, 223, 230, 237, 244, 203, 210, 217, 224, 231, 238, 245, 294, 287, 280, 273, 266, 259, 252, 293, 286, 279, 272, 265, 258, 251, 292, 285, 278, 271, 264, 257, 250, 291, 284, 277, 270, 263, 256, 249, 290, 283, 276, 269, 262, 255, 248, 289, 282, 275, 268, 261, 254, 247, 288, 281, 274, 267, 260, 253, 246, 56, 55, 54, 53, 52, 51, 50, 63, 62, 61, 60, 59, 58, 57, 70, 69, 68, 67, 66, 65, 64, 77, 76, 75, 74, 73, 72, 71, 84, 83, 82, 81, 80, 79, 78, 91, 90, 89, 88, 87, 86, 85, 98, 97, 96, 95, 94, 93, 92),
+    "reflect-x x y y" : (0, 105, 104, 103, 102, 101, 100, 99, 112, 111, 110, 109, 108, 107, 106, 119, 118, 117, 116, 115, 114, 113, 126, 125, 124, 123, 122, 121, 120, 133, 132, 131, 130, 129, 128, 127, 140, 139, 138, 137, 136, 135, 134, 147, 146, 145, 144, 143, 142, 141, 148, 155, 162, 169, 176, 183, 190, 149, 156, 163, 170, 177, 184, 191, 150, 157, 164, 171, 178, 185, 192, 151, 158, 165, 172, 179, 186, 193, 152, 159, 166, 173, 180, 187, 194, 153, 160, 167, 174, 181, 188, 195, 154, 161, 168, 175, 182, 189, 196, 252, 251, 250, 249, 248, 247, 246, 259, 258, 257, 256, 255, 254, 253, 266, 265, 264, 263, 262, 261, 260, 273, 272, 271, 270, 269, 268, 267, 280, 279, 278, 277, 276, 275, 274, 287, 286, 285, 284, 283, 282, 281, 294, 293, 292, 291, 290, 289, 288, 98, 91, 84, 77, 70, 63, 56, 97, 90, 83, 76, 69, 62, 55, 96, 89, 82, 75, 68, 61, 54, 95, 88, 81, 74, 67, 60, 53, 94, 87, 80, 73, 66, 59, 52, 93, 86, 79, 72, 65, 58, 51, 92, 85, 78, 71, 64, 57, 50, 43, 44, 45, 46, 47, 48, 49, 36, 37, 38, 39, 40, 41, 42, 29, 30, 31, 32, 33, 34, 35, 22, 23, 24, 25, 26, 27, 28, 15, 16, 17, 18, 19, 20, 21, 8, 9, 10, 11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7, 239, 240, 241, 242, 243, 244, 245, 232, 233, 234, 235, 236, 237, 238, 225, 226, 227, 228, 229, 230, 231, 218, 219, 220, 221, 222, 223, 224, 211, 212, 213, 214, 215, 216, 217, 204, 205, 206, 207, 208, 209, 210, 197, 198, 199, 200, 201, 202, 203),
+    "reflect-x x z z" : (0, 239, 240, 241, 242, 243, 244, 245, 232, 233, 234, 235, 236, 237, 238, 225, 226, 227, 228, 229, 230, 231, 218, 219, 220, 221, 222, 223, 224, 211, 212, 213, 214, 215, 216, 217, 204, 205, 206, 207, 208, 209, 210, 197, 198, 199, 200, 201, 202, 203, 196, 189, 182, 175, 168, 161, 154, 195, 188, 181, 174, 167, 160, 153, 194, 187, 180, 173, 166, 159, 152, 193, 186, 179, 172, 165, 158, 151, 192, 185, 178, 171, 164, 157, 150, 191, 184, 177, 170, 163, 156, 149, 190, 183, 176, 169, 162, 155, 148, 7, 6, 5, 4, 3, 2, 1, 14, 13, 12, 11, 10, 9, 8, 21, 20, 19, 18, 17, 16, 15, 28, 27, 26, 25, 24, 23, 22, 35, 34, 33, 32, 31, 30, 29, 42, 41, 40, 39, 38, 37, 36, 49, 48, 47, 46, 45, 44, 43, 50, 57, 64, 71, 78, 85, 92, 51, 58, 65, 72, 79, 86, 93, 52, 59, 66, 73, 80, 87, 94, 53, 60, 67, 74, 81, 88, 95, 54, 61, 68, 75, 82, 89, 96, 55, 62, 69, 76, 83, 90, 97, 56, 63, 70, 77, 84, 91, 98, 288, 289, 290, 291, 292, 293, 294, 281, 282, 283, 284, 285, 286, 287, 274, 275, 276, 277, 278, 279, 280, 267, 268, 269, 270, 271, 272, 273, 260, 261, 262, 263, 264, 265, 266, 253, 254, 255, 256, 257, 258, 259, 246, 247, 248, 249, 250, 251, 252, 105, 104, 103, 102, 101, 100, 99, 112, 111, 110, 109, 108, 107, 106, 119, 118, 117, 116, 115, 114, 113, 126, 125, 124, 123, 122, 121, 120, 133, 132, 131, 130, 129, 128, 127, 140, 139, 138, 137, 136, 135, 134, 147, 146, 145, 144, 143, 142, 141),
+    "reflect-x x' y" : (0, 245, 238, 231, 224, 217, 210, 203, 244, 237, 230, 223, 216, 209, 202, 243, 236, 229, 222, 215, 208, 201, 242, 235, 228, 221, 214, 207, 200, 241, 234, 227, 220, 213, 206, 199, 240, 233, 226, 219, 212, 205, 198, 239, 232, 225, 218, 211, 204, 197, 288, 289, 290, 291, 292, 293, 294, 281, 282, 283, 284, 285, 286, 287, 274, 275, 276, 277, 278, 279, 280, 267, 268, 269, 270, 271, 272, 273, 260, 261, 262, 263, 264, 265, 266, 253, 254, 255, 256, 257, 258, 259, 246, 247, 248, 249, 250, 251, 252, 196, 189, 182, 175, 168, 161, 154, 195, 188, 181, 174, 167, 160, 153, 194, 187, 180, 173, 166, 159, 152, 193, 186, 179, 172, 165, 158, 151, 192, 185, 178, 171, 164, 157, 150, 191, 184, 177, 170, 163, 156, 149, 190, 183, 176, 169, 162, 155, 148, 7, 6, 5, 4, 3, 2, 1, 14, 13, 12, 11, 10, 9, 8, 21, 20, 19, 18, 17, 16, 15, 28, 27, 26, 25, 24, 23, 22, 35, 34, 33, 32, 31, 30, 29, 42, 41, 40, 39, 38, 37, 36, 49, 48, 47, 46, 45, 44, 43, 50, 57, 64, 71, 78, 85, 92, 51, 58, 65, 72, 79, 86, 93, 52, 59, 66, 73, 80, 87, 94, 53, 60, 67, 74, 81, 88, 95, 54, 61, 68, 75, 82, 89, 96, 55, 62, 69, 76, 83, 90, 97, 56, 63, 70, 77, 84, 91, 98, 147, 140, 133, 126, 119, 112, 105, 146, 139, 132, 125, 118, 111, 104, 145, 138, 131, 124, 117, 110, 103, 144, 137, 130, 123, 116, 109, 102, 143, 136, 129, 122, 115, 108, 101, 142, 135, 128, 121, 114, 107, 100, 141, 134, 127, 120, 113, 106, 99),
+    "reflect-x x' y'" : (0, 197, 204, 211, 218, 225, 232, 239, 198, 205, 212, 219, 226, 233, 240, 199, 206, 213, 220, 227, 234, 241, 200, 207, 214, 221, 228, 235, 242, 201, 208, 215, 222, 229, 236, 243, 202, 209, 216, 223, 230, 237, 244, 203, 210, 217, 224, 231, 238, 245, 7, 6, 5, 4, 3, 2, 1, 14, 13, 12, 11, 10, 9, 8, 21, 20, 19, 18, 17, 16, 15, 28, 27, 26, 25, 24, 23, 22, 35, 34, 33, 32, 31, 30, 29, 42, 41, 40, 39, 38, 37, 36, 49, 48, 47, 46, 45, 44, 43, 50, 57, 64, 71, 78, 85, 92, 51, 58, 65, 72, 79, 86, 93, 52, 59, 66, 73, 80, 87, 94, 53, 60, 67, 74, 81, 88, 95, 54, 61, 68, 75, 82, 89, 96, 55, 62, 69, 76, 83, 90, 97, 56, 63, 70, 77, 84, 91, 98, 288, 289, 290, 291, 292, 293, 294, 281, 282, 283, 284, 285, 286, 287, 274, 275, 276, 277, 278, 279, 280, 267, 268, 269, 270, 271, 272, 273, 260, 261, 262, 263, 264, 265, 266, 253, 254, 255, 256, 257, 258, 259, 246, 247, 248, 249, 250, 251, 252, 196, 189, 182, 175, 168, 161, 154, 195, 188, 181, 174, 167, 160, 153, 194, 187, 180, 173, 166, 159, 152, 193, 186, 179, 172, 165, 158, 151, 192, 185, 178, 171, 164, 157, 150, 191, 184, 177, 170, 163, 156, 149, 190, 183, 176, 169, 162, 155, 148, 99, 106, 113, 120, 127, 134, 141, 100, 107, 114, 121, 128, 135, 142, 101, 108, 115, 122, 129, 136, 143, 102, 109, 116, 123, 130, 137, 144, 103, 110, 117, 124, 131, 138, 145, 104, 111, 118, 125, 132, 139, 146, 105, 112, 119, 126, 133, 140, 147),
+    "reflect-x x' z" : (0, 56, 55, 54, 53, 52, 51, 50, 63, 62, 61, 60, 59, 58, 57, 70, 69, 68, 67, 66, 65, 64, 77, 76, 75, 74, 73, 72, 71, 84, 83, 82, 81, 80, 79, 78, 91, 90, 89, 88, 87, 86, 85, 98, 97, 96, 95, 94, 93, 92, 99, 106, 113, 120, 127, 134, 141, 100, 107, 114, 121, 128, 135, 142, 101, 108, 115, 122, 129, 136, 143, 102, 109, 116, 123, 130, 137, 144, 103, 110, 117, 124, 131, 138, 145, 104, 111, 118, 125, 132, 139, 146, 105, 112, 119, 126, 133, 140, 147, 246, 253, 260, 267, 274, 281, 288, 247, 254, 261, 268, 275, 282, 289, 248, 255, 262, 269, 276, 283, 290, 249, 256, 263, 270, 277, 284, 291, 250, 257, 264, 271, 278, 285, 292, 251, 258, 265, 272, 279, 286, 293, 252, 259, 266, 273, 280, 287, 294, 245, 238, 231, 224, 217, 210, 203, 244, 237, 230, 223, 216, 209, 202, 243, 236, 229, 222, 215, 208, 201, 242, 235, 228, 221, 214, 207, 200, 241, 234, 227, 220, 213, 206, 199, 240, 233, 226, 219, 212, 205, 198, 239, 232, 225, 218, 211, 204, 197, 1, 8, 15, 22, 29, 36, 43, 2, 9, 16, 23, 30, 37, 44, 3, 10, 17, 24, 31, 38, 45, 4, 11, 18, 25, 32, 39, 46, 5, 12, 19, 26, 33, 40, 47, 6, 13, 20, 27, 34, 41, 48, 7, 14, 21, 28, 35, 42, 49, 190, 191, 192, 193, 194, 195, 196, 183, 184, 185, 186, 187, 188, 189, 176, 177, 178, 179, 180, 181, 182, 169, 170, 171, 172, 173, 174, 175, 162, 163, 164, 165, 166, 167, 168, 155, 156, 157, 158, 159, 160, 161, 148, 149, 150, 151, 152, 153, 154),
+    "reflect-x x' z'" : (0, 154, 153, 152, 151, 150, 149, 148, 161, 160, 159, 158, 157, 156, 155, 168, 167, 166, 165, 164, 163, 162, 175, 174, 173, 172, 171, 170, 169, 182, 181, 180, 179, 178, 177, 176, 189, 188, 187, 186, 185, 184, 183, 196, 195, 194, 193, 192, 191, 190, 197, 204, 211, 218, 225, 232, 239, 198, 205, 212, 219, 226, 233, 240, 199, 206, 213, 220, 227, 234, 241, 200, 207, 214, 221, 228, 235, 242, 201, 208, 215, 222, 229, 236, 243, 202, 209, 216, 223, 230, 237, 244, 203, 210, 217, 224, 231, 238, 245, 294, 287, 280, 273, 266, 259, 252, 293, 286, 279, 272, 265, 258, 251, 292, 285, 278, 271, 264, 257, 250, 291, 284, 277, 270, 263, 256, 249, 290, 283, 276, 269, 262, 255, 248, 289, 282, 275, 268, 261, 254, 247, 288, 281, 274, 267, 260, 253, 246, 147, 140, 133, 126, 119, 112, 105, 146, 139, 132, 125, 118, 111, 104, 145, 138, 131, 124, 117, 110, 103, 144, 137, 130, 123, 116, 109, 102, 143, 136, 129, 122, 115, 108, 101, 142, 135, 128, 121, 114, 107, 100, 141, 134, 127, 120, 113, 106, 99, 49, 42, 35, 28, 21, 14, 7, 48, 41, 34, 27, 20, 13, 6, 47, 40, 33, 26, 19, 12, 5, 46, 39, 32, 25, 18, 11, 4, 45, 38, 31, 24, 17, 10, 3, 44, 37, 30, 23, 16, 9, 2, 43, 36, 29, 22, 15, 8, 1, 92, 93, 94, 95, 96, 97, 98, 85, 86, 87, 88, 89, 90, 91, 78, 79, 80, 81, 82, 83, 84, 71, 72, 73, 74, 75, 76, 77, 64, 65, 66, 67, 68, 69, 70, 57, 58, 59, 60, 61, 62, 63, 50, 51, 52, 53, 54, 55, 56),
+    "reflect-x y x x" : (0, 49, 42, 35, 28, 21, 14, 7, 48, 41, 34, 27, 20, 13, 6, 47, 40, 33, 26, 19, 12, 5, 46, 39, 32, 25, 18, 11, 4, 45, 38, 31, 24, 17, 10, 3, 44, 37, 30, 23, 16, 9, 2, 43, 36, 29, 22, 15, 8, 1, 105, 104, 103, 102, 101, 100, 99, 112, 111, 110, 109, 108, 107, 106, 119, 118, 117, 116, 115, 114, 113, 126, 125, 124, 123, 122, 121, 120, 133, 132, 131, 130, 129, 128, 127, 140, 139, 138, 137, 136, 135, 134, 147, 146, 145, 144, 143, 142, 141, 56, 55, 54, 53, 52, 51, 50, 63, 62, 61, 60, 59, 58, 57, 70, 69, 68, 67, 66, 65, 64, 77, 76, 75, 74, 73, 72, 71, 84, 83, 82, 81, 80, 79, 78, 91, 90, 89, 88, 87, 86, 85, 98, 97, 96, 95, 94, 93, 92, 203, 202, 201, 200, 199, 198, 197, 210, 209, 208, 207, 206, 205, 204, 217, 216, 215, 214, 213, 212, 211, 224, 223, 222, 221, 220, 219, 218, 231, 230, 229, 228, 227, 226, 225, 238, 237, 236, 235, 234, 233, 232, 245, 244, 243, 242, 241, 240, 239, 154, 153, 152, 151, 150, 149, 148, 161, 160, 159, 158, 157, 156, 155, 168, 167, 166, 165, 164, 163, 162, 175, 174, 173, 172, 171, 170, 169, 182, 181, 180, 179, 178, 177, 176, 189, 188, 187, 186, 185, 184, 183, 196, 195, 194, 193, 192, 191, 190, 246, 253, 260, 267, 274, 281, 288, 247, 254, 261, 268, 275, 282, 289, 248, 255, 262, 269, 276, 283, 290, 249, 256, 263, 270, 277, 284, 291, 250, 257, 264, 271, 278, 285, 292, 251, 258, 265, 272, 279, 286, 293, 252, 259, 266, 273, 280, 287, 294),
+    "reflect-x y z z" : (0, 1, 8, 15, 22, 29, 36, 43, 2, 9, 16, 23, 30, 37, 44, 3, 10, 17, 24, 31, 38, 45, 4, 11, 18, 25, 32, 39, 46, 5, 12, 19, 26, 33, 40, 47, 6, 13, 20, 27, 34, 41, 48, 7, 14, 21, 28, 35, 42, 49, 203, 202, 201, 200, 199, 198, 197, 210, 209, 208, 207, 206, 205, 204, 217, 216, 215, 214, 213, 212, 211, 224, 223, 222, 221, 220, 219, 218, 231, 230, 229, 228, 227, 226, 225, 238, 237, 236, 235, 234, 233, 232, 245, 244, 243, 242, 241, 240, 239, 154, 153, 152, 151, 150, 149, 148, 161, 160, 159, 158, 157, 156, 155, 168, 167, 166, 165, 164, 163, 162, 175, 174, 173, 172, 171, 170, 169, 182, 181, 180, 179, 178, 177, 176, 189, 188, 187, 186, 185, 184, 183, 196, 195, 194, 193, 192, 191, 190, 105, 104, 103, 102, 101, 100, 99, 112, 111, 110, 109, 108, 107, 106, 119, 118, 117, 116, 115, 114, 113, 126, 125, 124, 123, 122, 121, 120, 133, 132, 131, 130, 129, 128, 127, 140, 139, 138, 137, 136, 135, 134, 147, 146, 145, 144, 143, 142, 141, 56, 55, 54, 53, 52, 51, 50, 63, 62, 61, 60, 59, 58, 57, 70, 69, 68, 67, 66, 65, 64, 77, 76, 75, 74, 73, 72, 71, 84, 83, 82, 81, 80, 79, 78, 91, 90, 89, 88, 87, 86, 85, 98, 97, 96, 95, 94, 93, 92, 294, 287, 280, 273, 266, 259, 252, 293, 286, 279, 272, 265, 258, 251, 292, 285, 278, 271, 264, 257, 250, 291, 284, 277, 270, 263, 256, 249, 290, 283, 276, 269, 262, 255, 248, 289, 282, 275, 268, 261, 254, 247, 288, 281, 274, 267, 260, 253, 246),
+    "reflect-x z x x" : (0, 148, 155, 162, 169, 176, 183, 190, 149, 156, 163, 170, 177, 184, 191, 150, 157, 164, 171, 178, 185, 192, 151, 158, 165, 172, 179, 186, 193, 152, 159, 166, 173, 180, 187, 194, 153, 160, 167, 174, 181, 188, 195, 154, 161, 168, 175, 182, 189, 196, 49, 42, 35, 28, 21, 14, 7, 48, 41, 34, 27, 20, 13, 6, 47, 40, 33, 26, 19, 12, 5, 46, 39, 32, 25, 18, 11, 4, 45, 38, 31, 24, 17, 10, 3, 44, 37, 30, 23, 16, 9, 2, 43, 36, 29, 22, 15, 8, 1, 197, 204, 211, 218, 225, 232, 239, 198, 205, 212, 219, 226, 233, 240, 199, 206, 213, 220, 227, 234, 241, 200, 207, 214, 221, 228, 235, 242, 201, 208, 215, 222, 229, 236, 243, 202, 209, 216, 223, 230, 237, 244, 203, 210, 217, 224, 231, 238, 245, 294, 287, 280, 273, 266, 259, 252, 293, 286, 279, 272, 265, 258, 251, 292, 285, 278, 271, 264, 257, 250, 291, 284, 277, 270, 263, 256, 249, 290, 283, 276, 269, 262, 255, 248, 289, 282, 275, 268, 261, 254, 247, 288, 281, 274, 267, 260, 253, 246, 147, 140, 133, 126, 119, 112, 105, 146, 139, 132, 125, 118, 111, 104, 145, 138, 131, 124, 117, 110, 103, 144, 137, 130, 123, 116, 109, 102, 143, 136, 129, 122, 115, 108, 101, 142, 135, 128, 121, 114, 107, 100, 141, 134, 127, 120, 113, 106, 99, 50, 57, 64, 71, 78, 85, 92, 51, 58, 65, 72, 79, 86, 93, 52, 59, 66, 73, 80, 87, 94, 53, 60, 67, 74, 81, 88, 95, 54, 61, 68, 75, 82, 89, 96, 55, 62, 69, 76, 83, 90, 97, 56, 63, 70, 77, 84, 91, 98),
+    "reflect-x z y y" : (0, 98, 91, 84, 77, 70, 63, 56, 97, 90, 83, 76, 69, 62, 55, 96, 89, 82, 75, 68, 61, 54, 95, 88, 81, 74, 67, 60, 53, 94, 87, 80, 73, 66, 59, 52, 93, 86, 79, 72, 65, 58, 51, 92, 85, 78, 71, 64, 57, 50, 246, 253, 260, 267, 274, 281, 288, 247, 254, 261, 268, 275, 282, 289, 248, 255, 262, 269, 276, 283, 290, 249, 256, 263, 270, 277, 284, 291, 250, 257, 264, 271, 278, 285, 292, 251, 258, 265, 272, 279, 286, 293, 252, 259, 266, 273, 280, 287, 294, 245, 238, 231, 224, 217, 210, 203, 244, 237, 230, 223, 216, 209, 202, 243, 236, 229, 222, 215, 208, 201, 242, 235, 228, 221, 214, 207, 200, 241, 234, 227, 220, 213, 206, 199, 240, 233, 226, 219, 212, 205, 198, 239, 232, 225, 218, 211, 204, 197, 1, 8, 15, 22, 29, 36, 43, 2, 9, 16, 23, 30, 37, 44, 3, 10, 17, 24, 31, 38, 45, 4, 11, 18, 25, 32, 39, 46, 5, 12, 19, 26, 33, 40, 47, 6, 13, 20, 27, 34, 41, 48, 7, 14, 21, 28, 35, 42, 49, 99, 106, 113, 120, 127, 134, 141, 100, 107, 114, 121, 128, 135, 142, 101, 108, 115, 122, 129, 136, 143, 102, 109, 116, 123, 130, 137, 144, 103, 110, 117, 124, 131, 138, 145, 104, 111, 118, 125, 132, 139, 146, 105, 112, 119, 126, 133, 140, 147, 196, 189, 182, 175, 168, 161, 154, 195, 188, 181, 174, 167, 160, 153, 194, 187, 180, 173, 166, 159, 152, 193, 186, 179, 172, 165, 158, 151, 192, 185, 178, 171, 164, 157, 150, 191, 184, 177, 170, 163, 156, 149, 190, 183, 176, 169, 162, 155, 148),
 }
 
 def rotate_777(cube, step):
-    return rotate_mapper_777[step](cube)
+    return [cube[x] for x in swaps_777[step]]

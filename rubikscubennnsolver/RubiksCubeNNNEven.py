@@ -52,6 +52,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         if self.fake_666 is None:
             self.fake_666 = RubiksCube666(solved_666, 'URFDLB')
             self.fake_666.lt_init()
+            self.fake_666.enable_print_cube = False
         else:
             self.fake_666.re_init()
 
@@ -64,6 +65,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         if self.fake_777 is None:
             self.fake_777 = RubiksCube777(solved_777, 'URFDLB')
             self.fake_777.lt_init()
+            self.fake_777.enable_print_cube = False
         else:
             self.fake_777.re_init()
 
@@ -162,6 +164,15 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         log.info("%s: Start center_orbit_id, %d, max_center_orbits %s, width %s, cycle %s, max_cycle %s" %\
             (self, center_orbit_id, max_center_orbits, width, cycle, max_cycle))
 
+        side_name = {
+            0 : 'U',
+            1 : 'L',
+            2 : 'F',
+            3 : 'R',
+            4 : 'B',
+            5 : 'D',
+        }
+
         for x in range(6):
             mid_NNN_row1 = start_NNN + row0_midpoint + (self.size * (max_center_orbits - center_orbit_id + 1))
             start_NNN_row1 = mid_NNN_row1 - (2 + cycle)
@@ -214,17 +225,17 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
             row5_col4 = end_NNN_row5-1
             row5_col5 = end_NNN_row5
 
-            log.info("%d: start_NNN_row1 %d, mid_NNN_row1 %d, end_NNN_row1 %d" % (x, start_NNN_row1, mid_NNN_row1, end_NNN_row1))
-            log.info("%d: start_NNN_row2 %d, mid_NNN_row2 %d, end_NNN_row2 %d" % (x, start_NNN_row2, mid_NNN_row2, end_NNN_row2))
-            log.info("%d: start_NNN_row3 %d, mid_NNN_row3 %d, end_NNN_row3 %d" % (x, start_NNN_row3, mid_NNN_row3, end_NNN_row3))
-            log.info("%d: start_NNN_row4 %d, mid_NNN_row4 %d, end_NNN_row4 %d" % (x, start_NNN_row4, mid_NNN_row4, end_NNN_row4))
-            log.info("%d: start_NNN_row5 %d, mid_NNN_row5 %d, end_NNN_row5 %d" % (x, start_NNN_row5, mid_NNN_row5, end_NNN_row5))
+            #log.info("%d: start_NNN_row1 %d, mid_NNN_row1 %d, end_NNN_row1 %d" % (x, start_NNN_row1, mid_NNN_row1, end_NNN_row1))
+            #log.info("%d: start_NNN_row2 %d, mid_NNN_row2 %d, end_NNN_row2 %d" % (x, start_NNN_row2, mid_NNN_row2, end_NNN_row2))
+            #log.info("%d: start_NNN_row3 %d, mid_NNN_row3 %d, end_NNN_row3 %d" % (x, start_NNN_row3, mid_NNN_row3, end_NNN_row3))
+            #log.info("%d: start_NNN_row4 %d, mid_NNN_row4 %d, end_NNN_row4 %d" % (x, start_NNN_row4, mid_NNN_row4, end_NNN_row4))
+            #log.info("%d: start_NNN_row5 %d, mid_NNN_row5 %d, end_NNN_row5 %d" % (x, start_NNN_row5, mid_NNN_row5, end_NNN_row5))
 
-            log.info("%d: row1 %d, %d, %d, %d, %d" % (x, row1_col1, row1_col2, row1_col3, row1_col4, row1_col5))
-            log.info("%d: row2 %d, %d, %d, %d, %d" % (x, row2_col1, row2_col2, row2_col3, row2_col4, row2_col5))
-            log.info("%d: row3 %d, %d, %d, %d, %d" % (x, row3_col1, row3_col2, row3_col3, row3_col4, row3_col5))
-            log.info("%d: row4 %d, %d, %d, %d, %d" % (x, row4_col1, row4_col2, row4_col3, row4_col4, row4_col5))
-            log.info("%d: row5 %d, %d, %d, %d, %d\n\n" % (x, row5_col1, row5_col2, row5_col3, row5_col4, row5_col5))
+            #log.info("%d: row1 %d, %d, %d, %d, %d" % (x, row1_col1, row1_col2, row1_col3, row1_col4, row1_col5))
+            #log.info("%d: row2 %d, %d, %d, %d, %d" % (x, row2_col1, row2_col2, row2_col3, row2_col4, row2_col5))
+            #log.info("%d: row3 %d, %d, %d, %d, %d" % (x, row3_col1, row3_col2, row3_col3, row3_col4, row3_col5))
+            #log.info("%d: row4 %d, %d, %d, %d, %d" % (x, row4_col1, row4_col2, row4_col3, row4_col4, row4_col5))
+            #log.info("%d: row5 %d, %d, %d, %d, %d\n\n" % (x, row5_col1, row5_col2, row5_col3, row5_col4, row5_col5))
 
             if ((center_orbit_id == 0 and cycle == 0) or
                 (center_orbit_id == max_center_orbits and cycle == max_cycle)):
@@ -260,10 +271,12 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
             else:
                 #fake_777.state[start_777+9] = self.state[row1_col1]
+                fake_777.state[start_777+9] = side_name[x]
                 fake_777.state[start_777+10] = self.state[row1_col2]
                 fake_777.state[start_777+11] = self.state[row1_col3]
                 fake_777.state[start_777+12] = self.state[row1_col4]
                 #fake_777.state[start_777+13] = self.state[row1_col5]
+                fake_777.state[start_777+13] = side_name[x]
 
                 fake_777.state[start_777+16] = self.state[row2_col1]
                 fake_777.state[start_777+17] = self.state[row2_col2]
@@ -284,10 +297,12 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 fake_777.state[start_777+34] = self.state[row4_col5]
 
                 #fake_777.state[start_777+37] = self.state[row5_col1]
+                fake_777.state[start_777+37] = side_name[x]
                 fake_777.state[start_777+38] = self.state[row5_col2]
                 fake_777.state[start_777+39] = self.state[row5_col3]
                 fake_777.state[start_777+40] = self.state[row5_col4]
                 #fake_777.state[start_777+41] = self.state[row5_col5]
+                fake_777.state[start_777+41] = side_name[x]
 
             start_777 += 49
             start_NNN += (self.size * self.size)
@@ -300,11 +315,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         half_size = str( ceil(self.size/2) - 1 - cycle )
         wide_size = str( ceil(self.size/2) - 2 - center_orbit_id)
 
-        if ((center_orbit_id == 0 and cycle == 0) or
-            (center_orbit_id == max_center_orbits and cycle == max_cycle)):
-            fake_777.group_centers_guts()
-        else:
-            fake_777.group_centers_guts(oblique_edges_only=True)
+        fake_777.group_centers_guts()
 
         for step in fake_777.solution:
             if step.startswith("3"):

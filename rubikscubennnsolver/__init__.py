@@ -2,7 +2,7 @@
 from copy import copy
 from collections import OrderedDict
 from pprint import pformat
-from rubikscubennnsolver.RubiksSide import Side, SolveError, StuckInALoop, ImplementThis
+from rubikscubennnsolver.RubiksSide import Side, SolveError, StuckInALoop, ImplementThis, NotSolving
 import itertools
 import json
 import logging
@@ -15,6 +15,57 @@ import sys
 
 log = logging.getLogger(__name__)
 
+
+symmetry_48 = (
+    (),
+    ('x',),
+    ("x'",),
+    ('y',),
+    ("y'",),
+    ('z',),
+    ("z'",),
+    ('x', 'x'),
+    ('y', 'y'),
+    ('z', 'z'),
+    ('x', 'y'),
+    ('x', "y'"),
+    ('x', 'z'),
+    ('x', "z'"),
+    ('x', 'y', 'y'),
+    ('x', 'z', 'z'),
+    ("x'", 'y'),
+    ("x'", "y'"),
+    ("x'", 'z'),
+    ("x'", "z'"),
+    ('y', 'x', 'x'),
+    ('y', 'z', 'z'),
+    ('z', 'x', 'x'),
+    ('z', 'y', 'y'),
+    ('reflect-x',),
+    ('reflect-x', 'x'),
+    ('reflect-x', "x'"),
+    ('reflect-x', 'y'),
+    ('reflect-x', "y'"),
+    ('reflect-x', 'z'),
+    ('reflect-x', "z'"),
+    ('reflect-x', 'x', 'x'),
+    ('reflect-x', 'y', 'y'),
+    ('reflect-x', 'z', 'z'),
+    ('reflect-x', 'x', 'y'),
+    ('reflect-x', 'x', "y'"),
+    ('reflect-x', 'x', 'z'),
+    ('reflect-x', 'x', "z'"),
+    ('reflect-x', 'x', 'y', 'y'),
+    ('reflect-x', 'x', 'z', 'z'),
+    ('reflect-x', "x'", 'y'),
+    ('reflect-x', "x'", "y'"),
+    ('reflect-x', "x'", 'z'),
+    ('reflect-x', "x'", "z'"),
+    ('reflect-x', 'y', 'x', 'x'),
+    ('reflect-x', 'y', 'z', 'z'),
+    ('reflect-x', 'z', 'x', 'x'),
+    ('reflect-x', 'z', 'y', 'y')
+)
 
 class InvalidCubeReduction(Exception):
     pass
@@ -361,15 +412,6 @@ def get_important_square_indexes(size):
     return (first_squares, last_squares, last_UBD_squares)
 
 
-def number_ranges(i):
-    """
-    https://stackoverflow.com/questions/4628333/converting-a-list-of-integers-into-range-in-python
-    """
-    for a, b in itertools.groupby(enumerate(i), lambda x_y: x_y[1] - x_y[0]):
-        b = list(b)
-        yield b[0][1], b[-1][1]
-
-
 class RubiksCube(object):
 
     def __init__(self, state_string, order, colormap=None, debug=False):
@@ -393,6 +435,8 @@ class RubiksCube(object):
         self.fake_666 = None
         self.fake_777 = None
         self.heuristic_stats = {}
+        self.min_memory = False
+        self.enable_print_cube = True
 
         if colormap:
             colormap = json.loads(colormap)
@@ -1110,9 +1154,13 @@ class RubiksCube(object):
             raise Exception("Unsupported action %s" % action)
 
     def print_cube_layout(self):
+        if not self.enable_print_cube:
+            return
         log.info('\n' + get_cube_layout(self.size) + '\n')
 
     def print_cube(self, print_positions=False):
+        if not self.enable_print_cube:
+            return
         side_names = ('U', 'L', 'F', 'R', 'B', 'D')
         side_name_index = 0
         rows = []
@@ -1203,7 +1251,7 @@ class RubiksCube(object):
                 print(("        cube[%s] = cube_tmp[%s];" % (key, value)))
         print("")
 
-    def print_case_statement_python(self, case):
+    def print_case_statement_python(self, function_name, case):
         """
         This is called via utils/rotate-printer.py, it is used to print the
         contents of rotate_xxx.py
@@ -1213,31 +1261,7 @@ class RubiksCube(object):
         for (key, value) in enumerate(self.state[1:]):
             numbers.append(int(value))
 
-        '''
-        If you feed number_ranges()
-            [0, 1, 2, 3, 4, 7, 8, 9, 11]
-
-        It will return:
-            [(0, 4), (7, 9), (11, 11)]
-        '''
-        lists = []
-        indexes_outside_streak = []
-
-        for (start_index, last_index) in number_ranges(numbers):
-            if start_index == last_index:
-                indexes_outside_streak.append("cube[%d]" % start_index)
-            else:
-                if indexes_outside_streak:
-                    # cube[11], cube[13]
-                    lists.append("[%s]" % ','.join(indexes_outside_streak))
-                    indexes_outside_streak = []
-                lists.append("cube[%d:%d]" % (start_index, last_index+1))
-
-        if indexes_outside_streak:
-            lists.append("[%s]" % ','.join(indexes_outside_streak))
-            indexes_outside_streak = []
-
-        print(("    return %s" % ' + '.join(lists)))
+        return tuple(numbers)
 
     def randomize(self):
         """
@@ -3427,7 +3451,7 @@ class RubiksCube(object):
                             wing_str += str(max_edge_index - edge_index)
 
                         # This is commented out because we used this once upon a time to generate the
-                        # orbit_index_444, etc dictionaries in https://github.com/dwalton76/rubiks-color-resolver
+                        # orbit_index_444, etc dictionaries in https://github.com/d walton76/rubiks-color-resolver
                         #
                         # The workflow was:
                         # - tweak code to call center_solution_leads_to_oll_parity() for odd cubes too
@@ -3466,8 +3490,14 @@ class RubiksCube(object):
         return False
 
     def edge_solution_leads_to_pll_parity(self, debug=False):
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
+
+        # I don't know why but long ago when I wrote this I had it rotate U and F
+        # to their targets...it should not make any difference for calculating
+        # parity though. Will leave this here but commented out for a while just
+        # in case. 07/14/2018
+        #
+        #self.rotate_U_to_U()
+        #self.rotate_F_to_F()
 
         if self.edge_swaps_even(edges_paired=True, orbit=None, debug=debug) == self.corner_swaps_even(debug):
             if debug:
@@ -3483,9 +3513,15 @@ class RubiksCube(object):
         http://www.speedcubing.com/chris/4speedsolve3.html
         http://www.rubik.rthost.org/4x4x4_edges.htm
         """
-        if self.centers_solved():
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
+
+        # I don't know why but long ago when I wrote this I had it rotate U and F
+        # to their targets...it should not make any difference for calculating
+        # parity though. Will leave this here but commented out for a while just
+        # in case. 07/14/2018
+        #
+        #if self.centers_solved():
+        #    self.rotate_U_to_U()
+        #    self.rotate_F_to_F()
         orbits_with_oll_parity = []
 
         # OLL only applies to even cubes but there are times when an even cube
@@ -3692,41 +3728,25 @@ class RubiksCube(object):
                     max_best_centers = best_centers
                     max_best_centers_state = self.state[:]
                     max_best_centers_solution = self.solution[:]
-                    log.info("%s: upper %s, front %s, stages %d centers" % (self, upper_side_name, front_side_name, max_best_centers))
+                    #log.info("%s: upper %s, front %s, stages %d centers" % (self, upper_side_name, front_side_name, max_best_centers))
 
         self.state = max_best_centers_state[:]
         self.solution = max_best_centers_solution[:]
 
+        # Return True if we rotated the cube
+        if self.solution == original_solution:
+            return False
+        else:
+            return True
+
     def rotate_for_best_centers_staging(self, centers=None):
-        self.rotate_for_best_centers(True, centers)
+        return self.rotate_for_best_centers(True, centers)
 
     def rotate_for_best_centers_solving(self, centers=None):
-        self.rotate_for_best_centers(False, centers)
+        return self.rotate_for_best_centers(False, centers)
 
     def group_centers_guts(self):
         raise ImplementThis("Child class must implement group_centers_guts")
-
-    def group_centers(self):
-
-        if self.is_odd():
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
-
-        if self.centers_solved():
-            self.rotate_U_to_U()
-            self.rotate_F_to_F()
-            log.info("group center solution: centers are already solved")
-        else:
-            log.info("")
-            log.info("")
-            log.info("")
-            self.group_centers_guts()
-            log.info("group center solution (%d steps in)" % (self.get_solution_len_minus_rotates(self.solution)))
-
-            if self.prevent_OLL():
-                log.info("prevented OLL (%d steps in)" % (self.get_solution_len_minus_rotates(self.solution)))
-
-        self.solution.append('CENTERS_SOLVED')
 
     def get_solution_len_minus_rotates(self, solution):
         count = 0
@@ -3834,7 +3854,7 @@ class RubiksCube(object):
         self.steps_to_solve_3x3x3 = 0
         index = 0
 
-        # log.info("pre compress; %s" % ' '.join(self.solution))
+        #log.info("pre compress; %s" % ' '.join(self.solution))
         for step in solution_string.split():
             if step.startswith(str(self.size)):
                 self.steps_to_rotate_cube += 1
@@ -3857,24 +3877,39 @@ class RubiksCube(object):
         The RubiksCube222 and RubiksCube333 child classes will override
         this since they don't need to group centers or edges
         """
-        solved_string = 'U' * self.squares_per_side +\
-                        'L' * self.squares_per_side +\
-                        'F' * self.squares_per_side +\
-                        'R' * self.squares_per_side +\
-                        'B' * self.squares_per_side +\
-                        'D' * self.squares_per_side
+        if self.solved():
+            return
 
-        if self.get_state_all() != solved_string:
-            self.group_centers()
-            self.group_edges()
+        if self.is_odd():
             self.rotate_U_to_U()
             self.rotate_F_to_F()
-            self.solve_333()
-            self.compress_solution()
 
-            # Cube is solved, rotate it around so white is on top, etc
-            #self.rotate_U_to_U()
-            #self.rotate_F_to_F()
+        if self.centers_solved():
+            self.rotate_U_to_U()
+            self.rotate_F_to_F()
+            log.info("centers are already solved")
+        else:
+            self.group_centers_guts()
+            #log.info("group center solution (%d steps in)" % (self.get_solution_len_minus_rotates(self.solution)))
+
+            if self.prevent_OLL():
+                log.info("prevented OLL (%d steps in)" % (self.get_solution_len_minus_rotates(self.solution)))
+
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
+        self.solution.append('CENTERS_SOLVED')
+        log.info("kociemba: %s" % self.get_kociemba_string(True))
+
+        if self.edges_paired():
+            log.info("edges are already paired")
+        else:
+            self.group_edges()
+        self.solution.append('EDGES_GROUPED')
+
+        self.rotate_U_to_U()
+        self.rotate_F_to_F()
+        self.solve_333()
+        self.compress_solution()
 
     def print_solution(self):
 
@@ -3909,17 +3944,17 @@ class RubiksCube(object):
     def nuke_corners(self):
         for side in list(self.sides.values()):
             for square_index in side.corner_pos:
-                self.state[square_index] = 'x'
+                self.state[square_index] = '.'
 
     def nuke_centers(self):
         for side in list(self.sides.values()):
             for square_index in side.center_pos:
-                self.state[square_index] = 'x'
+                self.state[square_index] = '.'
 
     def nuke_edges(self):
         for side in list(self.sides.values()):
             for square_index in side.edge_pos:
-                self.state[square_index] = 'x'
+                self.state[square_index] = '.'
 
     def www_header(self):
         """
