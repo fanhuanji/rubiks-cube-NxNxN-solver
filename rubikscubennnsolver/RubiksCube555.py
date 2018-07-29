@@ -5192,21 +5192,28 @@ class RubiksCubeTsai555(RubiksCube555):
             return
         self.lt_init_called = True
 
-        # 50 cubes took 2m 10s without CostOnly
-        # 50 cubes took 1m 33s with CostOnly
-        self.lt_UD_T_centers_stage = LookupTable555UDTCenterStageCostOnly(self)
-        self.lt_UD_X_centers_stage = LookupTable555UDXCenterStageCostOnly(self)
+        self.lt_UD_T_centers_stage = LookupTable555UDTCenterStage(self)
+        self.lt_UD_T_centers_stage_co = LookupTable555UDTCenterStageCostOnly(self)
+        self.lt_UD_X_centers_stage_co = LookupTable555UDXCenterStageCostOnly(self)
         self.lt_UD_centers_stage = LookupTableIDA555UDCentersStage(self)
-        self.lt_UD_centers_stage.preload_cache()
 
-        self.lt_LR_centers_stage = LookupTable555LRCentersStage(self)
+        self.lt_UD_centers_stage.preload_cache_string()
+        #self.lt_UD_centers_stage.preload_cache_set()
+        #self.lt_UD_centers_stage.preload_cache_dict()
+
+        self.lt_LR_T_centers_stage = LookupTable555LRTCenterStage(self)
+        self.lt_LR_X_centers_stage = LookupTable555LRXCenterStage(self)
+        self.lt_LR_centers_stage = LookupTableIDA555LRCenterStage(self)
+        self.lt_LR_T_centers_stage.preload_cache_dict()
+        self.lt_LR_X_centers_stage.preload_cache_dict()
+        self.lt_LR_centers_stage.preload_cache_dict()
 
         self.lt_tsai_phase3_edges_orient = LookupTable555TsaiPhase3EdgesOrient(self)
         self.lt_tsai_phase3_LR_centers = LookupTable555TsaiPhase3LRCenters(self)
         self.lt_tsai_phase3 = LookupTable555TsaiPhase3(self)
-        self.lt_tsai_phase3_edges_orient.preload_cache()
-        self.lt_tsai_phase3_LR_centers.preload_cache()
-        self.lt_tsai_phase3.preload_cache()
+        self.lt_tsai_phase3_edges_orient.preload_cache_string()
+        self.lt_tsai_phase3_LR_centers.preload_cache_dict()
+        self.lt_tsai_phase3.preload_cache_string()
 
         self.lt_tsai_phase4_FB_centers = LookupTable555TsaiPhase4FBCenters(self)
         self.lt_tsai_phase4_x_plane_edges = LookupTable555TsaiPhase4XPlaneOuterEdges(self)
