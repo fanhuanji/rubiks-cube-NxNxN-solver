@@ -288,7 +288,9 @@ try:
         from rubikscubennnsolver.RubiksCube444 import RubiksCube444, solved_444
         cube = RubiksCube444(args.state, args.order, args.colormap, avoid_pll=True, debug=args.debug)
     elif size == 5:
-        if args.tsai:
+        use_tsai = False
+
+        if use_tsai
             from rubikscubennnsolver.RubiksCube555 import RubiksCubeTsai555, solved_555
             cube = RubiksCubeTsai555(args.state, args.order, args.colormap, args.debug)
         else:
