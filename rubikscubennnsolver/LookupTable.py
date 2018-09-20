@@ -7,10 +7,12 @@ from pprint import pformat
 from pyhashxx import hashxx
 from subprocess import call
 import gc
+import hashlib
 import logging
 import os
-import sys
 import resource
+import subprocess
+import sys
 
 
 log = logging.getLogger(__name__)
@@ -25,6 +27,10 @@ class NoSteps(Exception):
 
 
 class NoIDASolution(Exception):
+    pass
+
+
+class NoPruneTableState(Exception):
     pass
 
 
@@ -102,6 +108,9 @@ def steps_on_same_face_and_layer(prev_step, step):
     >>> steps_on_same_face_and_layer("U", "Uw")
     False
 
+    >>> steps_on_same_face_and_layer("F2", "Fw'")
+    False
+
     >>> steps_on_same_face_and_layer("3Uw2", "3Uw")
     True
 
@@ -110,6 +119,13 @@ def steps_on_same_face_and_layer(prev_step, step):
     """
     if prev_step is None:
         return False
+
+    if prev_step[0] != step[0]:
+        return False
+
+    if prev_step[0].isdigit():
+        if prev_step[1] != step[1]:
+            return False
 
     # chop the trailing '
     if prev_step[-1] == "'":
@@ -205,6 +221,49 @@ def find_first_last(linecount, cache, b_state_to_find):
     #log.info("find_first_last for %s, deleted %s, first %s, last %s, cache\n%s" % (b_state_to_find, to_delete, first, last, pformat(cache)))
     return (cache, first, last)
 
+ 
+def md5signature(filename):
+    hasher = hashlib.md5()
+    with open(filename, 'rb') as fh:
+        buf = fh.read()
+        hasher.update(buf)
+    return hasher.hexdigest()
+
+
+def rm_file_if_mismatch(filename, filesize, md5target):
+    filename_gz = filename + ".gz"
+
+    # This only happens if a new copy of the lookup table has been checked in...we need to delete
+    # the one we have and download the new one.
+    if os.path.exists(filename):
+        if filesize is not None and os.path.getsize(filename) != filesize:
+            log.info("%s: filesize %s does not equal target filesize %s" % (filename, os.path.getsize(filename), filesize))
+            os.remove(filename)
+
+            if os.path.exists(filename_gz):
+                os.remove(filename_gz)
+
+        elif md5target is not None and md5signature(filename) != md5target:
+            log.info("%s: md5 signature %s is not %s" % (filename, md5signature(filename), md5target))
+            os.remove(filename)
+
+            if os.path.exists(filename_gz):
+                os.remove(filename_gz)
+
+
+def download_file_if_needed(filename, cube_size):
+
+    if not os.path.exists(filename):
+        filename_gz = filename + ".gz"
+
+        if not os.path.exists(filename_gz):
+            url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (cube_size, cube_size, cube_size, filename_gz)
+            log.info("Downloading table via 'wget %s'" % url)
+            call(['wget', url])
+
+        log.info("gunzip %s" % filename_gz)
+        call(['gunzip', filename_gz])
+
 
 class LookupTable(object):
     heuristic_stats = {}
@@ -212,7 +271,7 @@ class LookupTable(object):
     # This is for tweaking the valeus in heuristic_stats
     heuristic_stats_error = 0
 
-    def __init__(self, parent, filename, state_target, linecount, max_depth=None, filesize=None):
+    def __init__(self, parent, filename, state_target, linecount, max_depth=None, filesize=None, md5=None):
         self.parent = parent
         self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
         self.filename = filename
@@ -221,7 +280,7 @@ class LookupTable(object):
         self.filename_exists = False
         self.linecount = linecount
         self.max_depth = max_depth
-        self.avoid_oll = False
+        self.avoid_oll = None
         self.avoid_pll = False
         self.preloaded_cache_dict = False
         self.preloaded_cache_set = False
@@ -233,7 +292,7 @@ class LookupTable(object):
         self.cache_set = set()
         self.cache_list = []
         self.filesize = filesize
-        self.collect_stats = False
+        self.md5 = md5
         self.use_isdigit = False
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
@@ -244,24 +303,8 @@ class LookupTable(object):
             self.state_width = 0
         else:
             assert self.linecount, "%s linecount is %s" % (self, self.linecount)
-
-            # This only happens if a new copy of the lookup table has been checked in...we need to delete
-            # the one we have and download the new one.
-            if os.path.exists(self.filename) and self.filesize is not None and os.path.getsize(self.filename) != self.filesize:
-                log.info("%s: filesize %s does not equal target filesize %s" % (self, os.path.getsize(self.filename), self.filesize))
-                os.remove(self.filename)
-
-                if os.path.exists(self.filename_gz):
-                    os.remove(self.filename_gz)
-
-            if not os.path.exists(self.filename):
-                if not os.path.exists(self.filename_gz):
-                    url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
-                    log.info("Downloading table via 'wget %s'" % url)
-                    call(['wget', url])
-
-                log.info("gunzip %s" % self.filename_gz)
-                call(['gunzip', self.filename_gz])
+            rm_file_if_mismatch(self.filename, self.filesize, self.md5)
+            download_file_if_needed(self.filename, self.parent.size)
 
             # Find the state_width for the entries in our .txt file
             with open(self.filename, 'r') as fh:
@@ -272,7 +315,7 @@ class LookupTable(object):
 
                 if steps.isdigit():
                     self.use_isdigit = True
-                    log.info("%s: use_isdigit is True" % self)
+                    #log.info("%s: use_isdigit is True" % self)
 
         self.hex_format = '%' + "0%dx" % self.state_width
         self.filename_exists = True
@@ -309,6 +352,8 @@ class LookupTable(object):
         for state_to_find in states_to_find:
             b_state_to_find = bytearray(state_to_find, encoding='utf-8')
 
+            # TODO is the cache worth it (we have to sort it often) or would we be better
+            # off finding the first entry, then the last, then the first, etc?
             if cache:
                 (cache, first, last) = find_first_last(linecount, cache, b_state_to_find)
             else:
@@ -402,7 +447,7 @@ class LookupTable(object):
         return None
 
     def preload_cache_dict(self):
-        log.info("%s: begin preload cache dict" % self)
+        #log.info("%s: begin preload cache dict" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
         if isinstance(self, LookupTableCostOnly):
@@ -429,7 +474,7 @@ class LookupTable(object):
         log.info("{}: end preload cache dict ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post))
 
     def preload_cache_set(self):
-        log.info("%s: begin preload cache set" % self)
+        #log.info("%s: begin preload cache set" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         states = []
 
@@ -456,7 +501,7 @@ class LookupTable(object):
         log.info("{}: end preload cache set ({:,} bytes delta, {:,} bytes total)".format(self, memory_delta, memory_post))
 
     def preload_cache_string(self):
-        log.info("%s: begin preload cache string" % self)
+        #log.info("%s: begin preload cache string" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
         self.cache_string = None
         state_len = 0
@@ -481,8 +526,7 @@ class LookupTable(object):
         """
         Return a list of the steps found in the lookup table for the current cube state
         """
-        if state_to_find is None:
-            state_to_find = self.state()
+        assert state_to_find
 
         # If we are at one of our state_targets we do not need to do anything
         if state_to_find in self.state_target:
@@ -516,7 +560,6 @@ class LookupTable(object):
 
         # Binary search the file to get the value
         else:
-            #log.warning("%s: neither preload_cache() or preload_cache_set() were called" % self)
 
             line = self.binary_search(state_to_find)
             if line:
@@ -550,7 +593,7 @@ class LookupTable(object):
             tbd = False
 
         while True:
-            (state, _) = self.ida_heuristic()
+            (state, _) = self.ida_heuristic(0)
 
             if tbd:
                 log.info("%s: solve() state %s vs state_target %s" % (self, state, pformat(self.state_target)))
@@ -561,48 +604,8 @@ class LookupTable(object):
             steps = self.steps(state)
 
             if steps:
-
-                #log.info("%s: PRE solve() state %s found %s" % (self, state, ' '.join(steps)))
-                #self.parent.print_cube()
-                #log.info("%s: %d steps" % (self, len(steps)))
-
-                # If our table contains the move count instead of the move sequence
-                # find the move that takes us closer to our goal.
-                if steps[0].isdigit():
-                    current_distance = int(steps[0])
-                    #log.info("%s: state %s has distance %d" % (self, state, current_distance))
-                    orig_state = self.parent.state[:]
-                    orig_solution = self.parent.solution[:]
-
-                    for step in self.moves_all:
-                        self.parent.rotate(step)
-                        tmp_state = self.state()
-                        tmp_steps = self.steps(tmp_state)
-
-                        if current_distance == 1:
-                            if tmp_state in self.state_target:
-                                log.info("%s: %s takes us to state_target %s" % (self, step, tmp_state))
-                                break
-                            else:
-                                self.parent.state = orig_state[:]
-                                self.parent.solution = orig_solution[:]
-                        else:
-                            if tmp_steps and int(tmp_steps[0]) < current_distance:
-                                log.info("%s: %s takes us to state %s with distance %d" % (self, step, tmp_state, int(tmp_steps[0])))
-                                break
-                            else:
-                                self.parent.state = orig_state[:]
-                                self.parent.solution = orig_solution[:]
-                    else:
-                        raise Exception("failed to advance")
-
-                else:
-                    for step in steps:
-                        self.parent.rotate(step)
-
-                #log.info("%s: POST solve()" % self)
-                #self.parent.print_cube()
-
+                for step in steps:
+                    self.parent.rotate(step)
             else:
                 self.parent.print_cube()
                 raise NoSteps("%s: state %s does not have steps" % (self, state))
@@ -616,8 +619,8 @@ class LookupTable(object):
             if result == 0:
                 #log.warning("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
                 self.parent.enable_print_cube = True
-                self.parent.print_cube()
-                raise SolveError("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
+                #self.parent.print_cube()
+                raise NoPruneTableState("%s: pt_state %s cost is 0 but this is not a state_target" % (self, pt_state))
 
             return result
 
@@ -737,7 +740,7 @@ class LookupTable(object):
 
 class LookupTableCostOnly(LookupTable):
 
-    def __init__(self, parent, filename, state_target, linecount, max_depth=None, filesize=None):
+    def __init__(self, parent, filename, state_target, linecount, max_depth=None, filesize=None, md5=None):
         self.parent = parent
         self.sides_all = (self.parent.sideU, self.parent.sideL, self.parent.sideF, self.parent.sideR, self.parent.sideB, self.parent.sideD)
         self.filename = filename
@@ -746,13 +749,14 @@ class LookupTableCostOnly(LookupTable):
         self.filename_exists = False
         self.linecount = linecount
         self.max_depth = max_depth
-        self.avoid_oll = False
+        self.avoid_oll = None
         self.avoid_pll = False
         self.preloaded_cache_dict = False
         self.preloaded_cache_set = False
         self.ida_all_the_way = False
         self.use_lt_as_prune = False
         self.filesize = filesize
+        self.md5 = md5
 
         assert self.filename.startswith('lookup-table'), "We only support lookup-table*.txt files"
         #assert self.filename.endswith('.txt'), "We only support lookup-table*.txt files"
@@ -760,28 +764,17 @@ class LookupTableCostOnly(LookupTable):
         if 'dummy' not in self.filename:
             assert self.linecount, "%s linecount is %s" % (self, self.linecount)
 
-        # This only happens if a new copy of the lookup table has been checked in...we need to delete
-        # the one we have and download the new one.
-        if os.path.exists(self.filename) and self.filesize is not None and os.path.getsize(self.filename) != self.filesize:
-            log.info("%s: filesize %s does not equal target filesize %s" % (self, os.path.getsize(self.filename), self.filesize))
-            os.remove(self.filename)
-
-            if os.path.exists(self.filename_gz):
-                os.remove(self.filename_gz)
-
-        if not os.path.exists(self.filename):
-            if not os.path.exists(self.filename_gz):
-                url = "https://github.com/dwalton76/rubiks-cube-lookup-tables-%sx%sx%s/raw/master/%s" % (self.parent.size, self.parent.size, self.parent.size, self.filename_gz)
-                log.info("Downloading table via 'wget %s'" % url)
-                call(['wget', url])
-
-            log.info("gunzip %s" % self.filename_gz)
-            call(['gunzip', self.filename_gz])
-
+        rm_file_if_mismatch(self.filename, self.filesize, self.md5)
+        download_file_if_needed(self.filename, self.parent.size)
         self.filename_exists = True
 
         if isinstance(state_target, tuple):
-            self.state_width = len(state_target[0])
+
+            if isinstance(state_target[0], int):
+                self.state_width = 0
+            else:
+                self.state_width = len(state_target[0])
+
             self.state_target = set(state_target)
 
         elif isinstance(state_target, list):
@@ -805,7 +798,7 @@ class LookupTableCostOnly(LookupTable):
         # string into memory so for those we will seek()/read() through the file.
         # We do not have to binary_search() though so that cuts way down on the
         # number of reads.
-        log.info("%s: begin preload cost-only" % self)
+        #log.info("%s: begin preload cost-only" % self)
         memory_pre = resource.getrusage(resource.RUSAGE_SELF).ru_maxrss
 
         # There is a CPU/memory tradeoff to be made here with 'r' vs 'rb'. 'rb' takes
@@ -829,8 +822,8 @@ class LookupTableCostOnly(LookupTable):
 
 class LookupTableHashCostOnly(LookupTableCostOnly):
 
-    def __init__(self, parent, filename, state_target, linecount, max_depth=None, bucketcount=None, filesize=None):
-        LookupTableCostOnly.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
+    def __init__(self, parent, filename, state_target, linecount, max_depth=None, bucketcount=None, filesize=None, md5=None):
+        LookupTableCostOnly.__init__(self, parent, filename, state_target, linecount, max_depth, filesize, md5)
         self.bucketcount = bucketcount
 
     def steps_cost(self, state_to_find):
@@ -853,17 +846,16 @@ class LookupTableHashCostOnly(LookupTableCostOnly):
 
 class LookupTableIDA(LookupTable):
 
-    def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None, filesize=None, exit_asap=True):
+    def __init__(self, parent, filename, state_target, moves_all, moves_illegal, prune_tables, linecount, max_depth=None, filesize=None, exit_asap=99):
         LookupTable.__init__(self, parent, filename, state_target, linecount, max_depth, filesize)
         self.prune_tables = prune_tables
-        self.ida_solutions = []
-        self.next_phase = None
-        self.exit_asap = exit_asap
+        self.ida_nodes = {}
         self.recolor_positions = []
         self.recolor_map = {}
         self.nuke_corners = False
         self.nuke_edges = False
         self.nuke_centers = False
+        self.exit_asap = exit_asap
 
         for x in moves_illegal:
             if x not in moves_all:
@@ -890,69 +882,6 @@ class LookupTableIDA(LookupTable):
                         self.steps_not_on_same_face_and_layer[step1] = []
                     self.steps_not_on_same_face_and_layer[step1].append(step2)
 
-        '''
-    def ida_heuristic_total(self):
-        total = 0
-
-        for pt in self.prune_tables:
-            total += pt.heuristic()
-
-        return total
-
-    def ida_heuristic_tuple(self):
-        result = []
-
-        for pt in self.prune_tables:
-            result.append(pt.heuristic())
-
-        return tuple(result)
-
-    def ida_heuristic(self):
-        cost_to_goal = 0
-
-        if self.use_lt_as_prune:
-            state = self.state()
-
-            # If we are at our target then our cost_to_goal is 0
-            if state in self.state_target:
-                return cost_to_goal
-
-            steps = self.steps(state)
-
-            if steps is None:
-                assert self.max_depth is not None, "%s: use_lt_as_prune is True but max_depth is not set" % self
-                cost_to_goal = self.max_depth + 1
-            else:
-                cost_to_goal = len(steps)
-
-        if self.heuristic_stats:
-            heuristic_tuple = self.ida_heuristic_tuple()
-            cost_to_goal = self.heuristic_stats.get(heuristic_tuple)
-
-            if cost_to_goal is None:
-                cost_to_goal = max(heuristic_tuple)
-                #log.info("%s: heuristic_tuple %s does not have a known cost" % (self, pformat(heuristic_tuple)))
-            else:
-                #log.info("%s: heuristic_tuple %s has cost %d" % (self, pformat(heuristic_tuple), cost_to_goal))
-                return cost_to_goal - self.heuristic_stats_error
-
-        else:
-            for pt in self.prune_tables:
-
-                # If there is no way this pt will have a higher cost than the prune
-                # tables we have already examined do not bother looking up the cost
-                # for this pt
-                if cost_to_goal >= pt.max_depth:
-                    continue
-
-                pt_cost_to_goal = pt.heuristic()
-
-                if pt_cost_to_goal > cost_to_goal:
-                    cost_to_goal = pt_cost_to_goal
-
-        return cost_to_goal
-        '''
-
     def search_complete(self, state, steps_to_here):
 
         if self.ida_all_the_way:
@@ -977,23 +906,27 @@ class LookupTableIDA(LookupTable):
         self.parent.solution = self.original_solution[:]
 
         for step in steps_to_here:
-            self.parent.rotate(step)
+            self.parent.state = self.rotate_xxx(self.parent.state[:], step)
+            self.parent.solution.append(step)
 
         # The cube is now in a state where it is in the lookup table, we may need
         # to do several lookups to get to our target state though. Use
         # LookupTabele's solve() to take us the rest of the way to the target state.
         LookupTable.solve(self)
 
-        if self.avoid_oll and self.parent.center_solution_leads_to_oll_parity():
-            self.parent.state = self.original_state[:]
-            self.parent.solution = self.original_solution[:]
-            log.info("%s: IDA found match but it leads to OLL" % self)
-            return False
+        if self.avoid_oll is not None:
+            orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
+
+            if self.avoid_oll in orbits_with_oll:
+                self.parent.state = self.original_state[:]
+                self.parent.solution = self.original_solution[:]
+                log.debug("%s: IDA found match but it leads to OLL" % self)
+                return False
 
         if self.avoid_pll and self.parent.edge_solution_leads_to_pll_parity():
             self.parent.state = self.original_state[:]
             self.parent.solution = self.original_solution[:]
-            log.info("%s: IDA found match but it leads to PLL" % self)
+            log.debug("%s: IDA found match but it leads to PLL" % self)
             return False
 
         return True
@@ -1006,67 +939,25 @@ class LookupTableIDA(LookupTable):
 
         # calculate f_cost which is the cost to where we are plus the estimated cost to reach our goal
         cost_to_here = len(steps_to_here)
-        (lt_state, cost_to_goal) = self.ida_heuristic()
+        (lt_state, cost_to_goal) = self.ida_heuristic(threshold)
         f_cost = cost_to_here + cost_to_goal
-
-        # If our cost_to_goal is greater than the max_depth of our main lookup table then there is no
-        # need to do a binary search through the main lookup table to look for our current state...this
-        # saves us some disk IO
-        if (cost_to_goal <= self.max_depth and
-            self.search_complete(lt_state, steps_to_here)):
-            #log.info("%s: %d seek calls" % (self, self.fh_txt_seek_calls))
-            self.fh_txt_seek_calls = 0
-
-            for pt in self.prune_tables:
-                #log.info("%s: %d seek calls" % (pt, pt.fh_txt_seek_calls))
-                pt.fh_txt_seek_calls = 0
-
-            this_solution = self.parent.solution[len(self.original_solution):]
-            this_solution_len = self.parent.get_solution_len_minus_rotates(this_solution)
-
-            #log.info("%s: lt_state %s" % (self, lt_state))
-            if self.exit_asap:
-                log.info("%s: IDA found match %d steps, solution length %d, f_cost %d (%d + %d)" %
-                         (self, len(steps_to_here), this_solution_len,
-                          f_cost, cost_to_here, cost_to_goal))
-                #log.info("%s: solution %s" % (self, ' '.join(this_solution)))
-
-            # We use the heuristic of the next phase to rank the solutions in this phase
-            if self.next_phase:
-                (_, next_phase_ida_heuristic) = self.next_phase.ida_heuristic()
-            else:
-                next_phase_ida_heuristic = 0
-
-            self.ida_solutions.append((
-                this_solution_len + next_phase_ida_heuristic,
-                this_solution_len,
-                this_solution))
-
-            # TODO...how to prevent this?
-            '''
-            for foo in self.ida_solutions:
-                if foo[-1] == this_solution:
-                    log.info(pformat(foo[-1]))
-                    assert False, "this_solution %s is already in ida_solutions, steps_to_here %s" % (pformat(this_solution), pformat(steps_to_here))
-            '''
-
-            self.parent.state = self.original_state[:]
-            self.parent.solution = self.original_solution[:]
-
-            if self.exit_asap:
-                return (f_cost, True)
 
         # ================
         # Abort Searching?
         # ================
+        # I have gone back and forth many times over whether this should be done
+        # before or after the search_complete() call. If you put it after we will
+        # find a solution faster but it basically violates the rules of IDA and
+        # we will find a solution that is not the shortest...which kinda defeats
+        # the purpose of using IDA* in the first place. So leave it here and take
+        # the CPU hit on searching a little longer.
         if f_cost >= threshold:
             return (f_cost, False)
 
-        # Not used by any tables right now so commenting out
-        #if hasattr(self, 'state_for_explored'):
-        #    lt_state_for_explored = self.state_for_explored()
-        #else:
-        #    lt_state_for_explored = lt_state
+        if threshold >= self.exit_asap and cost_to_goal <= self.max_depth and self.search_complete(lt_state, steps_to_here):
+            log.info("%s: exit_asap on first match" % self)
+            self.ida_nodes[lt_state] = steps_to_here
+            return (f_cost, True)
 
         # If we have already explored the exact same scenario down another branch
         # then we can stop looking down this branch
@@ -1077,6 +968,9 @@ class LookupTableIDA(LookupTable):
         #self.explored[lt_state_for_explored] = cost_to_here
         self.explored[lt_state] = cost_to_here
         skip_other_steps_this_face = None
+
+        # TODO this is a duplicate of explored more or less
+        self.ida_nodes[lt_state] = steps_to_here
 
         for step in self.steps_not_on_same_face_and_layer[prev_step]:
 
@@ -1110,7 +1004,6 @@ class LookupTableIDA(LookupTable):
         self.parent.state = prev_state[:]
         return (f_cost, False)
 
-
     def recolor(self):
 
         if self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions:
@@ -1136,19 +1029,56 @@ class LookupTableIDA(LookupTable):
             #self.parent.print_cube()
             #sys.exit(0)
 
+    def get_best_ida_solution(self):
+        states_to_find = sorted(self.ida_nodes.keys())
+
+        if states_to_find:
+            #log.info("%s: there are %d states to look for" % (self, len(states_to_find)))
+            results = self.binary_search_multiple(states_to_find)
+
+            if results:
+                #log.info("%s: results\n%s" % (self, pformat(results)))
+                num_results = len(results.keys())
+                log.info("%s: found %d/%d states in lookup-table" % (self, num_results, len(states_to_find)))
+
+                min_solution_len = None
+                min_solution = None
+                min_solution_state = None
+
+                for (index, (lt_state, steps)) in enumerate(results.items()):
+                    step_count = len(steps.split())
+                    steps_to_here = self.ida_nodes[lt_state]
+                    this_solution_len = len(steps_to_here) + step_count
+                    #log.info("%s: index %d, solution_len %d" % (self, index, this_solution_len))
+
+                    if (min_solution_len is None or this_solution_len < min_solution_len):
+                        if self.search_complete(lt_state, steps_to_here):
+                            this_solution = self.parent.solution[len(self.original_solution):]
+                            #log.info("%s: MIN lt_state %s, steps_to_here %s, step_count to target %s, solution_len %s" %
+                            #    (self, lt_state, " ".join(steps_to_here), step_count, this_solution_len))
+                            log.info("%s: %d/%d solution_len %s (NEW MIN)" % (self, index+1, num_results, this_solution_len))
+                            min_solution_len = this_solution_len
+                            min_solution = this_solution[:]
+                            min_solution_state = lt_state
+
+                return min_solution
+            else:
+                return None
+        else:
+            return None
+
     # uncomment to cProfile solve()
     def solve(self, min_ida_threshold=None, max_ida_threshold=99):
         '''
     def solve(self, min_ida_threshold=None, max_ida_threshold=99):
-            profile.runctx('self.solve_guts()', globals(), locals())
+            profile.runctx('self.solve_with_cprofile()', globals(), locals())
 
-    def solve_guts(self, min_ida_threshold=None, max_ida_threshold=99):
+    def solve_with_cprofile(self, min_ida_threshold=None, max_ida_threshold=99):
         '''
         """
         The goal is to find a sequence of moves that will put the cube in a state that is
         in our lookup table
         """
-        start_time0 = dt.datetime.now()
 
         if self.parent.size == 2:
             from rubikscubennnsolver.RubiksCube222 import rotate_222
@@ -1179,7 +1109,7 @@ class LookupTableIDA(LookupTable):
         self.original_solution = self.parent.solution[:]
 
         # Get the intial cube state and cost_to_goal
-        (state, cost_to_goal) = self.ida_heuristic()
+        (state, cost_to_goal) = self.ida_heuristic(0)
 
         # The cube is already in the desired state, nothing to do
         if state in self.state_target or cost_to_goal == 0:
@@ -1190,7 +1120,25 @@ class LookupTableIDA(LookupTable):
 
         if self.search_complete(state, []):
             log.info("%s: cube is already in a state %s that is in our lookup table" % (self, state))
+            tmp_solution = self.parent.solution[:]
+            self.parent.state = self.pre_recolor_state[:]
+            self.parent.solution = self.pre_recolor_solution[:]
+
+            for step in tmp_solution[len(self.original_solution):]:
+                self.parent.rotate(step)
+
             return True
+
+        # Avoiding OLL is done by changing the edge parity from odd to even.
+        # The edge parity toggles from odd to even or even to odd with every
+        # quarter wide turn. Sanity check that avoiding OLL is possible for
+        # this table.
+        if self.avoid_oll:
+            for step in self.moves_all:
+                if "w" in step and not step.endswith("2"):
+                    break
+            else:
+                raise Exception("%s: has avoid_oll %s but there are no quarter wide turns among moves_all %s" % (self, self.avoid_oll, " ".join(self.moves_all)))
 
         # If we are here (odds are very high we will be) it means that the current
         # cube state was not in the lookup table.  We must now perform an IDA search
@@ -1203,6 +1151,7 @@ class LookupTableIDA(LookupTable):
         if min_ida_threshold >= max_ida_threshold+1:
             raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
 
+        start_time0 = dt.datetime.now()
         log.info("%s: IDA threshold range %d->%d" % (self, min_ida_threshold, max_ida_threshold))
         total_ida_count = 0
 
@@ -1211,47 +1160,24 @@ class LookupTableIDA(LookupTable):
             start_time1 = dt.datetime.now()
             self.ida_count = 0
             self.explored = {}
-            self.ida_solutions = []
+            self.ida_nodes = {}
 
             self.ida_search(steps_to_here, threshold, None, self.original_state[:])
             total_ida_count += self.ida_count
+            best_solution = self.get_best_ida_solution()
 
-            if self.ida_solutions:
-
-                self.ida_solutions = sorted(self.ida_solutions)
-                min_solution = self.ida_solutions[0][-1]
-
-                if not self.exit_asap:
-                    log.info("%s: top 5 ida_solutions\n\n"
-                        "(this_solution_len + next_phase_ida_heuristic, this_solution_len, solution)\n\n"
-                        "%s\n" % (self, pformat(self.ida_solutions[0:5], width=256)))
-
+            if best_solution:
                 self.parent.state = self.pre_recolor_state[:]
                 self.parent.solution = self.pre_recolor_solution[:]
 
-                if self.collect_stats:
-                    steps_to_go = len(min_solution)
-
-                    for step in min_solution:
-                        self.parent.rotate(step)
-                        heuristic_tuple = self.ida_heuristic_tuple()
-
-                        if heuristic_tuple not in self.parent.heuristic_stats:
-                            self.parent.heuristic_stats[heuristic_tuple] = []
-
-                        self.parent.heuristic_stats[heuristic_tuple].append(steps_to_go)
-                        steps_to_go -= 1
-                else:
-                    for step in min_solution:
-                        self.parent.rotate(step)
-
+                for step in best_solution:
+                    self.parent.rotate(step)
 
                 end_time1 = dt.datetime.now()
-                log.info("%s: IDA threshold %d, explored %d nodes in %s (%s total), found %d solutions" %
+                log.info("%s: IDA threshold %d, explored %d nodes in %s (%s total)" %
                     (self, threshold, self.ida_count,
                      pretty_time(end_time1 - start_time1),
-                     pretty_time(end_time1 - start_time0),
-                     len(self.ida_solutions)))
+                     pretty_time(end_time1 - start_time0)))
                 delta = end_time1 - start_time0
                 nodes_per_sec = int(total_ida_count / delta.total_seconds())
                 log.info("%s: IDA explored %d nodes in %s, %d nodes-per-sec" % (self, total_ida_count, delta, nodes_per_sec))
@@ -1263,15 +1189,112 @@ class LookupTableIDA(LookupTable):
                 log.info("%s: IDA threshold %d, explored %d nodes in %s, %d nodes-per-sec" %
                     (self, threshold, self.ida_count, pretty_time(delta), nodes_per_sec))
 
-        # The only time we will get here is when max_ida_threshold is a low number.  It will be up to the caller to:
-        # - 'solve' one of their prune tables to put the cube in a state that we can find a solution for a little more easily
-        # - call ida_solve() again but with a near infinite max_ida_threshold...99 is close enough to infinity for IDA purposes
         log.info("%s: could not find a solution via IDA with max threshold of %d " % (self, max_ida_threshold))
-
         self.parent.state = self.original_state[:]
         self.parent.solution = self.original_solution[:]
-
         raise NoIDASolution("%s FAILED with range %d->%d" % (self, min_ida_threshold, max_ida_threshold+1))
+
+
+
+class LookupTableIDAViaC(object):
+
+    def __init__(self, parent, files, C_ida_type):
+        self.avoid_oll = None
+        self.nuke_corners = False
+        self.nuke_edges = False
+        self.nuke_centers = False
+        self.recolor_positions = []
+        self.parent = parent
+        self.C_ida_type = C_ida_type
+
+        for (filename, md5target) in files:
+            rm_file_if_mismatch(filename, None, md5target)
+            download_file_if_needed(filename, self.parent.size)
+
+    def __str__(self):
+        return self.__class__.__name__
+
+    def recolor(self):
+
+        if self.nuke_corners or self.nuke_edges or self.nuke_centers or self.recolor_positions:
+            log.info("%s: recolor" % self)
+            #self.parent.print_cube()
+
+            if self.nuke_corners:
+                self.parent.nuke_corners()
+
+            if self.nuke_edges:
+                self.parent.nuke_edges()
+
+            if self.nuke_centers:
+                self.parent.nuke_centers()
+
+            for x in self.recolor_positions:
+                x_color = self.parent.state[x]
+                x_new_color = self.recolor_map.get(x_color)
+
+                if x_new_color:
+                    self.parent.state[x] = x_new_color
+
+            #self.parent.print_cube()
+            #sys.exit(0)
+
+    def solve(self):
+
+        # If this is a lookup table that is staging a pair of colors (such as U and D)
+        # then recolor the cubies accordingly.
+        self.pre_recolor_state = self.parent.state[:]
+        self.pre_recolor_solution = self.parent.solution[:]
+        self.recolor()
+
+        if not os.path.isfile("ida_search"):
+            log.info("ida_search is missing...compiling it now")
+            subprocess.check_output("gcc -O3 -o ida_search ida_search_core.c ida_search.c rotate_xxx.c ida_search_555.c -lm".split())
+
+        kociemba_string = self.parent.get_kociemba_string(True)
+        cmd = ["./ida_search", "--kociemba", kociemba_string, "--type", self.C_ida_type]
+
+        if self.avoid_oll is not None:
+            orbits_with_oll = self.parent.center_solution_leads_to_oll_parity()
+
+            if self.avoid_oll == 0 or self.avoid_oll == (0, 1):
+                # Edge parity is currently odd so we need an odd number of w turns in orbit 0
+                if 0 in orbits_with_oll:
+                    cmd.append("--orbit0-need-odd-w")
+
+                # Edge parity is currently even so we need an even number of w turns in orbit 0
+                else:
+                    cmd.append("--orbit0-need-even-w")
+
+            if self.avoid_oll == 1 or self.avoid_oll == (0, 1):
+                # Edge parity is currently odd so we need an odd number of w turns in orbit 1
+                if 1 in orbits_with_oll:
+                    cmd.append("--orbit1-need-odd-w")
+
+                # Edge parity is currently even so we need an even number of w turns in orbit 1
+                else:
+                    cmd.append("--orbit1-need-even-w")
+
+            if self.avoid_oll != 0 and self.avoid_oll != 1 and self.avoid_oll != (0, 1):
+                raise Exception("avoid_oll is only supported for orbits 0 or 1, not {}".format(self.avoid_oll))
+
+        log.info("%s: solving via C ida_search\n\n%s" % (self, " ".join(cmd)))
+        output = subprocess.check_output(cmd).decode('ascii')
+        log.info("\n\n" + output + "\n\n")
+
+        for line in output.splitlines():
+            if line.startswith("SOLUTION"):
+                steps = line.split(":")[1].strip().split()
+                break
+        else:
+            raise NoIDASolution("%s" % self)
+
+        log.info("%s: ida_search found solution %s" % (self, ' '.join(steps)))
+        self.parent.state = self.pre_recolor_state[:]
+        self.parent.solution = self.pre_recolor_solution[:]
+
+        for step in steps:
+            self.parent.rotate(step)
 
 
 if __name__ == '__main__':

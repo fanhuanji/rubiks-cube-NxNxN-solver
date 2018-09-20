@@ -5,6 +5,7 @@ from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_666
 from rubikscubennnsolver.RubiksCube777 import RubiksCube777, solved_777
 from rubikscubennnsolver.RubiksCubeNNNEvenEdges import RubiksCubeNNNEvenEdges
 from math import ceil
+import gc
 import logging
 import sys
 
@@ -69,9 +70,6 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
         else:
             self.fake_777.re_init()
 
-        if self.fake_666:
-            self.fake_777.fake_666 = self.fake_666
-
         if self.fake_555:
             self.fake_777.fake_555 = self.fake_555
 
@@ -132,7 +130,7 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
 
             # Group LR centers (in turn groups FB)
             fake_666.print_cube()
-            fake_666.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = False
+            fake_666.lt_LR_inner_x_centers_and_oblique_edges_stage.avoid_oll = None
             fake_666.group_centers_guts(oblique_edges_only=True)
             fake_666.print_cube()
 
@@ -148,6 +146,8 @@ class RubiksCubeNNNEven(RubiksCubeNNNEvenEdges):
                 else:
                     self.rotate(step)
 
+        fake_666 = None
+        gc.collect()
         log.info("%s: Big plus sign formed, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         self.print_cube()
 

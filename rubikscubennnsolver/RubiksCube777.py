@@ -1,20 +1,37 @@
 
+from rubikscubennnsolver import NotSolving
 from rubikscubennnsolver.RubiksCubeNNNOddEdges import RubiksCubeNNNOddEdges
 from rubikscubennnsolver.RubiksCube555 import RubiksCube555, solved_555
-from rubikscubennnsolver.RubiksCube666 import RubiksCube666, solved_666, moves_666
-from rubikscubennnsolver.RubiksCube777Misc import (
-    state_targets_step30,
-    state_targets_step31,
-    state_targets_step32,
+from rubikscubennnsolver.LookupTable import (
+    LookupTable,
+    LookupTableIDA,
+    LookupTableIDAViaC,
+    LookupTableHashCostOnly,
 )
-from rubikscubennnsolver.LookupTable import LookupTable, LookupTableIDA, LookupTableHashCostOnly
 import logging
 import math
 import sys
 
 log = logging.getLogger(__name__)
 
-moves_777 = moves_666
+
+moves_777 = (
+    "U", "U'", "U2", "Uw", "Uw'", "Uw2", "3Uw", "3Uw'", "3Uw2",
+    "L", "L'", "L2", "Lw", "Lw'", "Lw2", "3Lw", "3Lw'", "3Lw2",
+    "F" , "F'", "F2", "Fw", "Fw'", "Fw2", "3Fw", "3Fw'", "3Fw2",
+    "R" , "R'", "R2", "Rw", "Rw'", "Rw2", "3Rw", "3Rw'", "3Rw2",
+    "B" , "B'", "B2", "Bw", "Bw'", "Bw2", "3Bw", "3Bw'", "3Bw2",
+    "D" , "D'", "D2", "Dw", "Dw'", "Dw2", "3Dw", "3Dw'", "3Dw2",
+
+    # slices...not used for now
+    # "2U", "2U'", "2U2", "2D", "2D'", "2D2",
+    # "2L", "2L'", "2L2", "2R", "2R'", "2R2",
+    # "2F", "2F'", "2F2", "2B", "2B'", "2B2",
+    # "3U", "3U'", "3U2", "3D", "3D'", "3D2",
+    # "3L", "3L'", "3L2", "3R", "3R'", "3R2",
+    # "3F", "3F'", "3F2", "3B", "3B'", "3B2"
+)
+
 solved_777 = 'UUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUUURRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRRFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFFDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDDLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLLBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB'
 
 centers_777 = (
@@ -27,314 +44,7 @@ centers_777 = (
 )
 
 
-class LookupTable777UDOutsideObliqueEdgePairingLeftOnly(LookupTable):
-    """
-    24!/(8!*16!) is 735,471
-
-    lookup-table-7x7x7-step01-UD-oblique-edges-stage-left.txt
-    =========================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 82 entries (0 percent, 16.40x previous step)
-    3 steps has 1,198 entries (0 percent, 14.61x previous step)
-    4 steps has 13,818 entries (1 percent, 11.53x previous step)
-    5 steps has 115,638 entries (15 percent, 8.37x previous step)
-    6 steps has 399,478 entries (54 percent, 3.45x previous step)
-    7 steps has 204,612 entries (27 percent, 0.51x previous step)
-    8 steps has 640 entries (0 percent, 0.00x previous step)
-
-    Total: 735,471 entries
-    Average: 6.08 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step01-UD-oblique-edges-stage-left.txt',
-            'f0000f',
-            linecount=735471,
-            max_depth=8,
-            filesize=6619239,
-        )
-
-
-class LookupTable777UDOutsideObliqueEdgePairingRightOnly(LookupTable):
-    """
-    24!/(8!*16!) is 735,471
-
-    lookup-table-7x7x7-step02-UD-oblique-edges-stage-right.txt
-    ==========================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 82 entries (0 percent, 16.40x previous step)
-    3 steps has 1,198 entries (0 percent, 14.61x previous step)
-    4 steps has 13,818 entries (1 percent, 11.53x previous step)
-    5 steps has 115,638 entries (15 percent, 8.37x previous step)
-    6 steps has 399,478 entries (54 percent, 3.45x previous step)
-    7 steps has 204,612 entries (27 percent, 0.51x previous step)
-    8 steps has 640 entries (0 percent, 0.00x previous step)
-
-    Total: 735,471 entries
-    Average: 6.08 moves
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step02-UD-oblique-edges-stage-right.txt',
-            'f0000f',
-            linecount=735471,
-            max_depth=8,
-            filesize=6619239,
-        )
-
-
-class LookupTableIDA777UDOutsideObliqueEdgePairing(LookupTableIDA):
-    """
-    lookup-table-7x7x7-step00-UD-oblique-edges-stage.txt
-    ====================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 82 entries (0 percent, 16.40x previous step)
-    3 steps has 1,434 entries (0 percent, 17.49x previous step)
-    4 steps has 24,198 entries (0 percent, 16.87x previous step)
-    5 steps has 405,916 entries (5 percent, 16.77x previous step)
-    6 steps has 6,839,392 entries (94 percent, 16.85x previous step)
-
-    Total: 7,271,027 entries
-    """
-
-    outside_oblique_edges_777 = (
-        10, 12, 16, 20, 30, 34, 38, 40, # Upper
-        59, 61, 65, 69, 79, 83, 87, 89, # Left
-        108, 110, 114, 118, 128, 132, 136, 138, # Front
-        157, 159, 163, 167, 177, 181, 185, 187, # Right
-        206, 208, 212, 216, 226, 230, 234, 236, # Back
-        255, 257, 261, 265, 275, 279, 283, 285, # Down
-    )
-
-    left_oblique_edge_777 = (
-        10, 20, 30, 40, # Upper
-        59, 69, 79, 89, # Left
-        108, 118, 128, 138, # Front
-        157, 167, 177, 187, # Right
-        206, 216, 226, 236, # Back
-        255, 265, 275, 285, # Down
-    )
-
-    right_oblique_edge_777 = (
-        12, 16, 34, 38, # Upper
-        61, 65, 83, 87, # Left
-        110, 114, 132, 136, # Front
-        159, 163, 181, 185, # Right
-        208, 212, 230, 234, # Back
-        257, 261, 279, 283, # Down
-    )
-
-    set_left_oblique_edge_777 = set(left_oblique_edge_777)
-    set_right_oblique_edge_777 = set(right_oblique_edge_777)
-
-    def __init__(self, parent):
-        LookupTableIDA.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step00-UD-oblique-edges-stage.txt',
-            'ff00000000ff',
-            moves_777,
-
-            # do not mess up UD 5x5x5 centers
-            ("3Rw", "3Rw'",
-             "3Lw", "3Lw'",
-             "3Fw", "3Fw'",
-             "3Bw", "3Bw'"
-            ),
-
-            # prune tables
-            (parent.lt_UD_outside_oblique_edge_pairing_left_only,
-             parent.lt_UD_outside_oblique_edge_pairing_right_only),
-
-            linecount=7271027,
-            max_depth=6,
-            filesize=130878486)
-
-    def recolor(self):
-        log.info("%s: recolor (custom)" % self)
-        #self.parent.print_cube()
-        self.parent.nuke_corners()
-        self.parent.nuke_edges()
-
-        for x in centers_777:
-            if x in self.outside_oblique_edges_777:
-                if self.parent.state[x] == 'U' or self.parent.state[x] == 'D':
-                    self.parent.state[x] = 'U'
-                else:
-                    self.parent.state[x] = 'x'
-            else:
-                self.parent.state[x] = '.'
-        #self.parent.print_cube()
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        left_state = 0
-        right_state = 0
-        lt_state = 0
-
-        set_left_oblique_edge_777 = self.set_left_oblique_edge_777
-        set_right_oblique_edge_777 = self.set_right_oblique_edge_777
-
-        for x in self.outside_oblique_edges_777:
-
-            if x in set_left_oblique_edge_777:
-                if parent_state[x] == 'U':
-                    left_state = left_state | 0x1
-                    lt_state = lt_state | 0x1
-                left_state = left_state << 1
-
-            if x in set_right_oblique_edge_777:
-                if parent_state[x] == 'U':
-                    right_state = right_state | 0x1
-                    lt_state = lt_state | 0x1
-                right_state = right_state << 1
-
-            lt_state = lt_state << 1
-
-        left_state = left_state >> 1
-        right_state = right_state >> 1
-        lt_state = lt_state >> 1
-
-        # convert to hex format
-        left_state = self.parent.lt_UD_outside_oblique_edge_pairing_left_only.hex_format % left_state
-        right_state = self.parent.lt_UD_outside_oblique_edge_pairing_right_only.hex_format % right_state
-        lt_state = self.hex_format % lt_state
-
-        cost_to_goal = max(
-             self.parent.lt_UD_outside_oblique_edge_pairing_left_only.heuristic(left_state),
-             self.parent.lt_UD_outside_oblique_edge_pairing_right_only.heuristic(right_state),
-        )
-
-        #log.info("%s: lt_state %s, left_state %s, right_state %s, cost_to_goal %d" %
-        #    (self, lt_state, left_state, right_state, cost_to_goal))
-        return (lt_state, cost_to_goal)
-
-
-class LookupTable777UDObliqueEdgePairingMiddleOnly(LookupTable):
-    """
-    24!/(8!*16!) is 735,471
-
-    lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt
-    =================================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 66 entries (0 percent, 13.20x previous step)
-    3 steps has 850 entries (0 percent, 12.88x previous step)
-    4 steps has 8,753 entries (1 percent, 10.30x previous step)
-    5 steps has 67,758 entries (9 percent, 7.74x previous step)
-    6 steps has 243,959 entries (33 percent, 3.60x previous step)
-    7 steps has 257,410 entries (34 percent, 1.06x previous step)
-    8 steps has 135,684 entries (18 percent, 0.53x previous step)
-    9 steps has 20,177 entries (2 percent, 0.15x previous step)
-    10 steps has 801 entries (0 percent, 0.04x previous step)
-    11 steps has 8 entries (0 percent, 0.01x previous step)
-
-    Total: 735,471 entries
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step11-UD-oblique-edge-pairing-middle-only.txt',
-            '462000000000000462',
-            linecount=735471,
-            max_depth=11,
-            filesize=16180362,
-        )
-
-
-class LookupTable777UDObliqueEdgePairingLeftOnly(LookupTable):
-    """
-    24!/(8!*16!) is 735,471
-
-    lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt
-    ===============================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 66 entries (0 percent, 13.20x previous step)
-    3 steps has 850 entries (0 percent, 12.88x previous step)
-    4 steps has 8,753 entries (1 percent, 10.30x previous step)
-    5 steps has 67,758 entries (9 percent, 7.74x previous step)
-    6 steps has 243,959 entries (33 percent, 3.60x previous step)
-    7 steps has 257,410 entries (34 percent, 1.06x previous step)
-    8 steps has 135,684 entries (18 percent, 0.53x previous step)
-    9 steps has 20,177 entries (2 percent, 0.15x previous step)
-    10 steps has 801 entries (0 percent, 0.04x previous step)
-    11 steps has 8 entries (0 percent, 0.01x previous step)
-
-    Total: 735,471 entries
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step12-UD-oblique-edge-pairing-left-only.txt',
-            '891000000000000891',
-            linecount=735471,
-            max_depth=11,
-            filesize=15444891,
-        )
-
-
-class LookupTable777UDObliqueEdgePairingRightOnly(LookupTable):
-    """
-    24!/(8!*16!) is 735,471
-
-    lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt
-    ================================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 66 entries (0 percent, 13.20x previous step)
-    3 steps has 850 entries (0 percent, 12.88x previous step)
-    4 steps has 8,753 entries (1 percent, 10.30x previous step)
-    5 steps has 67,758 entries (9 percent, 7.74x previous step)
-    6 steps has 243,959 entries (33 percent, 3.60x previous step)
-    7 steps has 257,410 entries (34 percent, 1.06x previous step)
-    8 steps has 135,684 entries (18 percent, 0.53x previous step)
-    9 steps has 20,177 entries (2 percent, 0.15x previous step)
-    10 steps has 801 entries (0 percent, 0.04x previous step)
-    11 steps has 8 entries (0 percent, 0.01x previous step)
-
-    Total: 735,471 entries
-    """
-
-    def __init__(self, parent):
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step13-UD-oblique-edge-pairing-right-only.txt',
-            '30c00000000000030c',
-            linecount=735471,
-            max_depth=11,
-            filesize=15444891,
-        )
-
-
-class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
-    """
-    This is 6-deep...this table is odd because it "locks" the outside UD oblique
-    edges together which results in these weird move counts per level.
-
-    lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt
-    =====================================================
-    1 steps has 5 entries (0 percent, 0.00x previous step)
-    2 steps has 66 entries (0 percent, 13.20x previous step)
-    3 steps has 916 entries (0 percent, 13.88x previous step)
-    4 steps has 10,132 entries (0 percent, 11.06x previous step)
-    5 steps has 92,070 entries (1 percent, 9.09x previous step)
-    6 steps has 558,950 entries (9 percent, 6.07x previous step)
-    7 steps has 3,861,635 entries (64 percent, 6.91x previous step)
-    8 steps has 1,365,844 entries (22 percent, 0.35x previous step)
-    9 steps has 71,797 entries (1 percent, 0.05x previous step)
-    10 steps has 158 entries (0 percent, 0.00x previous step)
-
-    Total: 5,961,573 entries
-    """
+class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDAViaC):
 
     oblique_edges_777 = (
         10, 11, 12, 16, 20, 23, 27, 30, 34, 38, 39, 40, # Upper
@@ -345,56 +55,14 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
         255, 256, 257, 261, 265, 268, 272, 275, 279, 283, 284, 285, # Down
     )
 
-    left_oblique_edge_777 = (
-        10, 20, 30, 40, # Upper
-        59, 69, 79, 89, # Left
-        108, 118, 128, 138, # Front
-        157, 167, 177, 187, # Right
-        206, 216, 226, 236, # Back
-        255, 265, 275, 285, # Down
-    )
-
-    middle_oblique_edge_777 = (
-        11, 23, 27, 39, # Upper
-        60, 72, 76, 88, # Left
-        109, 121, 125, 137, # Front
-        158, 170, 174, 186, # Right
-        207, 219, 223, 235, # Back
-        256, 268, 272, 284, # Down
-    )
-
-    right_oblique_edge_777 = (
-        12, 16, 34, 38, # Upper
-        61, 65, 83, 87, # Left
-        110, 114, 132, 136, # Front
-        159, 163, 181, 185, # Right
-        208, 212, 230, 234, # Back
-        257, 261, 279, 283, # Down
-    )
-
-    set_left_oblique_edge_777 = set(left_oblique_edge_777)
-    set_middle_oblique_edge_777 = set(middle_oblique_edge_777)
-    set_right_oblique_edge_777 = set(right_oblique_edge_777)
-
     def __init__(self, parent):
-        LookupTableIDA.__init__(
+
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            'lookup-table-7x7x7-step10-UD-oblique-edge-pairing.txt',
-            'fff000000000000fff',
-            moves_777,
-
-            # do not mess up UD 5x5x5 centers
-            ("3Rw", "3Rw'", "3Lw", "3Lw'", "3Fw", "3Fw'", "3Bw", "3Bw'"),
-
-            # prune tables
-            (parent.lt_UD_oblique_edge_pairing_middle_only,
-             parent.lt_UD_oblique_edge_pairing_left_only,
-             parent.lt_UD_oblique_edge_pairing_right_only),
-
-            linecount=5961573,
-            max_depth=6,
-            filesize=399425391,
+            # Needed tables and their md5 signatures
+            (),
+            '7x7x7-UD-oblique-edges-stage' # C_ida_type
         )
 
     def recolor(self):
@@ -413,151 +81,9 @@ class LookupTableIDA777UDObliqueEdgePairing(LookupTableIDA):
                 self.parent.state[x] = '.'
         #self.parent.print_cube()
 
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        left_state = 0
-        middle_state = 0
-        right_state = 0
-        lt_state = 0
 
-        set_left_oblique_edge_777 = self.set_left_oblique_edge_777
-        set_middle_oblique_edge_777 = self.set_middle_oblique_edge_777
-        set_right_oblique_edge_777 = self.set_right_oblique_edge_777
+class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDAViaC):
 
-        for x in self.oblique_edges_777:
-
-            if parent_state[x] == 'U':
-                if x in set_left_oblique_edge_777:
-                    left_state = left_state | 0x1
-
-                elif x in set_middle_oblique_edge_777:
-                    middle_state = middle_state | 0x1
-
-                elif x in set_right_oblique_edge_777:
-                    right_state = right_state | 0x1
-
-                lt_state = lt_state | 0x1
-
-            left_state = left_state << 1
-            middle_state = middle_state << 1
-            right_state = right_state << 1
-            lt_state = lt_state << 1
-
-        left_state = left_state >> 1
-        middle_state = middle_state >> 1
-        right_state = right_state >> 1
-        lt_state = lt_state >> 1
-
-        # convert to hex format
-        left_state = self.parent.lt_UD_oblique_edge_pairing_left_only.hex_format % left_state
-        middle_state = self.parent.lt_UD_oblique_edge_pairing_middle_only.hex_format % middle_state
-        right_state = self.parent.lt_UD_oblique_edge_pairing_right_only.hex_format % right_state
-        lt_state = self.hex_format % lt_state
-
-        cost_to_goal = max(
-             self.parent.lt_UD_oblique_edge_pairing_left_only.heuristic(left_state),
-             self.parent.lt_UD_oblique_edge_pairing_middle_only.heuristic(middle_state),
-             self.parent.lt_UD_oblique_edge_pairing_right_only.heuristic(right_state),
-        )
-
-        #log.info("%s: lt_state %s, left_state %s, middle_state %s, right_state %s, cost_to_goal %d" %
-        #    (self, lt_state, left_state, middle_state, right_state, cost_to_goal))
-        return (lt_state, cost_to_goal)
-
-
-class LookupTable777LRLeftRightObliqueEdgePairing(LookupTableHashCostOnly):
-    """
-    lookup-table-7x7x7-step31-stage-lr-oblique-edges.txt
-    ====================================================
-    1 steps has 45,158 entries (0 percent, 0.00x previous step)
-    2 steps has 293,056 entries (0 percent, 6.49x previous step)
-    3 steps has 2,056,784 entries (1 percent, 7.02x previous step)
-    4 steps has 11,562,716 entries (6 percent, 5.62x previous step)
-    5 steps has 43,269,568 entries (26 percent, 3.74x previous step)
-    6 steps has 75,723,092 entries (45 percent, 1.75x previous step)
-    7 steps has 31,697,280 entries (19 percent, 0.42x previous step)
-    8 steps has 983,238 entries (0 percent, 0.03x previous step)
-    9 steps has 5,992 entries (0 percent, 0.01x previous step)
-    10 steps has 16 entries (0 percent, 0.00x previous step)
-
-    Total: 165,636,900 entries
-    Average: 5.76 moves
-    """
-
-    def __init__(self, parent):
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step31-stage-lr-oblique-edges.hash-cost-only.txt',
-            state_targets_step31,
-            linecount=165636900,
-            max_depth=10,
-            bucketcount=165636907,
-            filesize=165636908)
-
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step31-stage-lr-oblique-edges.txt',
-            state_targets_step31,
-            linecount=165636900,
-            max_depth=10)
-        '''
-
-
-class LookupTable777LRLeftMiddleObliqueEdgePairing(LookupTableHashCostOnly):
-    """
-    lookup-table-7x7x7-step32-stage-lr-left-middle-oblique-edges.txt
-    ================================================================
-    1 steps has 60,390 entries (0 percent, 0.00x previous step)
-    2 steps has 504,512 entries (0 percent, 8.35x previous step)
-    3 steps has 3,164,712 entries (1 percent, 6.27x previous step)
-    4 steps has 14,547,152 entries (8 percent, 4.60x previous step)
-    5 steps has 39,862,724 entries (24 percent, 2.74x previous step)
-    6 steps has 59,903,328 entries (36 percent, 1.50x previous step)
-    7 steps has 38,877,292 entries (23 percent, 0.65x previous step)
-    8 steps has 8,224,240 entries (4 percent, 0.21x previous step)
-    9 steps has 486,440 entries (0 percent, 0.06x previous step)
-    10 steps has 6,102 entries (0 percent, 0.01x previous step)
-    11 steps has 8 entries (0 percent, 0.00x previous step)
-
-    Total: 165,636,900 entries
-    Average: 5.86 moves
-    """
-
-    def __init__(self, parent):
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step32-stage-lr-left-middle-oblique-edges.hash-cost-only.txt',
-            state_targets_step32,
-            linecount=165636900,
-            max_depth=11,
-            bucketcount=165636907,
-            filesize=165636908)
-
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step32-stage-lr-left-middle-oblique-edges.txt',
-            state_targets_step32,
-            linecount=165636900,
-            max_depth=11)
-        '''
-
-
-class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
-    """
-    lookup-table-7x7x7-step30-stage-lr-oblique-edges.txt
-    ====================================================
-    1 steps has 77,446 entries (0 percent, 0.00x previous step)
-    2 steps has 831,520 entries (8 percent, 10.74x previous step)
-    3 steps has 9,010,776 entries (90 percent, 10.84x previous step)
-
-    Total: 9,919,742 entries
-    """
     LFRB_oblique_edges_777 = (
         59, 60, 61, 65, 69, 72, 76, 79, 83, 87, 88, 89, # Left
         108, 109, 110, 114, 118, 121, 125, 128, 132, 136, 137, 138, # Front
@@ -565,128 +91,14 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
         206, 207, 208, 212, 216, 219, 223, 226, 230, 234, 235, 236, # Back
     )
 
-    LFRB_left_middle_oblique_edges_777 = (
-        59, 60, 69, 72, 76, 79, 88, 89, # Left
-        108, 109, 118, 121, 125, 128, 137, 138, # Front
-        157, 158, 167, 170, 174, 177, 186, 187, # Right
-        206, 207, 216, 219, 223, 226, 235, 236, # Back
-    )
-
-    LFRB_left_right_oblique_edges_777 = (
-        59, 61, 65, 69, 79, 83, 87, 89, # Left
-        108, 110, 114, 118, 128, 132, 136, 138, # Front
-        157, 159, 163, 167, 177, 181, 185, 187, # Right
-        206, 208, 212, 216, 226, 230, 234, 236, # Back
-    )
-
-    set_LFRB_left_right_oblique_edges_777 = set(LFRB_left_right_oblique_edges_777)
-    set_LFRB_left_middle_oblique_edges_777 = set(LFRB_left_middle_oblique_edges_777)
-
-    heuristic_stats = {
-        (0, 0): 1,
-        (0, 1): 3,
-        (0, 2): 3,
-        (0, 3): 4,
-        (0, 4): 5,
-        (0, 5): 7,
-        (0, 6): 8,
-        (1, 0): 2,
-        (1, 1): 2,
-        (1, 2): 4,
-        (1, 3): 4,
-        (1, 4): 5,
-        (1, 5): 7,
-        (1, 6): 9,
-        (1, 7): 10,
-        (2, 0): 3,
-        (2, 1): 3,
-        (2, 2): 3,
-        (2, 3): 4,
-        (2, 4): 5,
-        (2, 5): 8,
-        (2, 6): 9,
-        (2, 7): 9,
-        (2, 8): 12,
-        (3, 0): 4,
-        (3, 1): 4,
-        (3, 2): 4,
-        (3, 3): 4,
-        (3, 4): 5,
-        (3, 5): 8,
-        (3, 6): 9,
-        (3, 7): 9,
-        (3, 8): 11,
-        (4, 0): 5,
-        (4, 1): 5,
-        (4, 2): 5,
-        (4, 3): 5,
-        (4, 3): 6,
-        (4, 4): 5,
-        (4, 5): 8,
-        (4, 6): 9,
-        (4, 7): 10,
-        (4, 8): 10,
-        (4, 9): 13,
-        (5, 0): 7,
-        (5, 1): 8,
-        (5, 2): 6,
-        (5, 3): 7,
-        (5, 4): 8,
-        (5, 5): 7,
-        (5, 6): 9,
-        (5, 7): 9,
-        (5, 8): 10,
-        (5, 9): 10,
-        (6, 1): 9,
-        (6, 2): 8,
-        (6, 3): 9,
-        (6, 4): 9,
-        (6, 5): 9,
-        (6, 6): 8,
-        (6, 7): 10,
-        (6, 8): 11,
-        (6, 9): 12,
-        (7, 2): 10,
-        (7, 3): 9,
-        (7, 4): 10,
-        (7, 5): 10,
-        (7, 6): 9,
-        (7, 7): 9,
-        (7, 8): 9,
-        (8, 4): 11,
-        (8, 5): 11,
-        (8, 6): 10,
-        (8, 7): 13,
-        (8, 8): 12
-    }
-
-    # The stats above are all median values from solving 5000 7x7x7 cubes. Experimenting
-    # shows that subtracting 1 from all of those speeds up some searches a good bit (from
-    # 2m down to 5s).
-    #heuristic_stats_error = 1
-
     def __init__(self, parent):
-        LookupTableIDA.__init__(
+
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            'lookup-table-7x7x7-step30-stage-lr-oblique-edges.txt',
-            state_targets_step30,
-            moves_777,
-
-            ("3Uw", "3Uw'", "3Dw", "3Dw'", # do not mess up staged inner-x-centers
-             "3Lw", "3Lw'", "3Rw", "3Rw'",
-             "3Fw", "3Fw'", "3Bw", "3Bw'",
-             "Rw", "Rw'", "Lw", "Lw'",     # do not mess up staged UD oblique pairs
-             "Fw", "Fw'", "Bw", "Bw'"),
-
-            # prune tables
-            (parent.lt_LR_left_right_oblique_edge_pairing,
-             parent.lt_LR_left_middle_oblique_edge_pairing,
-            ),
-
-            linecount=9919742,
-            max_depth=3,
-            filesize=178555356,
+            # Needed tables and their md5 signatures
+            (),
+            '7x7x7-LR-oblique-edges-stage' # C_ida_type
         )
 
     def recolor(self):
@@ -705,55 +117,20 @@ class LookupTableIDA777LRObliqueEdgePairing(LookupTableIDA):
                 self.parent.state[x] = '.'
         #self.parent.print_cube()
 
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        left_middle_state = 0
-        left_right_state = 0
-        lt_state = 0
 
-        set_LFRB_left_right_oblique_edges_777 = self.set_LFRB_left_right_oblique_edges_777
-        set_LFRB_left_middle_oblique_edges_777 = self.set_LFRB_left_middle_oblique_edges_777
-
-        for x in self.LFRB_oblique_edges_777:
-            x_state = parent_state[x]
-
-            if x in set_LFRB_left_right_oblique_edges_777:
-                if x_state == 'L':
-                    left_right_state = left_right_state | 0x1
-                left_right_state = left_right_state << 1
-
-            if x in set_LFRB_left_middle_oblique_edges_777:
-                if x_state == 'L':
-                    left_middle_state = left_middle_state | 0x1
-                left_middle_state = left_middle_state << 1
-
-            if x_state == 'L':
-                lt_state = lt_state | 0x1
-            lt_state = lt_state << 1
-
-        left_middle_state = left_middle_state >> 1
-        left_right_state = left_right_state >> 1
-        lt_state = lt_state >> 1
-
-        # convert to hex format
-        left_right_state = self.parent.lt_LR_left_right_oblique_edge_pairing.hex_format % left_right_state
-        left_middle_state = self.parent.lt_LR_left_middle_oblique_edge_pairing.hex_format % left_middle_state
-        lt_state = self.hex_format % lt_state
-
-        left_right_cost = self.parent.lt_LR_left_right_oblique_edge_pairing.heuristic(left_right_state)
-        left_middle_cost = self.parent.lt_LR_left_middle_oblique_edge_pairing.heuristic(left_middle_state)
-
-        cost_to_goal = self.heuristic_stats.get((left_right_cost, left_middle_cost))
-
-        if cost_to_goal is None:
-            cost_to_goal = max(left_right_cost, left_middle_cost)
-
-        return (lt_state, cost_to_goal)
-
-
-#class LookupTable777Step41(LookupTable):
-class LookupTable777Step41(LookupTableHashCostOnly):
+class LookupTableIDA777Step40(LookupTableIDAViaC):
     """
+    lookup-table-7x7x7-step40.txt
+    =============================
+    1 steps has 250 entries (0 percent, 0.00x previous step)
+    2 steps has 1,981 entries (0 percent, 7.92x previous step)
+    3 steps has 15,782 entries (1 percent, 7.97x previous step)
+    4 steps has 123,053 entries (11 percent, 7.80x previous step)
+    5 steps has 931,072 entries (86 percent, 7.57x previous step)
+
+    Total: 1,072,138 entries
+
+
     lookup-table-7x7x7-step41.txt
     =============================
     1 steps has 226 entries (0 percent, 0.00x previous step)
@@ -771,72 +148,8 @@ class LookupTable777Step41(LookupTableHashCostOnly):
 
     Total: 24,010,000 entries
     Average: 8.01 moves
-    """
-
-    state_targets = (
-        'LLLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRRR',
-        'LLLLLLRLLLLLLLRLLRRLRRRRRRRLRRRRRR',
-        'LLLLLLRLLLLLLLRLLRRRRRRLRRRRRRRLRR',
-        'LLRLLLLLLLRLLLLLLRRLRRRRRRRLRRRRRR',
-        'LLRLLLLLLLRLLLLLLRRRRRRLRRRRRRRLRR',
-        'LLRLLLRLLLRLLLRLLRRLRRRLRRRLRRRLRR',
-        'LRLLLRLLLRLLLRLLRLRRLRRRLRRRLRRRLR',
-        'LRLLLRLLLRLLLRLLRRLRRRLRRRLRRRLRRL',
-        'LRLLLRRLLRLLLRRLRLRLLRRRLRRLLRRRLR',
-        'LRLLLRRLLRLLLRRLRLRRLRRLLRRRLRRLLR',
-        'LRLLLRRLLRLLLRRLRRLLRRLRRRLLRRLRRL',
-        'LRLLLRRLLRLLLRRLRRLRRRLLRRLRRRLLRL',
-        'LRRLLRLLLRRLLRLLRLRLLRRRLRRLLRRRLR',
-        'LRRLLRLLLRRLLRLLRLRRLRRLLRRRLRRLLR',
-        'LRRLLRLLLRRLLRLLRRLLRRLRRRLLRRLRRL',
-        'LRRLLRLLLRRLLRLLRRLRRRLLRRLRRRLLRL',
-        'LRRLLRRLLRRLLRRLRLRLLRRLLRRLLRRLLR',
-        'LRRLLRRLLRRLLRRLRRLLRRLLRRLLRRLLRL',
-        'RLLRLLLRLLLRLLLRLLRRLRRRLRRRLRRRLR',
-        'RLLRLLLRLLLRLLLRLRLRRRLRRRLRRRLRRL',
-        'RLLRLLRRLLLRLLRRLLRLLRRRLRRLLRRRLR',
-        'RLLRLLRRLLLRLLRRLLRRLRRLLRRRLRRLLR',
-        'RLLRLLRRLLLRLLRRLRLLRRLRRRLLRRLRRL',
-        'RLLRLLRRLLLRLLRRLRLRRRLLRRLRRRLLRL',
-        'RLRRLLLRLLRRLLLRLLRLLRRRLRRLLRRRLR',
-        'RLRRLLLRLLRRLLLRLLRRLRRLLRRRLRRLLR',
-        'RLRRLLLRLLRRLLLRLRLLRRLRRRLLRRLRRL',
-        'RLRRLLLRLLRRLLLRLRLRRRLLRRLRRRLLRL',
-        'RLRRLLRRLLRRLLRRLLRLLRRLLRRLLRRLLR',
-        'RLRRLLRRLLRRLLRRLRLLRRLLRRLLRRLLRL',
-        'RRLRLRLRLRLRLRLRRLLRLRLRLRLRLRLRLL',
-        'RRLRLRRRLRLRLRRRRLLLLRLRLRLLLRLRLL',
-        'RRLRLRRRLRLRLRRRRLLRLRLLLRLRLRLLLL',
-        'RRRRLRLRLRRRLRLRRLLLLRLRLRLLLRLRLL',
-        'RRRRLRLRLRRRLRLRRLLRLRLLLRLRLRLLLL',
-        'RRRRLRRRLRRRLRRRRLLLLRLLLRLLLRLLLL'
-    )
-
-    def __init__(self, parent):
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step41.txt',
-            self.state_targets,
-            linecount=24010000,
-            max_depth=12,
-            filesize=2064860000)
-        '''
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step41.hash-cost-only.txt',
-            self.state_targets,
-            linecount=24010000,
-            max_depth=12,
-            bucketcount=24010031,
-            filesize=24010032)
 
 
-#class LookupTable777Step42(LookupTable):
-class LookupTable777Step42(LookupTableHashCostOnly):
-    """
     lookup-table-7x7x7-step42.txt
     =============================
     1 steps has 250 entries (0 percent, 0.00x previous step)
@@ -856,117 +169,15 @@ class LookupTable777Step42(LookupTableHashCostOnly):
     """
 
     state_targets = (
-        'LLLLLLLLLLLLLLLLLRRRRRRRRRRRRRRRRR',
-        'LLLLLRLLLRLLLRLLLRRRLRRRLRRRLRRRRR',
-        'LLLLLRLLLRLLLRLLLRRRRRLRRRLRRRLRRR',
-        'LLLRLLLRLLLRLLLLLRRRLRRRLRRRLRRRRR',
-        'LLLRLLLRLLLRLLLLLRRRRRLRRRLRRRLRRR',
-        'LLLRLRLRLRLRLRLLLRRRLRLRLRLRLRLRRR',
-        'LLRLLLLLLLRLLLLLRLRRRRRLRRRRRRRLRR',
-        'LLRLLLLLLLRLLLLLRRRLRRRRRRRLRRRRRL',
-        'LLRLLRLLLRRLLRLLRLRRLRRLLRRRLRRLRR',
-        'LLRLLRLLLRRLLRLLRLRRRRLLRRLRRRLLRR',
-        'LLRLLRLLLRRLLRLLRRRLLRRRLRRLLRRRRL',
-        'LLRLLRLLLRRLLRLLRRRLRRLRRRLLRRLRRL',
-        'LLRRLLLRLLRRLLLLRLRRLRRLLRRRLRRLRR',
-        'LLRRLLLRLLRRLLLLRLRRRRLLRRLRRRLLRR',
-        'LLRRLLLRLLRRLLLLRRRLLRRRLRRLLRRRRL',
-        'LLRRLLLRLLRRLLLLRRRLRRLRRRLLRRLRRL',
-        'LLRRLRLRLRRRLRLLRLRRLRLLLRLRLRLLRR',
-        'LLRRLRLRLRRRLRLLRRRLLRLRLRLLLRLRRL',
-        'RLLLLLRLLLLLLLRLLLRRRRRLRRRRRRRLRR',
-        'RLLLLLRLLLLLLLRLLRRLRRRRRRRLRRRRRL',
-        'RLLLLRRLLRLLLRRLLLRRLRRLLRRRLRRLRR',
-        'RLLLLRRLLRLLLRRLLLRRRRLLRRLRRRLLRR',
-        'RLLLLRRLLRLLLRRLLRRLLRRRLRRLLRRRRL',
-        'RLLLLRRLLRLLLRRLLRRLRRLRRRLLRRLRRL',
-        'RLLRLLRRLLLRLLRLLLRRLRRLLRRRLRRLRR',
-        'RLLRLLRRLLLRLLRLLLRRRRLLRRLRRRLLRR',
-        'RLLRLLRRLLLRLLRLLRRLLRRRLRRLLRRRRL',
-        'RLLRLLRRLLLRLLRLLRRLRRLRRRLLRRLRRL',
-        'RLLRLRRRLRLRLRRLLLRRLRLLLRLRLRLLRR',
-        'RLLRLRRRLRLRLRRLLRRLLRLRLRLLLRLRRL',
-        'RLRLLLRLLLRLLLRLRLRLRRRLRRRLRRRLRL',
-        'RLRLLRRLLRRLLRRLRLRLLRRLLRRLLRRLRL',
-        'RLRLLRRLLRRLLRRLRLRLRRLLRRLLRRLLRL',
-        'RLRRLLRRLLRRLLRLRLRLLRRLLRRLLRRLRL',
-        'RLRRLLRRLLRRLLRLRLRLRRLLRRLLRRLLRL',
-        'RLRRLRRRLRRRLRRLRLRLLRLLLRLLLRLLRL'
-    )
-
-    def __init__(self, parent):
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step42.txt',
-            self.state_targets,
-            linecount=24010000,
-            max_depth=11,
-            filesize=2040850000)
-        '''
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step42.hash-cost-only.txt',
-            self.state_targets,
-            linecount=24010000,
-            max_depth=11,
-            bucketcount=24010031,
-            filesize=24010032)
-
-
-class LookupTableIDA777Step40(LookupTableIDA):
-    """
-    lookup-table-7x7x7-step40.txt
-    =============================
-    1 steps has 250 entries (0 percent, 0.00x previous step)
-    2 steps has 1,981 entries (0 percent, 7.92x previous step)
-    3 steps has 15,782 entries (0 percent, 7.97x previous step)
-    4 steps has 123,053 entries (1 percent, 7.80x previous step)
-    5 steps has 931,072 entries (11 percent, 7.57x previous step)
-    6 steps has 6,799,621 entries (86 percent, 7.30x previous step)
-
-    Total: 7,871,759 entries
-    """
-
-    state_targets = (
-        '0842109bdef7b',
-        '0a5294ab5ad6b',
-        '0a5294bad6b5a',
-        '0c6318d39ce73',
-        '0c6318d9ce739',
-        '0e739ce318c63',
-        '0e739ce94a529',
-        '0e739cf294a52',
-        '0e739cf8c6318',
-        '18c631939ce73',
-        '18c63199ce739',
-        '1ad6b5a318c63',
-        '1ad6b5a94a529',
-        '1ad6b5b294a52',
-        '1ad6b5b8c6318',
-        '1ce739d18c631',
-        '1ef7bde108421',
-        '1ef7bdf084210',
-        '294a528b5ad6b',
-        '294a529ad6b5a',
-        '2b5ad6aa5294a',
-        '2d6b5ac318c63',
-        '2d6b5ac94a529',
-        '2d6b5ad294a52',
-        '2d6b5ad8c6318',
-        '2f7bdee210842',
-        '2f7bdee842108',
-        '39ce738318c63',
-        '39ce73894a529',
-        '39ce739294a52',
-        '39ce7398c6318',
-        '3bdef7a210842',
-        '3bdef7a842108',
-        '3def7bc108421',
-        '3def7bd084210',
-        '3fffffe000000',
+        '0842109bdef7b', '0a5294ab5ad6b', '0a5294bad6b5a', '0c6318d39ce73',
+        '0c6318d9ce739', '0e739ce318c63', '0e739ce94a529', '0e739cf294a52',
+        '0e739cf8c6318', '18c631939ce73', '18c63199ce739', '1ad6b5a318c63',
+        '1ad6b5a94a529', '1ad6b5b294a52', '1ad6b5b8c6318', '1ce739d18c631',
+        '1ef7bde108421', '1ef7bdf084210', '294a528b5ad6b', '294a529ad6b5a',
+        '2b5ad6aa5294a', '2d6b5ac318c63', '2d6b5ac94a529', '2d6b5ad294a52',
+        '2d6b5ad8c6318', '2f7bdee210842', '2f7bdee842108', '39ce738318c63',
+        '39ce73894a529', '39ce739294a52', '39ce7398c6318', '3bdef7a210842',
+        '3bdef7a842108', '3def7bc108421', '3def7bd084210', '3fffffe000000',
     )
 
     centers_step40_777 = (
@@ -988,66 +199,30 @@ class LookupTableIDA777Step40(LookupTableIDA):
     set_centers_step42_777 = set(centers_step42_777)
 
     def __init__(self, parent):
-        LookupTableIDA.__init__(
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            'lookup-table-7x7x7-step40.txt',
-            self.state_targets,
-            moves_777,
-
-            # illegal moves
-            ("3Uw", "3Uw'", "3Uw2", "Uw", "Uw'", "Uw2",
-             "3Lw", "3Lw'", "3Lw2", "Lw", "Lw'", "Lw2",
-             "3Fw", "3Fw'", "Fw", "Fw'",
-             "3Rw", "3Rw'", "3Rw2", "Rw", "Rw'", "Rw2",
-             "3Bw", "3Bw'", "Bw", "Bw'",
-             "3Dw", "3Dw'", "3Dw2", "Dw", "Dw'", "Dw2"),
-
-            # prune tables
-            (parent.lt_step41,
-             parent.lt_step42),
-            linecount=7871759,
-            max_depth=6,
-            filesize=149563421)
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        lt_state = 0
-        step41_state = []
-        step42_state = []
-
-        set_centers_step41_777 = self.set_centers_step41_777
-        set_centers_step42_777 = self.set_centers_step42_777
-
-        for x in self.centers_step40_777:
-            x_state = parent_state[x]
-
-            if x in set_centers_step41_777:
-                step41_state.append(x_state)
-
-            if x in set_centers_step42_777:
-                step42_state.append(x_state)
-
-            if x_state == 'L':
-                lt_state = lt_state | 0x1
-            lt_state = lt_state << 1
-
-        step41_state = ''.join(step41_state)
-        step42_state = ''.join(step42_state)
-        lt_state = lt_state >> 1
-        lt_state = self.hex_format % lt_state
-
-        cost_to_goal = max(
-            self.parent.lt_step41.heuristic(step41_state),
-            self.parent.lt_step42.heuristic(step42_state),
+            # Needed tables and their md5 signatures
+            (('lookup-table-7x7x7-step40.txt', '4862690bafc6dada8dd652047acafe3a'),
+             ('lookup-table-7x7x7-step41.hash-cost-only.txt', '63c848ac2fc2e7e78a2ea6312dd96249'),
+             ('lookup-table-7x7x7-step42.hash-cost-only.txt', '70d5bd7eab4360535a622fc0f7f973ec')),
+            '7x7x7-step40' # C_ida_type
         )
 
-        return (lt_state, cost_to_goal)
 
-
-#class LookupTable777Step51(LookupTable):
-class LookupTable777Step51(LookupTableHashCostOnly):
+class LookupTableIDA777Step50(LookupTableIDAViaC):
     """
+    lookup-table-7x7x7-step50.txt
+    =============================
+    1 steps has 250 entries (0 percent, 0.00x previous step)
+    2 steps has 1,981 entries (0 percent, 7.92x previous step)
+    3 steps has 15,782 entries (1 percent, 7.97x previous step)
+    4 steps has 123,053 entries (11 percent, 7.80x previous step)
+    5 steps has 931,072 entries (86 percent, 7.57x previous step)
+
+    Total: 1,072,138 entries
+
+
     lookup-table-7x7x7-step51.txt
     =============================
     1 steps has 226 entries (0 percent, 0.00x previous step)
@@ -1065,72 +240,8 @@ class LookupTable777Step51(LookupTableHashCostOnly):
 
     Total: 24,010,000 entries
     Average: 8.01 moves
-    """
-
-    state_targets = (
-        'DDDDUDDDUDDDUDDDDUUUUDUUUDUUUDUUUU',
-        'DDDDUDUDUDDDUDUDDUUDUDUUUDUDUDUUUU',
-        'DDDDUDUDUDDDUDUDDUUUUDUDUDUUUDUDUU',
-        'DDUDUDDDUDUDUDDDDUUDUDUUUDUDUDUUUU',
-        'DDUDUDDDUDUDUDDDDUUUUDUDUDUUUDUDUU',
-        'DDUDUDUDUDUDUDUDDUUDUDUDUDUDUDUDUU',
-        'DUDDUUDDUUDDUUDDUDUUDDUUDDUUDDUUDU',
-        'DUDDUUDDUUDDUUDDUUDUUDDUUDDUUDDUUD',
-        'DUDDUUUDUUDDUUUDUDUDDDUUDDUDDDUUDU',
-        'DUDDUUUDUUDDUUUDUDUUDDUDDDUUDDUDDU',
-        'DUDDUUUDUUDDUUUDUUDDUDDUUDDDUDDUUD',
-        'DUDDUUUDUUDDUUUDUUDUUDDDUDDUUDDDUD',
-        'DUUDUUDDUUUDUUDDUDUDDDUUDDUDDDUUDU',
-        'DUUDUUDDUUUDUUDDUDUUDDUDDDUUDDUDDU',
-        'DUUDUUDDUUUDUUDDUUDDUDDUUDDDUDDUUD',
-        'DUUDUUDDUUUDUUDDUUDUUDDDUDDUUDDDUD',
-        'DUUDUUUDUUUDUUUDUDUDDDUDDDUDDDUDDU',
-        'DUUDUUUDUUUDUUUDUUDDUDDDUDDDUDDDUD',
-        'UDDUUDDUUDDUUDDUDDUUDDUUDDUUDDUUDU',
-        'UDDUUDDUUDDUUDDUDUDUUDDUUDDUUDDUUD',
-        'UDDUUDUUUDDUUDUUDDUDDDUUDDUDDDUUDU',
-        'UDDUUDUUUDDUUDUUDDUUDDUDDDUUDDUDDU',
-        'UDDUUDUUUDDUUDUUDUDDUDDUUDDDUDDUUD',
-        'UDDUUDUUUDDUUDUUDUDUUDDDUDDUUDDDUD',
-        'UDUUUDDUUDUUUDDUDDUDDDUUDDUDDDUUDU',
-        'UDUUUDDUUDUUUDDUDDUUDDUDDDUUDDUDDU',
-        'UDUUUDDUUDUUUDDUDUDDUDDUUDDDUDDUUD',
-        'UDUUUDDUUDUUUDDUDUDUUDDDUDDUUDDDUD',
-        'UDUUUDUUUDUUUDUUDDUDDDUDDDUDDDUDDU',
-        'UDUUUDUUUDUUUDUUDUDDUDDDUDDDUDDDUD',
-        'UUDUUUDUUUDUUUDUUDDUDDDUDDDUDDDUDD',
-        'UUDUUUUUUUDUUUUUUDDDDDDUDDDDDDDUDD',
-        'UUDUUUUUUUDUUUUUUDDUDDDDDDDUDDDDDD',
-        'UUUUUUDUUUUUUUDUUDDDDDDUDDDDDDDUDD',
-        'UUUUUUDUUUUUUUDUUDDUDDDDDDDUDDDDDD',
-        'UUUUUUUUUUUUUUUUUDDDDDDDDDDDDDDDDD'
-    )
-
-    def __init__(self, parent):
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step51.txt',
-            self.state_targets,
-            linecount=24010000,
-            max_depth=12,
-            filesize=2064860000)
-        '''
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step51.hash-cost-only.txt',
-            self.state_targets,
-            linecount=24010000,
-            max_depth=12,
-            bucketcount=24010031,
-            filesize=24010032)
 
 
-#class LookupTable777Step52(LookupTable):
-class LookupTable777Step52(LookupTableHashCostOnly):
-    """
     lookup-table-7x7x7-step52.txt
     =============================
     1 steps has 250 entries (0 percent, 0.00x previous step)
@@ -1150,117 +261,15 @@ class LookupTable777Step52(LookupTableHashCostOnly):
     """
 
     state_targets = (
-        'DUDDUDDDUDDDUDDUDUDUUDUUUDUUUDUUDU',
-        'DUDDUUDDUUDDUUDUDUDUDDUUDDUUDDUUDU',
-        'DUDDUUDDUUDDUUDUDUDUUDDUUDDUUDDUDU',
-        'DUDUUDDUUDDUUDDUDUDUDDUUDDUUDDUUDU',
-        'DUDUUDDUUDDUUDDUDUDUUDDUUDDUUDDUDU',
-        'DUDUUUDUUUDUUUDUDUDUDDDUDDDUDDDUDU',
-        'DUUDUDDDUDUDUDDUUDDUUDUDUDUUUDUDDU',
-        'DUUDUDDDUDUDUDDUUUDDUDUUUDUDUDUUDD',
-        'DUUDUUDDUUUDUUDUUDDUDDUDDDUUDDUDDU',
-        'DUUDUUDDUUUDUUDUUDDUUDDDUDDUUDDDDU',
-        'DUUDUUDDUUUDUUDUUUDDDDUUDDUDDDUUDD',
-        'DUUDUUDDUUUDUUDUUUDDUDDUUDDDUDDUDD',
-        'DUUUUDDUUDUUUDDUUDDUDDUDDDUUDDUDDU',
-        'DUUUUDDUUDUUUDDUUDDUUDDDUDDUUDDDDU',
-        'DUUUUDDUUDUUUDDUUUDDDDUUDDUDDDUUDD',
-        'DUUUUDDUUDUUUDDUUUDDUDDUUDDDUDDUDD',
-        'DUUUUUDUUUUUUUDUUDDUDDDDDDDUDDDDDU',
-        'DUUUUUDUUUUUUUDUUUDDDDDUDDDDDDDUDD',
-        'UUDDUDUDUDDDUDUUDDDUUDUDUDUUUDUDDU',
-        'UUDDUDUDUDDDUDUUDUDDUDUUUDUDUDUUDD',
-        'UUDDUUUDUUDDUUUUDDDUDDUDDDUUDDUDDU',
-        'UUDDUUUDUUDDUUUUDDDUUDDDUDDUUDDDDU',
-        'UUDDUUUDUUDDUUUUDUDDDDUUDDUDDDUUDD',
-        'UUDDUUUDUUDDUUUUDUDDUDDUUDDDUDDUDD',
-        'UUDUUDUUUDDUUDUUDDDUDDUDDDUUDDUDDU',
-        'UUDUUDUUUDDUUDUUDDDUUDDDUDDUUDDDDU',
-        'UUDUUDUUUDDUUDUUDUDDDDUUDDUDDDUUDD',
-        'UUDUUDUUUDDUUDUUDUDDUDDUUDDDUDDUDD',
-        'UUDUUUUUUUDUUUUUDDDUDDDDDDDUDDDDDU',
-        'UUDUUUUUUUDUUUUUDUDDDDDUDDDDDDDUDD',
-        'UUUDUDUDUDUDUDUUUDDDUDUDUDUDUDUDDD',
-        'UUUDUUUDUUUDUUUUUDDDDDUDDDUDDDUDDD',
-        'UUUDUUUDUUUDUUUUUDDDUDDDUDDDUDDDDD',
-        'UUUUUDUUUDUUUDUUUDDDDDUDDDUDDDUDDD',
-        'UUUUUDUUUDUUUDUUUDDDUDDDUDDDUDDDDD',
-        'UUUUUUUUUUUUUUUUUDDDDDDDDDDDDDDDDD'
-    )
-
-    def __init__(self, parent):
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step52.txt',
-            self.state_targets,
-            linecount=24010000,
-            max_depth=11,
-            filesize=1992830000)
-        '''
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step52.hash-cost-only.txt',
-            self.state_targets,
-            linecount=24010000,
-            max_depth=11,
-            bucketcount=24010031,
-            filesize=24010032)
-
-
-class LookupTableIDA777Step50(LookupTableIDA):
-    """
-    lookup-table-7x7x7-step50.txt
-    =============================
-    1 steps has 250 entries (0 percent, 0.00x previous step)
-    2 steps has 1,981 entries (0 percent, 7.92x previous step)
-    3 steps has 15,782 entries (0 percent, 7.97x previous step)
-    4 steps has 123,053 entries (1 percent, 7.80x previous step)
-    5 steps has 931,072 entries (11 percent, 7.57x previous step)
-    6 steps has 6,799,621 entries (86 percent, 7.30x previous step)
-
-    Total: 7,871,759 entries
-    """
-
-    state_targets = (
-        '0842109bdef7b',
-        '0a5294ab5ad6b',
-        '0a5294bad6b5a',
-        '0c6318d39ce73',
-        '0c6318d9ce739',
-        '0e739ce318c63',
-        '0e739ce94a529',
-        '0e739cf294a52',
-        '0e739cf8c6318',
-        '18c631939ce73',
-        '18c63199ce739',
-        '1ad6b5a318c63',
-        '1ad6b5a94a529',
-        '1ad6b5b294a52',
-        '1ad6b5b8c6318',
-        '1ce739d18c631',
-        '1ef7bde108421',
-        '1ef7bdf084210',
-        '294a528b5ad6b',
-        '294a529ad6b5a',
-        '2b5ad6aa5294a',
-        '2d6b5ac318c63',
-        '2d6b5ac94a529',
-        '2d6b5ad294a52',
-        '2d6b5ad8c6318',
-        '2f7bdee210842',
-        '2f7bdee842108',
-        '39ce738318c63',
-        '39ce73894a529',
-        '39ce739294a52',
-        '39ce7398c6318',
-        '3bdef7a210842',
-        '3bdef7a842108',
-        '3def7bc108421',
-        '3def7bd084210',
-        '3fffffe000000',
+        '0842109bdef7b', '0a5294ab5ad6b', '0a5294bad6b5a', '0c6318d39ce73',
+        '0c6318d9ce739', '0e739ce318c63', '0e739ce94a529', '0e739cf294a52',
+        '0e739cf8c6318', '18c631939ce73', '18c63199ce739', '1ad6b5a318c63',
+        '1ad6b5a94a529', '1ad6b5b294a52', '1ad6b5b8c6318', '1ce739d18c631',
+        '1ef7bde108421', '1ef7bdf084210', '294a528b5ad6b', '294a529ad6b5a',
+        '2b5ad6aa5294a', '2d6b5ac318c63', '2d6b5ac94a529', '2d6b5ad294a52',
+        '2d6b5ad8c6318', '2f7bdee210842', '2f7bdee842108', '39ce738318c63',
+        '39ce73894a529', '39ce739294a52', '39ce7398c6318', '3bdef7a210842',
+        '3bdef7a842108', '3def7bc108421', '3def7bd084210', '3fffffe000000',
     )
 
     centers_step50_777 = (
@@ -1282,69 +291,31 @@ class LookupTableIDA777Step50(LookupTableIDA):
     set_centers_step52_777 = set(centers_step52_777)
 
     def __init__(self, parent):
-        LookupTableIDA.__init__(
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            'lookup-table-7x7x7-step50.txt',
-            self.state_targets,
-            moves_777,
-            # illegal moves
-            # keep all centers staged
-            ("3Uw", "3Uw'", "Uw", "Uw'",
-             "3Lw", "3Lw'", "Lw", "Lw'",
-             "3Fw", "3Fw'", "Fw", "Fw'",
-             "3Rw", "3Rw'", "Rw", "Rw'",
-             "3Bw", "3Bw'", "Bw", "Bw'",
-             "3Dw", "3Dw'", "Dw", "Dw'",
-
-            # keep LR in vertical bars
-            "L", "L'", "R", "R'", "3Uw2", "3Dw2", "Uw2", "Dw2"),
-
-            # prune tables
-            (parent.lt_step51,
-             parent.lt_step52),
-            linecount=7871759,
-            max_depth=6,
-            filesize=149563421)
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        lt_state = 0
-        step51_state = []
-        step52_state = []
-
-        set_centers_step51_777 = self.set_centers_step51_777
-        set_centers_step52_777 = self.set_centers_step52_777
-
-        for x in self.centers_step50_777:
-            x_state = parent_state[x]
-
-            if x in set_centers_step51_777:
-                step51_state.append(x_state)
-
-            if x in set_centers_step52_777:
-                step52_state.append(x_state)
-
-            if x_state == 'U':
-                lt_state = lt_state | 0x1
-            lt_state = lt_state << 1
-
-        step51_state = ''.join(step51_state)
-        step52_state = ''.join(step52_state)
-        lt_state = lt_state >> 1
-        lt_state = self.hex_format % lt_state
-
-        cost_to_goal = max(
-            self.parent.lt_step51.heuristic(step51_state),
-            self.parent.lt_step52.heuristic(step52_state),
+            # Needed tables and their md5 signatures
+            (('lookup-table-7x7x7-step50.txt', 'de0c08d06995550c0654ccb3eec588f9'),
+             ('lookup-table-7x7x7-step51.hash-cost-only.txt', 'e9b548241f7fc6296cac2d32981efac5'),
+             ('lookup-table-7x7x7-step52.hash-cost-only.txt', '5b6b9c069943e6c87397843b4b888799')),
+            '7x7x7-step50' # C_ida_type
         )
 
-        return (lt_state, cost_to_goal)
 
-
-#class LookupTable777Step61(LookupTable):
-class LookupTable777Step61(LookupTableHashCostOnly):
+class LookupTableIDA777Step60(LookupTableIDAViaC):
     """
+    lookup-table-7x7x7-step60.txt
+    =============================
+    1 steps has 9 entries (0 percent, 0.00x previous step)
+    2 steps has 108 entries (0 percent, 12.00x previous step)
+    3 steps has 1,192 entries (0 percent, 11.04x previous step)
+    4 steps has 12,762 entries (0 percent, 10.71x previous step)
+    5 steps has 133,624 entries (8 percent, 10.47x previous step)
+    6 steps has 1,382,900 entries (90 percent, 10.35x previous step)
+
+    Total: 1,530,595 entries
+
+
     lookup-table-7x7x7-step61.txt
     =============================
     1 steps has 9 entries (0 percent, 0.00x previous step)
@@ -1364,33 +335,8 @@ class LookupTable777Step61(LookupTableHashCostOnly):
 
     Total: 24,010,000 entries
     Average: 10.11 moves
-    """
-
-    def __init__(self, parent):
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step61.txt',
-            'FFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBBB',
-            linecount=24010000,
-            max_depth=14,
-            filesize=2280950000)
-        '''
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step61.hash-cost-only.txt',
-            'FFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBBB',
-            linecount=24010000,
-            max_depth=14,
-            bucketcount=24010031,
-            filesize=24010032)
 
 
-#class LookupTable777Step62(LookupTable):
-class LookupTable777Step62(LookupTableHashCostOnly):
-    """
     lookup-table-7x7x7-step62.txt
     =============================
     1 steps has 9 entries (0 percent, 0.00x previous step)
@@ -1409,43 +355,6 @@ class LookupTable777Step62(LookupTableHashCostOnly):
 
     Total: 24,010,000 entries
     Average: 9.58 moves
-    """
-
-    def __init__(self, parent):
-        '''
-        LookupTable.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step62.txt',
-            'FFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBBB',
-            linecount=24010000,
-            max_depth=13,
-            filesize=)
-        '''
-        LookupTableHashCostOnly.__init__(
-            self,
-            parent,
-            'lookup-table-7x7x7-step62.hash-cost-only.txt',
-            'FFFFFFFFFFFFFFFFFBBBBBBBBBBBBBBBBB',
-            linecount=24010000,
-            max_depth=13,
-            bucketcount=24010031,
-            filesize=24010032)
-
-
-class LookupTableIDA777Step60(LookupTableIDA):
-    """
-    lookup-table-7x7x7-step60.txt
-    =============================
-    1 steps has 9 entries (0 percent, 0.00x previous step)
-    2 steps has 108 entries (0 percent, 12.00x previous step)
-    3 steps has 1,192 entries (0 percent, 11.04x previous step)
-    4 steps has 12,762 entries (0 percent, 10.71x previous step)
-    5 steps has 133,624 entries (0 percent, 10.47x previous step)
-    6 steps has 1,382,900 entries (8 percent, 10.35x previous step)
-    7 steps has 13,876,960 entries (90 percent, 10.03x previous step)
-
-    Total: 15,407,555 entries
     """
 
     state_indexes_step60 = (
@@ -1471,68 +380,16 @@ class LookupTableIDA777Step60(LookupTableIDA):
     set_state_indexes_step62 = set(state_indexes_step62)
 
     def __init__(self, parent):
-        LookupTableIDA.__init__(
+        LookupTableIDAViaC.__init__(
             self,
             parent,
-            'lookup-table-7x7x7-step60.txt',
-            '3ffffffffffffffffff8000000000000000000',
-            moves_777,
-
-            # illegal moves
-            # keep all centers staged
-            ("3Uw", "3Uw'", "Uw", "Uw'",
-             "3Lw", "3Lw'", "Lw", "Lw'",
-             "3Fw", "3Fw'", "Fw", "Fw'",
-             "3Rw", "3Rw'", "Rw", "Rw'",
-             "3Bw", "3Bw'", "Bw", "Bw'",
-             "3Dw", "3Dw'", "Dw", "Dw'",
-
-            # keep LR in horizontal bars
-            "L", "L'", "R", "R'", "3Fw2", "3Bw2", "Fw2", "Bw2",
-
-            # keep UD in vertical bars
-            "U", "U'", "D", "D'"),
-
-            # prune tables
-            (parent.lt_step61,
-             parent.lt_step62),
-            linecount=15407555,
-            max_depth=7,
-            filesize=677932420)
-
-    def ida_heuristic(self):
-        parent_state = self.parent.state
-        lt_state = 0
-        step61_state = []
-        step62_state = []
-
-        set_state_indexes_step61 = self.set_state_indexes_step61
-        set_state_indexes_step62 = self.set_state_indexes_step62
-
-        for x in self.state_indexes_step60:
-            x_state = parent_state[x]
-
-            if x in set_state_indexes_step61:
-                step61_state.append(x_state)
-
-            if x in set_state_indexes_step62:
-                step62_state.append(x_state)
-
-            if x_state in ('U', 'L', 'F'):
-                lt_state = lt_state | 0x1
-            lt_state = lt_state << 1
-
-        step61_state = ''.join(step61_state)
-        step62_state = ''.join(step62_state)
-        lt_state = lt_state >> 1
-        lt_state = self.hex_format % lt_state
-
-        cost_to_goal = max(
-            self.parent.lt_step61.heuristic(step61_state),
-            self.parent.lt_step62.heuristic(step62_state),
+            # Needed tables and their md5 signatures
+            (('lookup-table-7x7x7-step60.txt', 'a81708de4b0fca70b048989cc7b51b67'),
+             ('lookup-table-7x7x7-step61.hash-cost-only.txt', 'ba9b9e02f603459dac94fef5c637ac40'),
+             ('lookup-table-7x7x7-step62.hash-cost-only.txt', '2ebb594b99f8cf04a2a77a64c67ea0d4'),
+             ('lookup-table-7x7x7-step63.hash-cost-only.txt', '67ec50d946ec204c0dc8fe27b268c64d')),
+            '7x7x7-step60' # C_ida_type
         )
-
-        return (lt_state, cost_to_goal)
 
 
 class RubiksCube777(RubiksCubeNNNOddEdges):
@@ -1695,41 +552,12 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             return
         self.lt_init_called = True
 
-        self.lt_UD_outside_oblique_edge_pairing_left_only = LookupTable777UDOutsideObliqueEdgePairingLeftOnly(self)
-        self.lt_UD_outside_oblique_edge_pairing_right_only = LookupTable777UDOutsideObliqueEdgePairingRightOnly(self)
-        self.lt_UD_outside_oblique_edge_pairing = LookupTableIDA777UDOutsideObliqueEdgePairing(self)
-        self.lt_UD_outside_oblique_edge_pairing_left_only.preload_cache_dict()
-        self.lt_UD_outside_oblique_edge_pairing_right_only.preload_cache_dict()
-        self.lt_UD_outside_oblique_edge_pairing.preload_cache_string()
-
-        self.lt_UD_oblique_edge_pairing_middle_only = LookupTable777UDObliqueEdgePairingMiddleOnly(self)
-        self.lt_UD_oblique_edge_pairing_left_only = LookupTable777UDObliqueEdgePairingLeftOnly(self)
-        self.lt_UD_oblique_edge_pairing_right_only = LookupTable777UDObliqueEdgePairingRightOnly(self)
         self.lt_UD_oblique_edge_pairing = LookupTableIDA777UDObliqueEdgePairing(self)
-        self.lt_UD_oblique_edge_pairing_middle_only.preload_cache_dict()
-        self.lt_UD_oblique_edge_pairing_left_only.preload_cache_dict()
-        self.lt_UD_oblique_edge_pairing_right_only.preload_cache_dict()
-        self.lt_UD_oblique_edge_pairing.preload_cache_string()
-
-        self.lt_LR_left_right_oblique_edge_pairing = LookupTable777LRLeftRightObliqueEdgePairing(self)
-        self.lt_LR_left_middle_oblique_edge_pairing = LookupTable777LRLeftMiddleObliqueEdgePairing(self)
         self.lt_LR_oblique_edge_pairing = LookupTableIDA777LRObliqueEdgePairing(self)
-        self.lt_LR_oblique_edge_pairing.preload_cache_string()
 
-        self.lt_step41 = LookupTable777Step41(self)
-        self.lt_step42 = LookupTable777Step42(self)
         self.lt_step40 = LookupTableIDA777Step40(self)
-        self.lt_step40.preload_cache_string()
-
-        self.lt_step51 = LookupTable777Step51(self)
-        self.lt_step52 = LookupTable777Step52(self)
         self.lt_step50 = LookupTableIDA777Step50(self)
-        self.lt_step50.preload_cache_string()
-
-        self.lt_step61 = LookupTable777Step61(self)
-        self.lt_step62 = LookupTable777Step62(self)
         self.lt_step60 = LookupTableIDA777Step60(self)
-        self.lt_step60.preload_cache_string()
 
     def create_fake_555_from_inside_centers(self):
 
@@ -1771,6 +599,29 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             fake_555.state[14 + offset_555] = self.state[27 + offset_777]
             fake_555.state[17 + offset_555] = self.state[37 + offset_777]
             fake_555.state[18 + offset_555] = self.state[39 + offset_777]
+            fake_555.state[19 + offset_555] = self.state[41 + offset_777]
+
+    def create_fake_555_from_outside_centers_for_UD_oblique_edges(self):
+        # This is only used when we are staging the UD outer x-centers and paired
+        # UD outer oblique edges, to sides UD
+        fake_555 = self.get_fake_555()
+        fake_555.nuke_corners()
+        fake_555.nuke_edges()
+        fake_555.nuke_centers()
+
+        for side_index in range(6):
+            offset_555 = side_index * 25
+            offset_777 = side_index * 49
+            fake_555.state[7 + offset_555] = self.state[9 + offset_777]
+            fake_555.state[8 + offset_555] = self.state[10 + offset_777]
+            fake_555.state[9 + offset_555] = self.state[13 + offset_777]
+
+            fake_555.state[12 + offset_555] = self.state[16 + offset_777]
+            fake_555.state[13 + offset_555] = self.state[25 + offset_777]
+            fake_555.state[14 + offset_555] = self.state[20 + offset_777]
+
+            fake_555.state[17 + offset_555] = self.state[37 + offset_777]
+            fake_555.state[18 + offset_555] = self.state[38 + offset_777]
             fake_555.state[19 + offset_555] = self.state[41 + offset_777]
 
     def UD_inside_centers_staged(self):
@@ -1829,11 +680,6 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
 
             self.rotate(step)
 
-    def group_outside_UD_oblique_edges(self):
-        self.lt_UD_outside_oblique_edge_pairing.solve()
-        self.rotate_U_to_U()
-        self.rotate_F_to_F()
-
     def group_centers_guts(self):
         self.lt_init()
 
@@ -1847,25 +693,10 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             log.info("")
             log.info("")
 
-            # Uses 6x6x6 solver to pair the "outside" oblique edges for UD
-            self.group_outside_UD_oblique_edges()
-            self.print_cube()
-            log.info("%s: UD oblique edges (outside only) staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            log.info("")
-            log.info("")
-            log.info("")
-            log.info("")
-
-            # Test the prune tables
-            #self.lt_UD_oblique_edge_pairing_middle_only.solve()
-            #self.lt_UD_oblique_edge_pairing_left_only.solve()
-            #self.lt_UD_oblique_edge_pairing_right_only.solve()
-            #self.print_cube()
-
-            # Now stage the "inside" oblique UD edges with the already staged outside oblique UD edges
+            # Pair the oblique UD edges
             self.lt_UD_oblique_edge_pairing.solve()
             self.print_cube()
-            log.info("%s: UD oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+            log.info("%s: UD oblique edges paired/staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
             log.info("")
             log.info("")
             log.info("")
@@ -1904,9 +735,8 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
             #self.lt_LR_left_middle_oblique_edge_pairing.solve()
             #self.print_cube()
             #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-            #sys.exit(0)
 
-            log.info("kociemba: %s" % self.get_kociemba_string(True))
+            #log.info("kociemba: %s" % self.get_kociemba_string(True))
             self.lt_LR_oblique_edge_pairing.solve()
             self.print_cube()
             log.info("%s: LR oblique edges staged, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
@@ -1934,11 +764,10 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #self.lt_step42.solve()
         #self.print_cube()
         #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #sys.exit(0)
 
         self.lt_step40.solve()
         self.print_cube()
-        log.info("kociemba: %s" % self.get_kociemba_string(True))
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: LR centers vertical bars, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Test the pruning tables
@@ -1946,15 +775,12 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #self.lt_step52.solve()
         #self.print_cube()
         #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #sys.exit(0)
 
         self.lt_step50.solve()
-
-        # Make the LR bars horizontal for the next phase
         self.rotate("L")
         self.rotate("R")
         self.print_cube()
-        log.info("kociemba: %s" % self.get_kociemba_string(True))
+        #log.info("kociemba: %s" % self.get_kociemba_string(True))
         log.info("%s: LR centers horizontal bars, UD centers vertical bars, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
         # Test the pruning tables
@@ -1962,27 +788,63 @@ class RubiksCube777(RubiksCubeNNNOddEdges):
         #self.lt_step62.solve()
         #self.print_cube()
         #log.info("%s: %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
-        #sys.exit(0)
 
         self.lt_step60.solve()
         self.print_cube()
         log.info("%s: centers solved, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
 
-swaps_777 = {'3Bw': (0, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 7, 14, 21, 53, 54, 55, 56, 6, 13, 20, 60, 61, 62, 63, 5, 12, 19, 67, 68, 69, 70, 4, 11, 18, 74, 75, 76, 77, 3, 10, 17, 81, 82, 83, 84, 2, 9, 16, 88, 89, 90, 91, 1, 8, 15, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 280, 287, 294, 155, 156, 157, 158, 279, 286, 293, 162, 163, 164, 165, 278, 285, 292, 169, 170, 171, 172, 277, 284, 291, 176, 177, 178, 179, 276, 283, 290, 183, 184, 185, 186, 275, 282, 289, 190, 191, 192, 193, 274, 281, 288, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92),
+
+swaps_777 = {'2B': (0, 1, 2, 3, 4, 5, 6, 7, 153, 160, 167, 174, 181, 188, 195, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 14, 52, 53, 54, 55, 56, 57, 13, 59, 60, 61, 62, 63, 64, 12, 66, 67, 68, 69, 70, 71, 11, 73, 74, 75, 76, 77, 78, 10, 80, 81, 82, 83, 84, 85, 9, 87, 88, 89, 90, 91, 92, 8, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 287, 154, 155, 156, 157, 158, 159, 286, 161, 162, 163, 164, 165, 166, 285, 168, 169, 170, 171, 172, 173, 284, 175, 176, 177, 178, 179, 180, 283, 182, 183, 184, 185, 186, 187, 282, 189, 190, 191, 192, 193, 194, 281, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 51, 58, 65, 72, 79, 86, 93, 288, 289, 290, 291, 292, 293, 294),
+ "2B'": (0, 1, 2, 3, 4, 5, 6, 7, 93, 86, 79, 72, 65, 58, 51, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 281, 52, 53, 54, 55, 56, 57, 282, 59, 60, 61, 62, 63, 64, 283, 66, 67, 68, 69, 70, 71, 284, 73, 74, 75, 76, 77, 78, 285, 80, 81, 82, 83, 84, 85, 286, 87, 88, 89, 90, 91, 92, 287, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 8, 154, 155, 156, 157, 158, 159, 9, 161, 162, 163, 164, 165, 166, 10, 168, 169, 170, 171, 172, 173, 11, 175, 176, 177, 178, 179, 180, 12, 182, 183, 184, 185, 186, 187, 13, 189, 190, 191, 192, 193, 194, 14, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 195, 188, 181, 174, 167, 160, 153, 288, 289, 290, 291, 292, 293, 294),
+ '2B2': (0, 1, 2, 3, 4, 5, 6, 7, 287, 286, 285, 284, 283, 282, 281, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 195, 52, 53, 54, 55, 56, 57, 188, 59, 60, 61, 62, 63, 64, 181, 66, 67, 68, 69, 70, 71, 174, 73, 74, 75, 76, 77, 78, 167, 80, 81, 82, 83, 84, 85, 160, 87, 88, 89, 90, 91, 92, 153, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 93, 154, 155, 156, 157, 158, 159, 86, 161, 162, 163, 164, 165, 166, 79, 168, 169, 170, 171, 172, 173, 72, 175, 176, 177, 178, 179, 180, 65, 182, 183, 184, 185, 186, 187, 58, 189, 190, 191, 192, 193, 194, 51, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 14, 13, 12, 11, 10, 9, 8, 288, 289, 290, 291, 292, 293, 294),
+ '2D': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 232, 233, 234, 235, 236, 237, 238, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 85, 86, 87, 88, 89, 90, 91, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 134, 135, 136, 137, 138, 139, 140, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 183, 184, 185, 186, 187, 188, 189, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ "2D'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 134, 135, 136, 137, 138, 139, 140, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 183, 184, 185, 186, 187, 188, 189, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 232, 233, 234, 235, 236, 237, 238, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 85, 86, 87, 88, 89, 90, 91, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ '2D2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 183, 184, 185, 186, 187, 188, 189, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 232, 233, 234, 235, 236, 237, 238, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 85, 86, 87, 88, 89, 90, 91, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 134, 135, 136, 137, 138, 139, 140, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ '2F': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 97, 90, 83, 76, 69, 62, 55, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 253, 56, 57, 58, 59, 60, 61, 254, 63, 64, 65, 66, 67, 68, 255, 70, 71, 72, 73, 74, 75, 256, 77, 78, 79, 80, 81, 82, 257, 84, 85, 86, 87, 88, 89, 258, 91, 92, 93, 94, 95, 96, 259, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 36, 150, 151, 152, 153, 154, 155, 37, 157, 158, 159, 160, 161, 162, 38, 164, 165, 166, 167, 168, 169, 39, 171, 172, 173, 174, 175, 176, 40, 178, 179, 180, 181, 182, 183, 41, 185, 186, 187, 188, 189, 190, 42, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 191, 184, 177, 170, 163, 156, 149, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ "2F'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 149, 156, 163, 170, 177, 184, 191, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 42, 56, 57, 58, 59, 60, 61, 41, 63, 64, 65, 66, 67, 68, 40, 70, 71, 72, 73, 74, 75, 39, 77, 78, 79, 80, 81, 82, 38, 84, 85, 86, 87, 88, 89, 37, 91, 92, 93, 94, 95, 96, 36, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 259, 150, 151, 152, 153, 154, 155, 258, 157, 158, 159, 160, 161, 162, 257, 164, 165, 166, 167, 168, 169, 256, 171, 172, 173, 174, 175, 176, 255, 178, 179, 180, 181, 182, 183, 254, 185, 186, 187, 188, 189, 190, 253, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 55, 62, 69, 76, 83, 90, 97, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ '2F2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 259, 258, 257, 256, 255, 254, 253, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 191, 56, 57, 58, 59, 60, 61, 184, 63, 64, 65, 66, 67, 68, 177, 70, 71, 72, 73, 74, 75, 170, 77, 78, 79, 80, 81, 82, 163, 84, 85, 86, 87, 88, 89, 156, 91, 92, 93, 94, 95, 96, 149, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 97, 150, 151, 152, 153, 154, 155, 90, 157, 158, 159, 160, 161, 162, 83, 164, 165, 166, 167, 168, 169, 76, 171, 172, 173, 174, 175, 176, 69, 178, 179, 180, 181, 182, 183, 62, 185, 186, 187, 188, 189, 190, 55, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 42, 41, 40, 39, 38, 37, 36, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ '2L': (0, 1, 244, 3, 4, 5, 6, 7, 8, 237, 10, 11, 12, 13, 14, 15, 230, 17, 18, 19, 20, 21, 22, 223, 24, 25, 26, 27, 28, 29, 216, 31, 32, 33, 34, 35, 36, 209, 38, 39, 40, 41, 42, 43, 202, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 2, 101, 102, 103, 104, 105, 106, 9, 108, 109, 110, 111, 112, 113, 16, 115, 116, 117, 118, 119, 120, 23, 122, 123, 124, 125, 126, 127, 30, 129, 130, 131, 132, 133, 134, 37, 136, 137, 138, 139, 140, 141, 44, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 289, 203, 204, 205, 206, 207, 208, 282, 210, 211, 212, 213, 214, 215, 275, 217, 218, 219, 220, 221, 222, 268, 224, 225, 226, 227, 228, 229, 261, 231, 232, 233, 234, 235, 236, 254, 238, 239, 240, 241, 242, 243, 247, 245, 246, 100, 248, 249, 250, 251, 252, 253, 107, 255, 256, 257, 258, 259, 260, 114, 262, 263, 264, 265, 266, 267, 121, 269, 270, 271, 272, 273, 274, 128, 276, 277, 278, 279, 280, 281, 135, 283, 284, 285, 286, 287, 288, 142, 290, 291, 292, 293, 294),
+ "2L'": (0, 1, 100, 3, 4, 5, 6, 7, 8, 107, 10, 11, 12, 13, 14, 15, 114, 17, 18, 19, 20, 21, 22, 121, 24, 25, 26, 27, 28, 29, 128, 31, 32, 33, 34, 35, 36, 135, 38, 39, 40, 41, 42, 43, 142, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 247, 101, 102, 103, 104, 105, 106, 254, 108, 109, 110, 111, 112, 113, 261, 115, 116, 117, 118, 119, 120, 268, 122, 123, 124, 125, 126, 127, 275, 129, 130, 131, 132, 133, 134, 282, 136, 137, 138, 139, 140, 141, 289, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 44, 203, 204, 205, 206, 207, 208, 37, 210, 211, 212, 213, 214, 215, 30, 217, 218, 219, 220, 221, 222, 23, 224, 225, 226, 227, 228, 229, 16, 231, 232, 233, 234, 235, 236, 9, 238, 239, 240, 241, 242, 243, 2, 245, 246, 244, 248, 249, 250, 251, 252, 253, 237, 255, 256, 257, 258, 259, 260, 230, 262, 263, 264, 265, 266, 267, 223, 269, 270, 271, 272, 273, 274, 216, 276, 277, 278, 279, 280, 281, 209, 283, 284, 285, 286, 287, 288, 202, 290, 291, 292, 293, 294),
+ '2L2': (0, 1, 247, 3, 4, 5, 6, 7, 8, 254, 10, 11, 12, 13, 14, 15, 261, 17, 18, 19, 20, 21, 22, 268, 24, 25, 26, 27, 28, 29, 275, 31, 32, 33, 34, 35, 36, 282, 38, 39, 40, 41, 42, 43, 289, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 244, 101, 102, 103, 104, 105, 106, 237, 108, 109, 110, 111, 112, 113, 230, 115, 116, 117, 118, 119, 120, 223, 122, 123, 124, 125, 126, 127, 216, 129, 130, 131, 132, 133, 134, 209, 136, 137, 138, 139, 140, 141, 202, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 142, 203, 204, 205, 206, 207, 208, 135, 210, 211, 212, 213, 214, 215, 128, 217, 218, 219, 220, 221, 222, 121, 224, 225, 226, 227, 228, 229, 114, 231, 232, 233, 234, 235, 236, 107, 238, 239, 240, 241, 242, 243, 100, 245, 246, 2, 248, 249, 250, 251, 252, 253, 9, 255, 256, 257, 258, 259, 260, 16, 262, 263, 264, 265, 266, 267, 23, 269, 270, 271, 272, 273, 274, 30, 276, 277, 278, 279, 280, 281, 37, 283, 284, 285, 286, 287, 288, 44, 290, 291, 292, 293, 294),
+ '2R': (0, 1, 2, 3, 4, 5, 104, 7, 8, 9, 10, 11, 12, 111, 14, 15, 16, 17, 18, 19, 118, 21, 22, 23, 24, 25, 26, 125, 28, 29, 30, 31, 32, 33, 132, 35, 36, 37, 38, 39, 40, 139, 42, 43, 44, 45, 46, 47, 146, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 251, 105, 106, 107, 108, 109, 110, 258, 112, 113, 114, 115, 116, 117, 265, 119, 120, 121, 122, 123, 124, 272, 126, 127, 128, 129, 130, 131, 279, 133, 134, 135, 136, 137, 138, 286, 140, 141, 142, 143, 144, 145, 293, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 48, 199, 200, 201, 202, 203, 204, 41, 206, 207, 208, 209, 210, 211, 34, 213, 214, 215, 216, 217, 218, 27, 220, 221, 222, 223, 224, 225, 20, 227, 228, 229, 230, 231, 232, 13, 234, 235, 236, 237, 238, 239, 6, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 240, 252, 253, 254, 255, 256, 257, 233, 259, 260, 261, 262, 263, 264, 226, 266, 267, 268, 269, 270, 271, 219, 273, 274, 275, 276, 277, 278, 212, 280, 281, 282, 283, 284, 285, 205, 287, 288, 289, 290, 291, 292, 198, 294),
+ "2R'": (0, 1, 2, 3, 4, 5, 240, 7, 8, 9, 10, 11, 12, 233, 14, 15, 16, 17, 18, 19, 226, 21, 22, 23, 24, 25, 26, 219, 28, 29, 30, 31, 32, 33, 212, 35, 36, 37, 38, 39, 40, 205, 42, 43, 44, 45, 46, 47, 198, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 6, 105, 106, 107, 108, 109, 110, 13, 112, 113, 114, 115, 116, 117, 20, 119, 120, 121, 122, 123, 124, 27, 126, 127, 128, 129, 130, 131, 34, 133, 134, 135, 136, 137, 138, 41, 140, 141, 142, 143, 144, 145, 48, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 293, 199, 200, 201, 202, 203, 204, 286, 206, 207, 208, 209, 210, 211, 279, 213, 214, 215, 216, 217, 218, 272, 220, 221, 222, 223, 224, 225, 265, 227, 228, 229, 230, 231, 232, 258, 234, 235, 236, 237, 238, 239, 251, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 104, 252, 253, 254, 255, 256, 257, 111, 259, 260, 261, 262, 263, 264, 118, 266, 267, 268, 269, 270, 271, 125, 273, 274, 275, 276, 277, 278, 132, 280, 281, 282, 283, 284, 285, 139, 287, 288, 289, 290, 291, 292, 146, 294),
+ '2R2': (0, 1, 2, 3, 4, 5, 251, 7, 8, 9, 10, 11, 12, 258, 14, 15, 16, 17, 18, 19, 265, 21, 22, 23, 24, 25, 26, 272, 28, 29, 30, 31, 32, 33, 279, 35, 36, 37, 38, 39, 40, 286, 42, 43, 44, 45, 46, 47, 293, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 240, 105, 106, 107, 108, 109, 110, 233, 112, 113, 114, 115, 116, 117, 226, 119, 120, 121, 122, 123, 124, 219, 126, 127, 128, 129, 130, 131, 212, 133, 134, 135, 136, 137, 138, 205, 140, 141, 142, 143, 144, 145, 198, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 146, 199, 200, 201, 202, 203, 204, 139, 206, 207, 208, 209, 210, 211, 132, 213, 214, 215, 216, 217, 218, 125, 220, 221, 222, 223, 224, 225, 118, 227, 228, 229, 230, 231, 232, 111, 234, 235, 236, 237, 238, 239, 104, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 6, 252, 253, 254, 255, 256, 257, 13, 259, 260, 261, 262, 263, 264, 20, 266, 267, 268, 269, 270, 271, 27, 273, 274, 275, 276, 277, 278, 34, 280, 281, 282, 283, 284, 285, 41, 287, 288, 289, 290, 291, 292, 48, 294),
+ '2U': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 106, 107, 108, 109, 110, 111, 112, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 155, 156, 157, 158, 159, 160, 161, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 204, 205, 206, 207, 208, 209, 210, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 57, 58, 59, 60, 61, 62, 63, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ "2U'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 204, 205, 206, 207, 208, 209, 210, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 57, 58, 59, 60, 61, 62, 63, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 106, 107, 108, 109, 110, 111, 112, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 155, 156, 157, 158, 159, 160, 161, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ '2U2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 155, 156, 157, 158, 159, 160, 161, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 204, 205, 206, 207, 208, 209, 210, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 57, 58, 59, 60, 61, 62, 63, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 106, 107, 108, 109, 110, 111, 112, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ '3B': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 152, 159, 166, 173, 180, 187, 194, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 21, 53, 54, 55, 56, 57, 58, 20, 60, 61, 62, 63, 64, 65, 19, 67, 68, 69, 70, 71, 72, 18, 74, 75, 76, 77, 78, 79, 17, 81, 82, 83, 84, 85, 86, 16, 88, 89, 90, 91, 92, 93, 15, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 280, 153, 154, 155, 156, 157, 158, 279, 160, 161, 162, 163, 164, 165, 278, 167, 168, 169, 170, 171, 172, 277, 174, 175, 176, 177, 178, 179, 276, 181, 182, 183, 184, 185, 186, 275, 188, 189, 190, 191, 192, 193, 274, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 52, 59, 66, 73, 80, 87, 94, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ "3B'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 94, 87, 80, 73, 66, 59, 52, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 274, 53, 54, 55, 56, 57, 58, 275, 60, 61, 62, 63, 64, 65, 276, 67, 68, 69, 70, 71, 72, 277, 74, 75, 76, 77, 78, 79, 278, 81, 82, 83, 84, 85, 86, 279, 88, 89, 90, 91, 92, 93, 280, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 15, 153, 154, 155, 156, 157, 158, 16, 160, 161, 162, 163, 164, 165, 17, 167, 168, 169, 170, 171, 172, 18, 174, 175, 176, 177, 178, 179, 19, 181, 182, 183, 184, 185, 186, 20, 188, 189, 190, 191, 192, 193, 21, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 194, 187, 180, 173, 166, 159, 152, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ '3B2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 280, 279, 278, 277, 276, 275, 274, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 194, 53, 54, 55, 56, 57, 58, 187, 60, 61, 62, 63, 64, 65, 180, 67, 68, 69, 70, 71, 72, 173, 74, 75, 76, 77, 78, 79, 166, 81, 82, 83, 84, 85, 86, 159, 88, 89, 90, 91, 92, 93, 152, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 94, 153, 154, 155, 156, 157, 158, 87, 160, 161, 162, 163, 164, 165, 80, 167, 168, 169, 170, 171, 172, 73, 174, 175, 176, 177, 178, 179, 66, 181, 182, 183, 184, 185, 186, 59, 188, 189, 190, 191, 192, 193, 52, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 21, 20, 19, 18, 17, 16, 15, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ '3Bw': (0, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 7, 14, 21, 53, 54, 55, 56, 6, 13, 20, 60, 61, 62, 63, 5, 12, 19, 67, 68, 69, 70, 4, 11, 18, 74, 75, 76, 77, 3, 10, 17, 81, 82, 83, 84, 2, 9, 16, 88, 89, 90, 91, 1, 8, 15, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 280, 287, 294, 155, 156, 157, 158, 279, 286, 293, 162, 163, 164, 165, 278, 285, 292, 169, 170, 171, 172, 277, 284, 291, 176, 177, 178, 179, 276, 283, 290, 183, 184, 185, 186, 275, 282, 289, 190, 191, 192, 193, 274, 281, 288, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92),
  "3Bw'": (0, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 288, 281, 274, 53, 54, 55, 56, 289, 282, 275, 60, 61, 62, 63, 290, 283, 276, 67, 68, 69, 70, 291, 284, 277, 74, 75, 76, 77, 292, 285, 278, 81, 82, 83, 84, 293, 286, 279, 88, 89, 90, 91, 294, 287, 280, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 15, 8, 1, 155, 156, 157, 158, 16, 9, 2, 162, 163, 164, 165, 17, 10, 3, 169, 170, 171, 172, 18, 11, 4, 176, 177, 178, 179, 19, 12, 5, 183, 184, 185, 186, 20, 13, 6, 190, 191, 192, 193, 21, 14, 7, 203, 210, 217, 224, 231, 238, 245, 202, 209, 216, 223, 230, 237, 244, 201, 208, 215, 222, 229, 236, 243, 200, 207, 214, 221, 228, 235, 242, 199, 206, 213, 220, 227, 234, 241, 198, 205, 212, 219, 226, 233, 240, 197, 204, 211, 218, 225, 232, 239, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154),
  '3Bw2': (0, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 196, 195, 194, 53, 54, 55, 56, 189, 188, 187, 60, 61, 62, 63, 182, 181, 180, 67, 68, 69, 70, 175, 174, 173, 74, 75, 76, 77, 168, 167, 166, 81, 82, 83, 84, 161, 160, 159, 88, 89, 90, 91, 154, 153, 152, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 94, 93, 92, 155, 156, 157, 158, 87, 86, 85, 162, 163, 164, 165, 80, 79, 78, 169, 170, 171, 172, 73, 72, 71, 176, 177, 178, 179, 66, 65, 64, 183, 184, 185, 186, 59, 58, 57, 190, 191, 192, 193, 52, 51, 50, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1),
+ '3D': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 225, 226, 227, 228, 229, 230, 231, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 78, 79, 80, 81, 82, 83, 84, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 127, 128, 129, 130, 131, 132, 133, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 176, 177, 178, 179, 180, 181, 182, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ "3D'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 127, 128, 129, 130, 131, 132, 133, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 176, 177, 178, 179, 180, 181, 182, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 225, 226, 227, 228, 229, 230, 231, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 78, 79, 80, 81, 82, 83, 84, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ '3D2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 176, 177, 178, 179, 180, 181, 182, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 225, 226, 227, 228, 229, 230, 231, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 78, 79, 80, 81, 82, 83, 84, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 127, 128, 129, 130, 131, 132, 133, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
  '3Dw': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 288, 281, 274, 267, 260, 253, 246, 289, 282, 275, 268, 261, 254, 247, 290, 283, 276, 269, 262, 255, 248, 291, 284, 277, 270, 263, 256, 249, 292, 285, 278, 271, 264, 257, 250, 293, 286, 279, 272, 265, 258, 251, 294, 287, 280, 273, 266, 259, 252),
  "3Dw'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 252, 259, 266, 273, 280, 287, 294, 251, 258, 265, 272, 279, 286, 293, 250, 257, 264, 271, 278, 285, 292, 249, 256, 263, 270, 277, 284, 291, 248, 255, 262, 269, 276, 283, 290, 247, 254, 261, 268, 275, 282, 289, 246, 253, 260, 267, 274, 281, 288),
  '3Dw2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246),
+ '3F': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 96, 89, 82, 75, 68, 61, 54, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 260, 55, 56, 57, 58, 59, 60, 261, 62, 63, 64, 65, 66, 67, 262, 69, 70, 71, 72, 73, 74, 263, 76, 77, 78, 79, 80, 81, 264, 83, 84, 85, 86, 87, 88, 265, 90, 91, 92, 93, 94, 95, 266, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 29, 151, 152, 153, 154, 155, 156, 30, 158, 159, 160, 161, 162, 163, 31, 165, 166, 167, 168, 169, 170, 32, 172, 173, 174, 175, 176, 177, 33, 179, 180, 181, 182, 183, 184, 34, 186, 187, 188, 189, 190, 191, 35, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 192, 185, 178, 171, 164, 157, 150, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ "3F'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 150, 157, 164, 171, 178, 185, 192, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 35, 55, 56, 57, 58, 59, 60, 34, 62, 63, 64, 65, 66, 67, 33, 69, 70, 71, 72, 73, 74, 32, 76, 77, 78, 79, 80, 81, 31, 83, 84, 85, 86, 87, 88, 30, 90, 91, 92, 93, 94, 95, 29, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 266, 151, 152, 153, 154, 155, 156, 265, 158, 159, 160, 161, 162, 163, 264, 165, 166, 167, 168, 169, 170, 263, 172, 173, 174, 175, 176, 177, 262, 179, 180, 181, 182, 183, 184, 261, 186, 187, 188, 189, 190, 191, 260, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 54, 61, 68, 75, 82, 89, 96, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ '3F2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 266, 265, 264, 263, 262, 261, 260, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 192, 55, 56, 57, 58, 59, 60, 185, 62, 63, 64, 65, 66, 67, 178, 69, 70, 71, 72, 73, 74, 171, 76, 77, 78, 79, 80, 81, 164, 83, 84, 85, 86, 87, 88, 157, 90, 91, 92, 93, 94, 95, 150, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 96, 151, 152, 153, 154, 155, 156, 89, 158, 159, 160, 161, 162, 163, 82, 165, 166, 167, 168, 169, 170, 75, 172, 173, 174, 175, 176, 177, 68, 179, 180, 181, 182, 183, 184, 61, 186, 187, 188, 189, 190, 191, 54, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 35, 34, 33, 32, 31, 30, 29, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
  '3Fw': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56, 50, 51, 52, 53, 260, 253, 246, 57, 58, 59, 60, 261, 254, 247, 64, 65, 66, 67, 262, 255, 248, 71, 72, 73, 74, 263, 256, 249, 78, 79, 80, 81, 264, 257, 250, 85, 86, 87, 88, 265, 258, 251, 92, 93, 94, 95, 266, 259, 252, 141, 134, 127, 120, 113, 106, 99, 142, 135, 128, 121, 114, 107, 100, 143, 136, 129, 122, 115, 108, 101, 144, 137, 130, 123, 116, 109, 102, 145, 138, 131, 124, 117, 110, 103, 146, 139, 132, 125, 118, 111, 104, 147, 140, 133, 126, 119, 112, 105, 43, 36, 29, 151, 152, 153, 154, 44, 37, 30, 158, 159, 160, 161, 45, 38, 31, 165, 166, 167, 168, 46, 39, 32, 172, 173, 174, 175, 47, 40, 33, 179, 180, 181, 182, 48, 41, 34, 186, 187, 188, 189, 49, 42, 35, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
  "3Fw'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190, 50, 51, 52, 53, 35, 42, 49, 57, 58, 59, 60, 34, 41, 48, 64, 65, 66, 67, 33, 40, 47, 71, 72, 73, 74, 32, 39, 46, 78, 79, 80, 81, 31, 38, 45, 85, 86, 87, 88, 30, 37, 44, 92, 93, 94, 95, 29, 36, 43, 105, 112, 119, 126, 133, 140, 147, 104, 111, 118, 125, 132, 139, 146, 103, 110, 117, 124, 131, 138, 145, 102, 109, 116, 123, 130, 137, 144, 101, 108, 115, 122, 129, 136, 143, 100, 107, 114, 121, 128, 135, 142, 99, 106, 113, 120, 127, 134, 141, 252, 259, 266, 151, 152, 153, 154, 251, 258, 265, 158, 159, 160, 161, 250, 257, 264, 165, 166, 167, 168, 249, 256, 263, 172, 173, 174, 175, 248, 255, 262, 179, 180, 181, 182, 247, 254, 261, 186, 187, 188, 189, 246, 253, 260, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
  '3Fw2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246, 50, 51, 52, 53, 192, 191, 190, 57, 58, 59, 60, 185, 184, 183, 64, 65, 66, 67, 178, 177, 176, 71, 72, 73, 74, 171, 170, 169, 78, 79, 80, 81, 164, 163, 162, 85, 86, 87, 88, 157, 156, 155, 92, 93, 94, 95, 150, 149, 148, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 151, 152, 153, 154, 91, 90, 89, 158, 159, 160, 161, 84, 83, 82, 165, 166, 167, 168, 77, 76, 75, 172, 173, 174, 175, 70, 69, 68, 179, 180, 181, 182, 63, 62, 61, 186, 187, 188, 189, 56, 55, 54, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ '3L': (0, 1, 2, 243, 4, 5, 6, 7, 8, 9, 236, 11, 12, 13, 14, 15, 16, 229, 18, 19, 20, 21, 22, 23, 222, 25, 26, 27, 28, 29, 30, 215, 32, 33, 34, 35, 36, 37, 208, 39, 40, 41, 42, 43, 44, 201, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 3, 102, 103, 104, 105, 106, 107, 10, 109, 110, 111, 112, 113, 114, 17, 116, 117, 118, 119, 120, 121, 24, 123, 124, 125, 126, 127, 128, 31, 130, 131, 132, 133, 134, 135, 38, 137, 138, 139, 140, 141, 142, 45, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 290, 202, 203, 204, 205, 206, 207, 283, 209, 210, 211, 212, 213, 214, 276, 216, 217, 218, 219, 220, 221, 269, 223, 224, 225, 226, 227, 228, 262, 230, 231, 232, 233, 234, 235, 255, 237, 238, 239, 240, 241, 242, 248, 244, 245, 246, 247, 101, 249, 250, 251, 252, 253, 254, 108, 256, 257, 258, 259, 260, 261, 115, 263, 264, 265, 266, 267, 268, 122, 270, 271, 272, 273, 274, 275, 129, 277, 278, 279, 280, 281, 282, 136, 284, 285, 286, 287, 288, 289, 143, 291, 292, 293, 294),
+ "3L'": (0, 1, 2, 101, 4, 5, 6, 7, 8, 9, 108, 11, 12, 13, 14, 15, 16, 115, 18, 19, 20, 21, 22, 23, 122, 25, 26, 27, 28, 29, 30, 129, 32, 33, 34, 35, 36, 37, 136, 39, 40, 41, 42, 43, 44, 143, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 248, 102, 103, 104, 105, 106, 107, 255, 109, 110, 111, 112, 113, 114, 262, 116, 117, 118, 119, 120, 121, 269, 123, 124, 125, 126, 127, 128, 276, 130, 131, 132, 133, 134, 135, 283, 137, 138, 139, 140, 141, 142, 290, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 45, 202, 203, 204, 205, 206, 207, 38, 209, 210, 211, 212, 213, 214, 31, 216, 217, 218, 219, 220, 221, 24, 223, 224, 225, 226, 227, 228, 17, 230, 231, 232, 233, 234, 235, 10, 237, 238, 239, 240, 241, 242, 3, 244, 245, 246, 247, 243, 249, 250, 251, 252, 253, 254, 236, 256, 257, 258, 259, 260, 261, 229, 263, 264, 265, 266, 267, 268, 222, 270, 271, 272, 273, 274, 275, 215, 277, 278, 279, 280, 281, 282, 208, 284, 285, 286, 287, 288, 289, 201, 291, 292, 293, 294),
+ '3L2': (0, 1, 2, 248, 4, 5, 6, 7, 8, 9, 255, 11, 12, 13, 14, 15, 16, 262, 18, 19, 20, 21, 22, 23, 269, 25, 26, 27, 28, 29, 30, 276, 32, 33, 34, 35, 36, 37, 283, 39, 40, 41, 42, 43, 44, 290, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 243, 102, 103, 104, 105, 106, 107, 236, 109, 110, 111, 112, 113, 114, 229, 116, 117, 118, 119, 120, 121, 222, 123, 124, 125, 126, 127, 128, 215, 130, 131, 132, 133, 134, 135, 208, 137, 138, 139, 140, 141, 142, 201, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 143, 202, 203, 204, 205, 206, 207, 136, 209, 210, 211, 212, 213, 214, 129, 216, 217, 218, 219, 220, 221, 122, 223, 224, 225, 226, 227, 228, 115, 230, 231, 232, 233, 234, 235, 108, 237, 238, 239, 240, 241, 242, 101, 244, 245, 246, 247, 3, 249, 250, 251, 252, 253, 254, 10, 256, 257, 258, 259, 260, 261, 17, 263, 264, 265, 266, 267, 268, 24, 270, 271, 272, 273, 274, 275, 31, 277, 278, 279, 280, 281, 282, 38, 284, 285, 286, 287, 288, 289, 45, 291, 292, 293, 294),
  '3Lw': (0, 245, 244, 243, 4, 5, 6, 7, 238, 237, 236, 11, 12, 13, 14, 231, 230, 229, 18, 19, 20, 21, 224, 223, 222, 25, 26, 27, 28, 217, 216, 215, 32, 33, 34, 35, 210, 209, 208, 39, 40, 41, 42, 203, 202, 201, 46, 47, 48, 49, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 95, 88, 81, 74, 67, 60, 53, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56, 1, 2, 3, 102, 103, 104, 105, 8, 9, 10, 109, 110, 111, 112, 15, 16, 17, 116, 117, 118, 119, 22, 23, 24, 123, 124, 125, 126, 29, 30, 31, 130, 131, 132, 133, 36, 37, 38, 137, 138, 139, 140, 43, 44, 45, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 290, 289, 288, 204, 205, 206, 207, 283, 282, 281, 211, 212, 213, 214, 276, 275, 274, 218, 219, 220, 221, 269, 268, 267, 225, 226, 227, 228, 262, 261, 260, 232, 233, 234, 235, 255, 254, 253, 239, 240, 241, 242, 248, 247, 246, 99, 100, 101, 249, 250, 251, 252, 106, 107, 108, 256, 257, 258, 259, 113, 114, 115, 263, 264, 265, 266, 120, 121, 122, 270, 271, 272, 273, 127, 128, 129, 277, 278, 279, 280, 134, 135, 136, 284, 285, 286, 287, 141, 142, 143, 291, 292, 293, 294),
  "3Lw'": (0, 99, 100, 101, 4, 5, 6, 7, 106, 107, 108, 11, 12, 13, 14, 113, 114, 115, 18, 19, 20, 21, 120, 121, 122, 25, 26, 27, 28, 127, 128, 129, 32, 33, 34, 35, 134, 135, 136, 39, 40, 41, 42, 141, 142, 143, 46, 47, 48, 49, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 53, 60, 67, 74, 81, 88, 95, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92, 246, 247, 248, 102, 103, 104, 105, 253, 254, 255, 109, 110, 111, 112, 260, 261, 262, 116, 117, 118, 119, 267, 268, 269, 123, 124, 125, 126, 274, 275, 276, 130, 131, 132, 133, 281, 282, 283, 137, 138, 139, 140, 288, 289, 290, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 45, 44, 43, 204, 205, 206, 207, 38, 37, 36, 211, 212, 213, 214, 31, 30, 29, 218, 219, 220, 221, 24, 23, 22, 225, 226, 227, 228, 17, 16, 15, 232, 233, 234, 235, 10, 9, 8, 239, 240, 241, 242, 3, 2, 1, 245, 244, 243, 249, 250, 251, 252, 238, 237, 236, 256, 257, 258, 259, 231, 230, 229, 263, 264, 265, 266, 224, 223, 222, 270, 271, 272, 273, 217, 216, 215, 277, 278, 279, 280, 210, 209, 208, 284, 285, 286, 287, 203, 202, 201, 291, 292, 293, 294),
  '3Lw2': (0, 246, 247, 248, 4, 5, 6, 7, 253, 254, 255, 11, 12, 13, 14, 260, 261, 262, 18, 19, 20, 21, 267, 268, 269, 25, 26, 27, 28, 274, 275, 276, 32, 33, 34, 35, 281, 282, 283, 39, 40, 41, 42, 288, 289, 290, 46, 47, 48, 49, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 245, 244, 243, 102, 103, 104, 105, 238, 237, 236, 109, 110, 111, 112, 231, 230, 229, 116, 117, 118, 119, 224, 223, 222, 123, 124, 125, 126, 217, 216, 215, 130, 131, 132, 133, 210, 209, 208, 137, 138, 139, 140, 203, 202, 201, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 143, 142, 141, 204, 205, 206, 207, 136, 135, 134, 211, 212, 213, 214, 129, 128, 127, 218, 219, 220, 221, 122, 121, 120, 225, 226, 227, 228, 115, 114, 113, 232, 233, 234, 235, 108, 107, 106, 239, 240, 241, 242, 101, 100, 99, 1, 2, 3, 249, 250, 251, 252, 8, 9, 10, 256, 257, 258, 259, 15, 16, 17, 263, 264, 265, 266, 22, 23, 24, 270, 271, 272, 273, 29, 30, 31, 277, 278, 279, 280, 36, 37, 38, 284, 285, 286, 287, 43, 44, 45, 291, 292, 293, 294),
+ '3R': (0, 1, 2, 3, 4, 103, 6, 7, 8, 9, 10, 11, 110, 13, 14, 15, 16, 17, 18, 117, 20, 21, 22, 23, 24, 25, 124, 27, 28, 29, 30, 31, 32, 131, 34, 35, 36, 37, 38, 39, 138, 41, 42, 43, 44, 45, 46, 145, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 250, 104, 105, 106, 107, 108, 109, 257, 111, 112, 113, 114, 115, 116, 264, 118, 119, 120, 121, 122, 123, 271, 125, 126, 127, 128, 129, 130, 278, 132, 133, 134, 135, 136, 137, 285, 139, 140, 141, 142, 143, 144, 292, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 47, 200, 201, 202, 203, 204, 205, 40, 207, 208, 209, 210, 211, 212, 33, 214, 215, 216, 217, 218, 219, 26, 221, 222, 223, 224, 225, 226, 19, 228, 229, 230, 231, 232, 233, 12, 235, 236, 237, 238, 239, 240, 5, 242, 243, 244, 245, 246, 247, 248, 249, 241, 251, 252, 253, 254, 255, 256, 234, 258, 259, 260, 261, 262, 263, 227, 265, 266, 267, 268, 269, 270, 220, 272, 273, 274, 275, 276, 277, 213, 279, 280, 281, 282, 283, 284, 206, 286, 287, 288, 289, 290, 291, 199, 293, 294),
+ "3R'": (0, 1, 2, 3, 4, 241, 6, 7, 8, 9, 10, 11, 234, 13, 14, 15, 16, 17, 18, 227, 20, 21, 22, 23, 24, 25, 220, 27, 28, 29, 30, 31, 32, 213, 34, 35, 36, 37, 38, 39, 206, 41, 42, 43, 44, 45, 46, 199, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 5, 104, 105, 106, 107, 108, 109, 12, 111, 112, 113, 114, 115, 116, 19, 118, 119, 120, 121, 122, 123, 26, 125, 126, 127, 128, 129, 130, 33, 132, 133, 134, 135, 136, 137, 40, 139, 140, 141, 142, 143, 144, 47, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 292, 200, 201, 202, 203, 204, 205, 285, 207, 208, 209, 210, 211, 212, 278, 214, 215, 216, 217, 218, 219, 271, 221, 222, 223, 224, 225, 226, 264, 228, 229, 230, 231, 232, 233, 257, 235, 236, 237, 238, 239, 240, 250, 242, 243, 244, 245, 246, 247, 248, 249, 103, 251, 252, 253, 254, 255, 256, 110, 258, 259, 260, 261, 262, 263, 117, 265, 266, 267, 268, 269, 270, 124, 272, 273, 274, 275, 276, 277, 131, 279, 280, 281, 282, 283, 284, 138, 286, 287, 288, 289, 290, 291, 145, 293, 294),
+ '3R2': (0, 1, 2, 3, 4, 250, 6, 7, 8, 9, 10, 11, 257, 13, 14, 15, 16, 17, 18, 264, 20, 21, 22, 23, 24, 25, 271, 27, 28, 29, 30, 31, 32, 278, 34, 35, 36, 37, 38, 39, 285, 41, 42, 43, 44, 45, 46, 292, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 241, 104, 105, 106, 107, 108, 109, 234, 111, 112, 113, 114, 115, 116, 227, 118, 119, 120, 121, 122, 123, 220, 125, 126, 127, 128, 129, 130, 213, 132, 133, 134, 135, 136, 137, 206, 139, 140, 141, 142, 143, 144, 199, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 145, 200, 201, 202, 203, 204, 205, 138, 207, 208, 209, 210, 211, 212, 131, 214, 215, 216, 217, 218, 219, 124, 221, 222, 223, 224, 225, 226, 117, 228, 229, 230, 231, 232, 233, 110, 235, 236, 237, 238, 239, 240, 103, 242, 243, 244, 245, 246, 247, 248, 249, 5, 251, 252, 253, 254, 255, 256, 12, 258, 259, 260, 261, 262, 263, 19, 265, 266, 267, 268, 269, 270, 26, 272, 273, 274, 275, 276, 277, 33, 279, 280, 281, 282, 283, 284, 40, 286, 287, 288, 289, 290, 291, 47, 293, 294),
  '3Rw': (0, 1, 2, 3, 4, 103, 104, 105, 8, 9, 10, 11, 110, 111, 112, 15, 16, 17, 18, 117, 118, 119, 22, 23, 24, 25, 124, 125, 126, 29, 30, 31, 32, 131, 132, 133, 36, 37, 38, 39, 138, 139, 140, 43, 44, 45, 46, 145, 146, 147, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 250, 251, 252, 106, 107, 108, 109, 257, 258, 259, 113, 114, 115, 116, 264, 265, 266, 120, 121, 122, 123, 271, 272, 273, 127, 128, 129, 130, 278, 279, 280, 134, 135, 136, 137, 285, 286, 287, 141, 142, 143, 144, 292, 293, 294, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 193, 186, 179, 172, 165, 158, 151, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154, 49, 48, 47, 200, 201, 202, 203, 42, 41, 40, 207, 208, 209, 210, 35, 34, 33, 214, 215, 216, 217, 28, 27, 26, 221, 222, 223, 224, 21, 20, 19, 228, 229, 230, 231, 14, 13, 12, 235, 236, 237, 238, 7, 6, 5, 242, 243, 244, 245, 246, 247, 248, 249, 241, 240, 239, 253, 254, 255, 256, 234, 233, 232, 260, 261, 262, 263, 227, 226, 225, 267, 268, 269, 270, 220, 219, 218, 274, 275, 276, 277, 213, 212, 211, 281, 282, 283, 284, 206, 205, 204, 288, 289, 290, 291, 199, 198, 197),
  "3Rw'": (0, 1, 2, 3, 4, 241, 240, 239, 8, 9, 10, 11, 234, 233, 232, 15, 16, 17, 18, 227, 226, 225, 22, 23, 24, 25, 220, 219, 218, 29, 30, 31, 32, 213, 212, 211, 36, 37, 38, 39, 206, 205, 204, 43, 44, 45, 46, 199, 198, 197, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 5, 6, 7, 106, 107, 108, 109, 12, 13, 14, 113, 114, 115, 116, 19, 20, 21, 120, 121, 122, 123, 26, 27, 28, 127, 128, 129, 130, 33, 34, 35, 134, 135, 136, 137, 40, 41, 42, 141, 142, 143, 144, 47, 48, 49, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 151, 158, 165, 172, 179, 186, 193, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190, 294, 293, 292, 200, 201, 202, 203, 287, 286, 285, 207, 208, 209, 210, 280, 279, 278, 214, 215, 216, 217, 273, 272, 271, 221, 222, 223, 224, 266, 265, 264, 228, 229, 230, 231, 259, 258, 257, 235, 236, 237, 238, 252, 251, 250, 242, 243, 244, 245, 246, 247, 248, 249, 103, 104, 105, 253, 254, 255, 256, 110, 111, 112, 260, 261, 262, 263, 117, 118, 119, 267, 268, 269, 270, 124, 125, 126, 274, 275, 276, 277, 131, 132, 133, 281, 282, 283, 284, 138, 139, 140, 288, 289, 290, 291, 145, 146, 147),
  '3Rw2': (0, 1, 2, 3, 4, 250, 251, 252, 8, 9, 10, 11, 257, 258, 259, 15, 16, 17, 18, 264, 265, 266, 22, 23, 24, 25, 271, 272, 273, 29, 30, 31, 32, 278, 279, 280, 36, 37, 38, 39, 285, 286, 287, 43, 44, 45, 46, 292, 293, 294, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 241, 240, 239, 106, 107, 108, 109, 234, 233, 232, 113, 114, 115, 116, 227, 226, 225, 120, 121, 122, 123, 220, 219, 218, 127, 128, 129, 130, 213, 212, 211, 134, 135, 136, 137, 206, 205, 204, 141, 142, 143, 144, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 200, 201, 202, 203, 140, 139, 138, 207, 208, 209, 210, 133, 132, 131, 214, 215, 216, 217, 126, 125, 124, 221, 222, 223, 224, 119, 118, 117, 228, 229, 230, 231, 112, 111, 110, 235, 236, 237, 238, 105, 104, 103, 242, 243, 244, 245, 246, 247, 248, 249, 5, 6, 7, 253, 254, 255, 256, 12, 13, 14, 260, 261, 262, 263, 19, 20, 21, 267, 268, 269, 270, 26, 27, 28, 274, 275, 276, 277, 33, 34, 35, 281, 282, 283, 284, 40, 41, 42, 288, 289, 290, 291, 47, 48, 49),
+ '3U': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 113, 114, 115, 116, 117, 118, 119, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 162, 163, 164, 165, 166, 167, 168, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 211, 212, 213, 214, 215, 216, 217, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 64, 65, 66, 67, 68, 69, 70, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ "3U'": (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 211, 212, 213, 214, 215, 216, 217, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 64, 65, 66, 67, 68, 69, 70, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 113, 114, 115, 116, 117, 118, 119, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 162, 163, 164, 165, 166, 167, 168, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
+ '3U2': (0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 162, 163, 164, 165, 166, 167, 168, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 211, 212, 213, 214, 215, 216, 217, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 64, 65, 66, 67, 68, 69, 70, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 113, 114, 115, 116, 117, 118, 119, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
  '3Uw': (0, 43, 36, 29, 22, 15, 8, 1, 44, 37, 30, 23, 16, 9, 2, 45, 38, 31, 24, 17, 10, 3, 46, 39, 32, 25, 18, 11, 4, 47, 40, 33, 26, 19, 12, 5, 48, 41, 34, 27, 20, 13, 6, 49, 42, 35, 28, 21, 14, 7, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
  "3Uw'": (0, 7, 14, 21, 28, 35, 42, 49, 6, 13, 20, 27, 34, 41, 48, 5, 12, 19, 26, 33, 40, 47, 4, 11, 18, 25, 32, 39, 46, 3, 10, 17, 24, 31, 38, 45, 2, 9, 16, 23, 30, 37, 44, 1, 8, 15, 22, 29, 36, 43, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
  '3Uw2': (0, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
@@ -2024,52 +886,13 @@ swaps_777 = {'3Bw': (0, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 1
  'Uw2': (0, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294),
  'x': (0, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 53, 60, 67, 74, 81, 88, 95, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 193, 186, 179, 172, 165, 158, 151, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197),
  "x'": (0, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 95, 88, 81, 74, 67, 60, 53, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 151, 158, 165, 172, 179, 186, 193, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147),
+ 'x2': (0, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49),
  'y': (0, 43, 36, 29, 22, 15, 8, 1, 44, 37, 30, 23, 16, 9, 2, 45, 38, 31, 24, 17, 10, 3, 46, 39, 32, 25, 18, 11, 4, 47, 40, 33, 26, 19, 12, 5, 48, 41, 34, 27, 20, 13, 6, 49, 42, 35, 28, 21, 14, 7, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 252, 259, 266, 273, 280, 287, 294, 251, 258, 265, 272, 279, 286, 293, 250, 257, 264, 271, 278, 285, 292, 249, 256, 263, 270, 277, 284, 291, 248, 255, 262, 269, 276, 283, 290, 247, 254, 261, 268, 275, 282, 289, 246, 253, 260, 267, 274, 281, 288),
  "y'": (0, 7, 14, 21, 28, 35, 42, 49, 6, 13, 20, 27, 34, 41, 48, 5, 12, 19, 26, 33, 40, 47, 4, 11, 18, 25, 32, 39, 46, 3, 10, 17, 24, 31, 38, 45, 2, 9, 16, 23, 30, 37, 44, 1, 8, 15, 22, 29, 36, 43, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 288, 281, 274, 267, 260, 253, 246, 289, 282, 275, 268, 261, 254, 247, 290, 283, 276, 269, 262, 255, 248, 291, 284, 277, 270, 263, 256, 249, 292, 285, 278, 271, 264, 257, 250, 293, 286, 279, 272, 265, 258, 251, 294, 287, 280, 273, 266, 259, 252),
+ 'y2': (0, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246),
  'z': (0, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 95, 88, 81, 74, 67, 60, 53, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56, 288, 281, 274, 267, 260, 253, 246, 289, 282, 275, 268, 261, 254, 247, 290, 283, 276, 269, 262, 255, 248, 291, 284, 277, 270, 263, 256, 249, 292, 285, 278, 271, 264, 257, 250, 293, 286, 279, 272, 265, 258, 251, 294, 287, 280, 273, 266, 259, 252, 141, 134, 127, 120, 113, 106, 99, 142, 135, 128, 121, 114, 107, 100, 143, 136, 129, 122, 115, 108, 101, 144, 137, 130, 123, 116, 109, 102, 145, 138, 131, 124, 117, 110, 103, 146, 139, 132, 125, 118, 111, 104, 147, 140, 133, 126, 119, 112, 105, 43, 36, 29, 22, 15, 8, 1, 44, 37, 30, 23, 16, 9, 2, 45, 38, 31, 24, 17, 10, 3, 46, 39, 32, 25, 18, 11, 4, 47, 40, 33, 26, 19, 12, 5, 48, 41, 34, 27, 20, 13, 6, 49, 42, 35, 28, 21, 14, 7, 203, 210, 217, 224, 231, 238, 245, 202, 209, 216, 223, 230, 237, 244, 201, 208, 215, 222, 229, 236, 243, 200, 207, 214, 221, 228, 235, 242, 199, 206, 213, 220, 227, 234, 241, 198, 205, 212, 219, 226, 233, 240, 197, 204, 211, 218, 225, 232, 239, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 193, 186, 179, 172, 165, 158, 151, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154),
  "z'": (0, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 151, 158, 165, 172, 179, 186, 193, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190, 7, 14, 21, 28, 35, 42, 49, 6, 13, 20, 27, 34, 41, 48, 5, 12, 19, 26, 33, 40, 47, 4, 11, 18, 25, 32, 39, 46, 3, 10, 17, 24, 31, 38, 45, 2, 9, 16, 23, 30, 37, 44, 1, 8, 15, 22, 29, 36, 43, 105, 112, 119, 126, 133, 140, 147, 104, 111, 118, 125, 132, 139, 146, 103, 110, 117, 124, 131, 138, 145, 102, 109, 116, 123, 130, 137, 144, 101, 108, 115, 122, 129, 136, 143, 100, 107, 114, 121, 128, 135, 142, 99, 106, 113, 120, 127, 134, 141, 252, 259, 266, 273, 280, 287, 294, 251, 258, 265, 272, 279, 286, 293, 250, 257, 264, 271, 278, 285, 292, 249, 256, 263, 270, 277, 284, 291, 248, 255, 262, 269, 276, 283, 290, 247, 254, 261, 268, 275, 282, 289, 246, 253, 260, 267, 274, 281, 288, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 53, 60, 67, 74, 81, 88, 95, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92),
-    "x x" : (0, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49),
-    "y y" : (0, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 99, 100, 101, 102, 103, 104, 105, 106, 107, 108, 109, 110, 111, 112, 113, 114, 115, 116, 117, 118, 119, 120, 121, 122, 123, 124, 125, 126, 127, 128, 129, 130, 131, 132, 133, 134, 135, 136, 137, 138, 139, 140, 141, 142, 143, 144, 145, 146, 147, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246),
-    "z z" : (0, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1),
-    "x y" : (0, 141, 134, 127, 120, 113, 106, 99, 142, 135, 128, 121, 114, 107, 100, 143, 136, 129, 122, 115, 108, 101, 144, 137, 130, 123, 116, 109, 102, 145, 138, 131, 124, 117, 110, 103, 146, 139, 132, 125, 118, 111, 104, 147, 140, 133, 126, 119, 112, 105, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 193, 186, 179, 172, 165, 158, 151, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 53, 60, 67, 74, 81, 88, 95, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203),
-    "x y'" : (0, 105, 112, 119, 126, 133, 140, 147, 104, 111, 118, 125, 132, 139, 146, 103, 110, 117, 124, 131, 138, 145, 102, 109, 116, 123, 130, 137, 144, 101, 108, 115, 122, 129, 136, 143, 100, 107, 114, 121, 128, 135, 142, 99, 106, 113, 120, 127, 134, 141, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 53, 60, 67, 74, 81, 88, 95, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 193, 186, 179, 172, 165, 158, 151, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154, 203, 210, 217, 224, 231, 238, 245, 202, 209, 216, 223, 230, 237, 244, 201, 208, 215, 222, 229, 236, 243, 200, 207, 214, 221, 228, 235, 242, 199, 206, 213, 220, 227, 234, 241, 198, 205, 212, 219, 226, 233, 240, 197, 204, 211, 218, 225, 232, 239),
-    "x z" : (0, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98, 203, 210, 217, 224, 231, 238, 245, 202, 209, 216, 223, 230, 237, 244, 201, 208, 215, 222, 229, 236, 243, 200, 207, 214, 221, 228, 235, 242, 199, 206, 213, 220, 227, 234, 241, 198, 205, 212, 219, 226, 233, 240, 197, 204, 211, 218, 225, 232, 239, 288, 281, 274, 267, 260, 253, 246, 289, 282, 275, 268, 261, 254, 247, 290, 283, 276, 269, 262, 255, 248, 291, 284, 277, 270, 263, 256, 249, 292, 285, 278, 271, 264, 257, 250, 293, 286, 279, 272, 265, 258, 251, 294, 287, 280, 273, 266, 259, 252, 141, 134, 127, 120, 113, 106, 99, 142, 135, 128, 121, 114, 107, 100, 143, 136, 129, 122, 115, 108, 101, 144, 137, 130, 123, 116, 109, 102, 145, 138, 131, 124, 117, 110, 103, 146, 139, 132, 125, 118, 111, 104, 147, 140, 133, 126, 119, 112, 105, 43, 36, 29, 22, 15, 8, 1, 44, 37, 30, 23, 16, 9, 2, 45, 38, 31, 24, 17, 10, 3, 46, 39, 32, 25, 18, 11, 4, 47, 40, 33, 26, 19, 12, 5, 48, 41, 34, 27, 20, 13, 6, 49, 42, 35, 28, 21, 14, 7, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148),
-    "x z'" : (0, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196, 105, 112, 119, 126, 133, 140, 147, 104, 111, 118, 125, 132, 139, 146, 103, 110, 117, 124, 131, 138, 145, 102, 109, 116, 123, 130, 137, 144, 101, 108, 115, 122, 129, 136, 143, 100, 107, 114, 121, 128, 135, 142, 99, 106, 113, 120, 127, 134, 141, 252, 259, 266, 273, 280, 287, 294, 251, 258, 265, 272, 279, 286, 293, 250, 257, 264, 271, 278, 285, 292, 249, 256, 263, 270, 277, 284, 291, 248, 255, 262, 269, 276, 283, 290, 247, 254, 261, 268, 275, 282, 289, 246, 253, 260, 267, 274, 281, 288, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203, 7, 14, 21, 28, 35, 42, 49, 6, 13, 20, 27, 34, 41, 48, 5, 12, 19, 26, 33, 40, 47, 4, 11, 18, 25, 32, 39, 46, 3, 10, 17, 24, 31, 38, 45, 2, 9, 16, 23, 30, 37, 44, 1, 8, 15, 22, 29, 36, 43, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50),
-    "x y y" : (0, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 193, 186, 179, 172, 165, 158, 151, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 53, 60, 67, 74, 81, 88, 95, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92, 246, 247, 248, 249, 250, 251, 252, 253, 254, 255, 256, 257, 258, 259, 260, 261, 262, 263, 264, 265, 266, 267, 268, 269, 270, 271, 272, 273, 274, 275, 276, 277, 278, 279, 280, 281, 282, 283, 284, 285, 286, 287, 288, 289, 290, 291, 292, 293, 294, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245),
-    "x z z" : (0, 197, 198, 199, 200, 201, 202, 203, 204, 205, 206, 207, 208, 209, 210, 211, 212, 213, 214, 215, 216, 217, 218, 219, 220, 221, 222, 223, 224, 225, 226, 227, 228, 229, 230, 231, 232, 233, 234, 235, 236, 237, 238, 239, 240, 241, 242, 243, 244, 245, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 151, 158, 165, 172, 179, 186, 193, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 95, 88, 81, 74, 67, 60, 53, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99),
-    "x' y" : (0, 203, 210, 217, 224, 231, 238, 245, 202, 209, 216, 223, 230, 237, 244, 201, 208, 215, 222, 229, 236, 243, 200, 207, 214, 221, 228, 235, 242, 199, 206, 213, 220, 227, 234, 241, 198, 205, 212, 219, 226, 233, 240, 197, 204, 211, 218, 225, 232, 239, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 151, 158, 165, 172, 179, 186, 193, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 95, 88, 81, 74, 67, 60, 53, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56, 105, 112, 119, 126, 133, 140, 147, 104, 111, 118, 125, 132, 139, 146, 103, 110, 117, 124, 131, 138, 145, 102, 109, 116, 123, 130, 137, 144, 101, 108, 115, 122, 129, 136, 143, 100, 107, 114, 121, 128, 135, 142, 99, 106, 113, 120, 127, 134, 141),
-    "x' y'" : (0, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 95, 88, 81, 74, 67, 60, 53, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40, 41, 42, 43, 44, 45, 46, 47, 48, 49, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 151, 158, 165, 172, 179, 186, 193, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190, 141, 134, 127, 120, 113, 106, 99, 142, 135, 128, 121, 114, 107, 100, 143, 136, 129, 122, 115, 108, 101, 144, 137, 130, 123, 116, 109, 102, 145, 138, 131, 124, 117, 110, 103, 146, 139, 132, 125, 118, 111, 104, 147, 140, 133, 126, 119, 112, 105),
-    "x' z" : (0, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 141, 134, 127, 120, 113, 106, 99, 142, 135, 128, 121, 114, 107, 100, 143, 136, 129, 122, 115, 108, 101, 144, 137, 130, 123, 116, 109, 102, 145, 138, 131, 124, 117, 110, 103, 146, 139, 132, 125, 118, 111, 104, 147, 140, 133, 126, 119, 112, 105, 43, 36, 29, 22, 15, 8, 1, 44, 37, 30, 23, 16, 9, 2, 45, 38, 31, 24, 17, 10, 3, 46, 39, 32, 25, 18, 11, 4, 47, 40, 33, 26, 19, 12, 5, 48, 41, 34, 27, 20, 13, 6, 49, 42, 35, 28, 21, 14, 7, 203, 210, 217, 224, 231, 238, 245, 202, 209, 216, 223, 230, 237, 244, 201, 208, 215, 222, 229, 236, 243, 200, 207, 214, 221, 228, 235, 242, 199, 206, 213, 220, 227, 234, 241, 198, 205, 212, 219, 226, 233, 240, 197, 204, 211, 218, 225, 232, 239, 288, 281, 274, 267, 260, 253, 246, 289, 282, 275, 268, 261, 254, 247, 290, 283, 276, 269, 262, 255, 248, 291, 284, 277, 270, 263, 256, 249, 292, 285, 278, 271, 264, 257, 250, 293, 286, 279, 272, 265, 258, 251, 294, 287, 280, 273, 266, 259, 252, 148, 149, 150, 151, 152, 153, 154, 155, 156, 157, 158, 159, 160, 161, 162, 163, 164, 165, 166, 167, 168, 169, 170, 171, 172, 173, 174, 175, 176, 177, 178, 179, 180, 181, 182, 183, 184, 185, 186, 187, 188, 189, 190, 191, 192, 193, 194, 195, 196),
-    "x' z'" : (0, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203, 7, 14, 21, 28, 35, 42, 49, 6, 13, 20, 27, 34, 41, 48, 5, 12, 19, 26, 33, 40, 47, 4, 11, 18, 25, 32, 39, 46, 3, 10, 17, 24, 31, 38, 45, 2, 9, 16, 23, 30, 37, 44, 1, 8, 15, 22, 29, 36, 43, 105, 112, 119, 126, 133, 140, 147, 104, 111, 118, 125, 132, 139, 146, 103, 110, 117, 124, 131, 138, 145, 102, 109, 116, 123, 130, 137, 144, 101, 108, 115, 122, 129, 136, 143, 100, 107, 114, 121, 128, 135, 142, 99, 106, 113, 120, 127, 134, 141, 252, 259, 266, 273, 280, 287, 294, 251, 258, 265, 272, 279, 286, 293, 250, 257, 264, 271, 278, 285, 292, 249, 256, 263, 270, 277, 284, 291, 248, 255, 262, 269, 276, 283, 290, 247, 254, 261, 268, 275, 282, 289, 246, 253, 260, 267, 274, 281, 288, 50, 51, 52, 53, 54, 55, 56, 57, 58, 59, 60, 61, 62, 63, 64, 65, 66, 67, 68, 69, 70, 71, 72, 73, 74, 75, 76, 77, 78, 79, 80, 81, 82, 83, 84, 85, 86, 87, 88, 89, 90, 91, 92, 93, 94, 95, 96, 97, 98),
-    "y x x" : (0, 252, 259, 266, 273, 280, 287, 294, 251, 258, 265, 272, 279, 286, 293, 250, 257, 264, 271, 278, 285, 292, 249, 256, 263, 270, 277, 284, 291, 248, 255, 262, 269, 276, 283, 290, 247, 254, 261, 268, 275, 282, 289, 246, 253, 260, 267, 274, 281, 288, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 43, 36, 29, 22, 15, 8, 1, 44, 37, 30, 23, 16, 9, 2, 45, 38, 31, 24, 17, 10, 3, 46, 39, 32, 25, 18, 11, 4, 47, 40, 33, 26, 19, 12, 5, 48, 41, 34, 27, 20, 13, 6, 49, 42, 35, 28, 21, 14, 7),
-    "y z z" : (0, 288, 281, 274, 267, 260, 253, 246, 289, 282, 275, 268, 261, 254, 247, 290, 283, 276, 269, 262, 255, 248, 291, 284, 277, 270, 263, 256, 249, 292, 285, 278, 271, 264, 257, 250, 293, 286, 279, 272, 265, 258, 251, 294, 287, 280, 273, 266, 259, 252, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 7, 14, 21, 28, 35, 42, 49, 6, 13, 20, 27, 34, 41, 48, 5, 12, 19, 26, 33, 40, 47, 4, 11, 18, 25, 32, 39, 46, 3, 10, 17, 24, 31, 38, 45, 2, 9, 16, 23, 30, 37, 44, 1, 8, 15, 22, 29, 36, 43),
-    "z x x" : (0, 190, 183, 176, 169, 162, 155, 148, 191, 184, 177, 170, 163, 156, 149, 192, 185, 178, 171, 164, 157, 150, 193, 186, 179, 172, 165, 158, 151, 194, 187, 180, 173, 166, 159, 152, 195, 188, 181, 174, 167, 160, 153, 196, 189, 182, 175, 168, 161, 154, 252, 259, 266, 273, 280, 287, 294, 251, 258, 265, 272, 279, 286, 293, 250, 257, 264, 271, 278, 285, 292, 249, 256, 263, 270, 277, 284, 291, 248, 255, 262, 269, 276, 283, 290, 247, 254, 261, 268, 275, 282, 289, 246, 253, 260, 267, 274, 281, 288, 239, 232, 225, 218, 211, 204, 197, 240, 233, 226, 219, 212, 205, 198, 241, 234, 227, 220, 213, 206, 199, 242, 235, 228, 221, 214, 207, 200, 243, 236, 229, 222, 215, 208, 201, 244, 237, 230, 223, 216, 209, 202, 245, 238, 231, 224, 217, 210, 203, 7, 14, 21, 28, 35, 42, 49, 6, 13, 20, 27, 34, 41, 48, 5, 12, 19, 26, 33, 40, 47, 4, 11, 18, 25, 32, 39, 46, 3, 10, 17, 24, 31, 38, 45, 2, 9, 16, 23, 30, 37, 44, 1, 8, 15, 22, 29, 36, 43, 105, 112, 119, 126, 133, 140, 147, 104, 111, 118, 125, 132, 139, 146, 103, 110, 117, 124, 131, 138, 145, 102, 109, 116, 123, 130, 137, 144, 101, 108, 115, 122, 129, 136, 143, 100, 107, 114, 121, 128, 135, 142, 99, 106, 113, 120, 127, 134, 141, 92, 85, 78, 71, 64, 57, 50, 93, 86, 79, 72, 65, 58, 51, 94, 87, 80, 73, 66, 59, 52, 95, 88, 81, 74, 67, 60, 53, 96, 89, 82, 75, 68, 61, 54, 97, 90, 83, 76, 69, 62, 55, 98, 91, 84, 77, 70, 63, 56),
-    "z y y" : (0, 56, 63, 70, 77, 84, 91, 98, 55, 62, 69, 76, 83, 90, 97, 54, 61, 68, 75, 82, 89, 96, 53, 60, 67, 74, 81, 88, 95, 52, 59, 66, 73, 80, 87, 94, 51, 58, 65, 72, 79, 86, 93, 50, 57, 64, 71, 78, 85, 92, 43, 36, 29, 22, 15, 8, 1, 44, 37, 30, 23, 16, 9, 2, 45, 38, 31, 24, 17, 10, 3, 46, 39, 32, 25, 18, 11, 4, 47, 40, 33, 26, 19, 12, 5, 48, 41, 34, 27, 20, 13, 6, 49, 42, 35, 28, 21, 14, 7, 203, 210, 217, 224, 231, 238, 245, 202, 209, 216, 223, 230, 237, 244, 201, 208, 215, 222, 229, 236, 243, 200, 207, 214, 221, 228, 235, 242, 199, 206, 213, 220, 227, 234, 241, 198, 205, 212, 219, 226, 233, 240, 197, 204, 211, 218, 225, 232, 239, 288, 281, 274, 267, 260, 253, 246, 289, 282, 275, 268, 261, 254, 247, 290, 283, 276, 269, 262, 255, 248, 291, 284, 277, 270, 263, 256, 249, 292, 285, 278, 271, 264, 257, 250, 293, 286, 279, 272, 265, 258, 251, 294, 287, 280, 273, 266, 259, 252, 141, 134, 127, 120, 113, 106, 99, 142, 135, 128, 121, 114, 107, 100, 143, 136, 129, 122, 115, 108, 101, 144, 137, 130, 123, 116, 109, 102, 145, 138, 131, 124, 117, 110, 103, 146, 139, 132, 125, 118, 111, 104, 147, 140, 133, 126, 119, 112, 105, 154, 161, 168, 175, 182, 189, 196, 153, 160, 167, 174, 181, 188, 195, 152, 159, 166, 173, 180, 187, 194, 151, 158, 165, 172, 179, 186, 193, 150, 157, 164, 171, 178, 185, 192, 149, 156, 163, 170, 177, 184, 191, 148, 155, 162, 169, 176, 183, 190),
-    "reflect-x" : (0, 288, 289, 290, 291, 292, 293, 294, 281, 282, 283, 284, 285, 286, 287, 274, 275, 276, 277, 278, 279, 280, 267, 268, 269, 270, 271, 272, 273, 260, 261, 262, 263, 264, 265, 266, 253, 254, 255, 256, 257, 258, 259, 246, 247, 248, 249, 250, 251, 252, 92, 93, 94, 95, 96, 97, 98, 85, 86, 87, 88, 89, 90, 91, 78, 79, 80, 81, 82, 83, 84, 71, 72, 73, 74, 75, 76, 77, 64, 65, 66, 67, 68, 69, 70, 57, 58, 59, 60, 61, 62, 63, 50, 51, 52, 53, 54, 55, 56, 141, 142, 143, 144, 145, 146, 147, 134, 135, 136, 137, 138, 139, 140, 127, 128, 129, 130, 131, 132, 133, 120, 121, 122, 123, 124, 125, 126, 113, 114, 115, 116, 117, 118, 119, 106, 107, 108, 109, 110, 111, 112, 99, 100, 101, 102, 103, 104, 105, 190, 191, 192, 193, 194, 195, 196, 183, 184, 185, 186, 187, 188, 189, 176, 177, 178, 179, 180, 181, 182, 169, 170, 171, 172, 173, 174, 175, 162, 163, 164, 165, 166, 167, 168, 155, 156, 157, 158, 159, 160, 161, 148, 149, 150, 151, 152, 153, 154, 239, 240, 241, 242, 243, 244, 245, 232, 233, 234, 235, 236, 237, 238, 225, 226, 227, 228, 229, 230, 231, 218, 219, 220, 221, 222, 223, 224, 211, 212, 213, 214, 215, 216, 217, 204, 205, 206, 207, 208, 209, 210, 197, 198, 199, 200, 201, 202, 203, 43, 44, 45, 46, 47, 48, 49, 36, 37, 38, 39, 40, 41, 42, 29, 30, 31, 32, 33, 34, 35, 22, 23, 24, 25, 26, 27, 28, 15, 16, 17, 18, 19, 20, 21, 8, 9, 10, 11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7),
-    "reflect-x x" : (0, 141, 142, 143, 144, 145, 146, 147, 134, 135, 136, 137, 138, 139, 140, 127, 128, 129, 130, 131, 132, 133, 120, 121, 122, 123, 124, 125, 126, 113, 114, 115, 116, 117, 118, 119, 106, 107, 108, 109, 110, 111, 112, 99, 100, 101, 102, 103, 104, 105, 98, 91, 84, 77, 70, 63, 56, 97, 90, 83, 76, 69, 62, 55, 96, 89, 82, 75, 68, 61, 54, 95, 88, 81, 74, 67, 60, 53, 94, 87, 80, 73, 66, 59, 52, 93, 86, 79, 72, 65, 58, 51, 92, 85, 78, 71, 64, 57, 50, 43, 44, 45, 46, 47, 48, 49, 36, 37, 38, 39, 40, 41, 42, 29, 30, 31, 32, 33, 34, 35, 22, 23, 24, 25, 26, 27, 28, 15, 16, 17, 18, 19, 20, 21, 8, 9, 10, 11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7, 148, 155, 162, 169, 176, 183, 190, 149, 156, 163, 170, 177, 184, 191, 150, 157, 164, 171, 178, 185, 192, 151, 158, 165, 172, 179, 186, 193, 152, 159, 166, 173, 180, 187, 194, 153, 160, 167, 174, 181, 188, 195, 154, 161, 168, 175, 182, 189, 196, 252, 251, 250, 249, 248, 247, 246, 259, 258, 257, 256, 255, 254, 253, 266, 265, 264, 263, 262, 261, 260, 273, 272, 271, 270, 269, 268, 267, 280, 279, 278, 277, 276, 275, 274, 287, 286, 285, 284, 283, 282, 281, 294, 293, 292, 291, 290, 289, 288, 203, 202, 201, 200, 199, 198, 197, 210, 209, 208, 207, 206, 205, 204, 217, 216, 215, 214, 213, 212, 211, 224, 223, 222, 221, 220, 219, 218, 231, 230, 229, 228, 227, 226, 225, 238, 237, 236, 235, 234, 233, 232, 245, 244, 243, 242, 241, 240, 239),
-    "reflect-x x'" : (0, 203, 202, 201, 200, 199, 198, 197, 210, 209, 208, 207, 206, 205, 204, 217, 216, 215, 214, 213, 212, 211, 224, 223, 222, 221, 220, 219, 218, 231, 230, 229, 228, 227, 226, 225, 238, 237, 236, 235, 234, 233, 232, 245, 244, 243, 242, 241, 240, 239, 50, 57, 64, 71, 78, 85, 92, 51, 58, 65, 72, 79, 86, 93, 52, 59, 66, 73, 80, 87, 94, 53, 60, 67, 74, 81, 88, 95, 54, 61, 68, 75, 82, 89, 96, 55, 62, 69, 76, 83, 90, 97, 56, 63, 70, 77, 84, 91, 98, 288, 289, 290, 291, 292, 293, 294, 281, 282, 283, 284, 285, 286, 287, 274, 275, 276, 277, 278, 279, 280, 267, 268, 269, 270, 271, 272, 273, 260, 261, 262, 263, 264, 265, 266, 253, 254, 255, 256, 257, 258, 259, 246, 247, 248, 249, 250, 251, 252, 196, 189, 182, 175, 168, 161, 154, 195, 188, 181, 174, 167, 160, 153, 194, 187, 180, 173, 166, 159, 152, 193, 186, 179, 172, 165, 158, 151, 192, 185, 178, 171, 164, 157, 150, 191, 184, 177, 170, 163, 156, 149, 190, 183, 176, 169, 162, 155, 148, 7, 6, 5, 4, 3, 2, 1, 14, 13, 12, 11, 10, 9, 8, 21, 20, 19, 18, 17, 16, 15, 28, 27, 26, 25, 24, 23, 22, 35, 34, 33, 32, 31, 30, 29, 42, 41, 40, 39, 38, 37, 36, 49, 48, 47, 46, 45, 44, 43, 141, 142, 143, 144, 145, 146, 147, 134, 135, 136, 137, 138, 139, 140, 127, 128, 129, 130, 131, 132, 133, 120, 121, 122, 123, 124, 125, 126, 113, 114, 115, 116, 117, 118, 119, 106, 107, 108, 109, 110, 111, 112, 99, 100, 101, 102, 103, 104, 105),
-    "reflect-x y" : (0, 246, 253, 260, 267, 274, 281, 288, 247, 254, 261, 268, 275, 282, 289, 248, 255, 262, 269, 276, 283, 290, 249, 256, 263, 270, 277, 284, 291, 250, 257, 264, 271, 278, 285, 292, 251, 258, 265, 272, 279, 286, 293, 252, 259, 266, 273, 280, 287, 294, 141, 142, 143, 144, 145, 146, 147, 134, 135, 136, 137, 138, 139, 140, 127, 128, 129, 130, 131, 132, 133, 120, 121, 122, 123, 124, 125, 126, 113, 114, 115, 116, 117, 118, 119, 106, 107, 108, 109, 110, 111, 112, 99, 100, 101, 102, 103, 104, 105, 190, 191, 192, 193, 194, 195, 196, 183, 184, 185, 186, 187, 188, 189, 176, 177, 178, 179, 180, 181, 182, 169, 170, 171, 172, 173, 174, 175, 162, 163, 164, 165, 166, 167, 168, 155, 156, 157, 158, 159, 160, 161, 148, 149, 150, 151, 152, 153, 154, 239, 240, 241, 242, 243, 244, 245, 232, 233, 234, 235, 236, 237, 238, 225, 226, 227, 228, 229, 230, 231, 218, 219, 220, 221, 222, 223, 224, 211, 212, 213, 214, 215, 216, 217, 204, 205, 206, 207, 208, 209, 210, 197, 198, 199, 200, 201, 202, 203, 92, 93, 94, 95, 96, 97, 98, 85, 86, 87, 88, 89, 90, 91, 78, 79, 80, 81, 82, 83, 84, 71, 72, 73, 74, 75, 76, 77, 64, 65, 66, 67, 68, 69, 70, 57, 58, 59, 60, 61, 62, 63, 50, 51, 52, 53, 54, 55, 56, 49, 42, 35, 28, 21, 14, 7, 48, 41, 34, 27, 20, 13, 6, 47, 40, 33, 26, 19, 12, 5, 46, 39, 32, 25, 18, 11, 4, 45, 38, 31, 24, 17, 10, 3, 44, 37, 30, 23, 16, 9, 2, 43, 36, 29, 22, 15, 8, 1),
-    "reflect-x y'" : (0, 294, 287, 280, 273, 266, 259, 252, 293, 286, 279, 272, 265, 258, 251, 292, 285, 278, 271, 264, 257, 250, 291, 284, 277, 270, 263, 256, 249, 290, 283, 276, 269, 262, 255, 248, 289, 282, 275, 268, 261, 254, 247, 288, 281, 274, 267, 260, 253, 246, 239, 240, 241, 242, 243, 244, 245, 232, 233, 234, 235, 236, 237, 238, 225, 226, 227, 228, 229, 230, 231, 218, 219, 220, 221, 222, 223, 224, 211, 212, 213, 214, 215, 216, 217, 204, 205, 206, 207, 208, 209, 210, 197, 198, 199, 200, 201, 202, 203, 92, 93, 94, 95, 96, 97, 98, 85, 86, 87, 88, 89, 90, 91, 78, 79, 80, 81, 82, 83, 84, 71, 72, 73, 74, 75, 76, 77, 64, 65, 66, 67, 68, 69, 70, 57, 58, 59, 60, 61, 62, 63, 50, 51, 52, 53, 54, 55, 56, 141, 142, 143, 144, 145, 146, 147, 134, 135, 136, 137, 138, 139, 140, 127, 128, 129, 130, 131, 132, 133, 120, 121, 122, 123, 124, 125, 126, 113, 114, 115, 116, 117, 118, 119, 106, 107, 108, 109, 110, 111, 112, 99, 100, 101, 102, 103, 104, 105, 190, 191, 192, 193, 194, 195, 196, 183, 184, 185, 186, 187, 188, 189, 176, 177, 178, 179, 180, 181, 182, 169, 170, 171, 172, 173, 174, 175, 162, 163, 164, 165, 166, 167, 168, 155, 156, 157, 158, 159, 160, 161, 148, 149, 150, 151, 152, 153, 154, 1, 8, 15, 22, 29, 36, 43, 2, 9, 16, 23, 30, 37, 44, 3, 10, 17, 24, 31, 38, 45, 4, 11, 18, 25, 32, 39, 46, 5, 12, 19, 26, 33, 40, 47, 6, 13, 20, 27, 34, 41, 48, 7, 14, 21, 28, 35, 42, 49),
-    "reflect-x z" : (0, 50, 57, 64, 71, 78, 85, 92, 51, 58, 65, 72, 79, 86, 93, 52, 59, 66, 73, 80, 87, 94, 53, 60, 67, 74, 81, 88, 95, 54, 61, 68, 75, 82, 89, 96, 55, 62, 69, 76, 83, 90, 97, 56, 63, 70, 77, 84, 91, 98, 1, 8, 15, 22, 29, 36, 43, 2, 9, 16, 23, 30, 37, 44, 3, 10, 17, 24, 31, 38, 45, 4, 11, 18, 25, 32, 39, 46, 5, 12, 19, 26, 33, 40, 47, 6, 13, 20, 27, 34, 41, 48, 7, 14, 21, 28, 35, 42, 49, 99, 106, 113, 120, 127, 134, 141, 100, 107, 114, 121, 128, 135, 142, 101, 108, 115, 122, 129, 136, 143, 102, 109, 116, 123, 130, 137, 144, 103, 110, 117, 124, 131, 138, 145, 104, 111, 118, 125, 132, 139, 146, 105, 112, 119, 126, 133, 140, 147, 246, 253, 260, 267, 274, 281, 288, 247, 254, 261, 268, 275, 282, 289, 248, 255, 262, 269, 276, 283, 290, 249, 256, 263, 270, 277, 284, 291, 250, 257, 264, 271, 278, 285, 292, 251, 258, 265, 272, 279, 286, 293, 252, 259, 266, 273, 280, 287, 294, 245, 238, 231, 224, 217, 210, 203, 244, 237, 230, 223, 216, 209, 202, 243, 236, 229, 222, 215, 208, 201, 242, 235, 228, 221, 214, 207, 200, 241, 234, 227, 220, 213, 206, 199, 240, 233, 226, 219, 212, 205, 198, 239, 232, 225, 218, 211, 204, 197, 148, 155, 162, 169, 176, 183, 190, 149, 156, 163, 170, 177, 184, 191, 150, 157, 164, 171, 178, 185, 192, 151, 158, 165, 172, 179, 186, 193, 152, 159, 166, 173, 180, 187, 194, 153, 160, 167, 174, 181, 188, 195, 154, 161, 168, 175, 182, 189, 196),
-    "reflect-x z'" : (0, 196, 189, 182, 175, 168, 161, 154, 195, 188, 181, 174, 167, 160, 153, 194, 187, 180, 173, 166, 159, 152, 193, 186, 179, 172, 165, 158, 151, 192, 185, 178, 171, 164, 157, 150, 191, 184, 177, 170, 163, 156, 149, 190, 183, 176, 169, 162, 155, 148, 294, 287, 280, 273, 266, 259, 252, 293, 286, 279, 272, 265, 258, 251, 292, 285, 278, 271, 264, 257, 250, 291, 284, 277, 270, 263, 256, 249, 290, 283, 276, 269, 262, 255, 248, 289, 282, 275, 268, 261, 254, 247, 288, 281, 274, 267, 260, 253, 246, 147, 140, 133, 126, 119, 112, 105, 146, 139, 132, 125, 118, 111, 104, 145, 138, 131, 124, 117, 110, 103, 144, 137, 130, 123, 116, 109, 102, 143, 136, 129, 122, 115, 108, 101, 142, 135, 128, 121, 114, 107, 100, 141, 134, 127, 120, 113, 106, 99, 49, 42, 35, 28, 21, 14, 7, 48, 41, 34, 27, 20, 13, 6, 47, 40, 33, 26, 19, 12, 5, 46, 39, 32, 25, 18, 11, 4, 45, 38, 31, 24, 17, 10, 3, 44, 37, 30, 23, 16, 9, 2, 43, 36, 29, 22, 15, 8, 1, 197, 204, 211, 218, 225, 232, 239, 198, 205, 212, 219, 226, 233, 240, 199, 206, 213, 220, 227, 234, 241, 200, 207, 214, 221, 228, 235, 242, 201, 208, 215, 222, 229, 236, 243, 202, 209, 216, 223, 230, 237, 244, 203, 210, 217, 224, 231, 238, 245, 98, 91, 84, 77, 70, 63, 56, 97, 90, 83, 76, 69, 62, 55, 96, 89, 82, 75, 68, 61, 54, 95, 88, 81, 74, 67, 60, 53, 94, 87, 80, 73, 66, 59, 52, 93, 86, 79, 72, 65, 58, 51, 92, 85, 78, 71, 64, 57, 50),
-    "reflect-x x x" : (0, 43, 44, 45, 46, 47, 48, 49, 36, 37, 38, 39, 40, 41, 42, 29, 30, 31, 32, 33, 34, 35, 22, 23, 24, 25, 26, 27, 28, 15, 16, 17, 18, 19, 20, 21, 8, 9, 10, 11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7, 56, 55, 54, 53, 52, 51, 50, 63, 62, 61, 60, 59, 58, 57, 70, 69, 68, 67, 66, 65, 64, 77, 76, 75, 74, 73, 72, 71, 84, 83, 82, 81, 80, 79, 78, 91, 90, 89, 88, 87, 86, 85, 98, 97, 96, 95, 94, 93, 92, 203, 202, 201, 200, 199, 198, 197, 210, 209, 208, 207, 206, 205, 204, 217, 216, 215, 214, 213, 212, 211, 224, 223, 222, 221, 220, 219, 218, 231, 230, 229, 228, 227, 226, 225, 238, 237, 236, 235, 234, 233, 232, 245, 244, 243, 242, 241, 240, 239, 154, 153, 152, 151, 150, 149, 148, 161, 160, 159, 158, 157, 156, 155, 168, 167, 166, 165, 164, 163, 162, 175, 174, 173, 172, 171, 170, 169, 182, 181, 180, 179, 178, 177, 176, 189, 188, 187, 186, 185, 184, 183, 196, 195, 194, 193, 192, 191, 190, 105, 104, 103, 102, 101, 100, 99, 112, 111, 110, 109, 108, 107, 106, 119, 118, 117, 116, 115, 114, 113, 126, 125, 124, 123, 122, 121, 120, 133, 132, 131, 130, 129, 128, 127, 140, 139, 138, 137, 136, 135, 134, 147, 146, 145, 144, 143, 142, 141, 288, 289, 290, 291, 292, 293, 294, 281, 282, 283, 284, 285, 286, 287, 274, 275, 276, 277, 278, 279, 280, 267, 268, 269, 270, 271, 272, 273, 260, 261, 262, 263, 264, 265, 266, 253, 254, 255, 256, 257, 258, 259, 246, 247, 248, 249, 250, 251, 252),
-    "reflect-x y y" : (0, 252, 251, 250, 249, 248, 247, 246, 259, 258, 257, 256, 255, 254, 253, 266, 265, 264, 263, 262, 261, 260, 273, 272, 271, 270, 269, 268, 267, 280, 279, 278, 277, 276, 275, 274, 287, 286, 285, 284, 283, 282, 281, 294, 293, 292, 291, 290, 289, 288, 190, 191, 192, 193, 194, 195, 196, 183, 184, 185, 186, 187, 188, 189, 176, 177, 178, 179, 180, 181, 182, 169, 170, 171, 172, 173, 174, 175, 162, 163, 164, 165, 166, 167, 168, 155, 156, 157, 158, 159, 160, 161, 148, 149, 150, 151, 152, 153, 154, 239, 240, 241, 242, 243, 244, 245, 232, 233, 234, 235, 236, 237, 238, 225, 226, 227, 228, 229, 230, 231, 218, 219, 220, 221, 222, 223, 224, 211, 212, 213, 214, 215, 216, 217, 204, 205, 206, 207, 208, 209, 210, 197, 198, 199, 200, 201, 202, 203, 92, 93, 94, 95, 96, 97, 98, 85, 86, 87, 88, 89, 90, 91, 78, 79, 80, 81, 82, 83, 84, 71, 72, 73, 74, 75, 76, 77, 64, 65, 66, 67, 68, 69, 70, 57, 58, 59, 60, 61, 62, 63, 50, 51, 52, 53, 54, 55, 56, 141, 142, 143, 144, 145, 146, 147, 134, 135, 136, 137, 138, 139, 140, 127, 128, 129, 130, 131, 132, 133, 120, 121, 122, 123, 124, 125, 126, 113, 114, 115, 116, 117, 118, 119, 106, 107, 108, 109, 110, 111, 112, 99, 100, 101, 102, 103, 104, 105, 7, 6, 5, 4, 3, 2, 1, 14, 13, 12, 11, 10, 9, 8, 21, 20, 19, 18, 17, 16, 15, 28, 27, 26, 25, 24, 23, 22, 35, 34, 33, 32, 31, 30, 29, 42, 41, 40, 39, 38, 37, 36, 49, 48, 47, 46, 45, 44, 43),
-    "reflect-x z z" : (0, 7, 6, 5, 4, 3, 2, 1, 14, 13, 12, 11, 10, 9, 8, 21, 20, 19, 18, 17, 16, 15, 28, 27, 26, 25, 24, 23, 22, 35, 34, 33, 32, 31, 30, 29, 42, 41, 40, 39, 38, 37, 36, 49, 48, 47, 46, 45, 44, 43, 154, 153, 152, 151, 150, 149, 148, 161, 160, 159, 158, 157, 156, 155, 168, 167, 166, 165, 164, 163, 162, 175, 174, 173, 172, 171, 170, 169, 182, 181, 180, 179, 178, 177, 176, 189, 188, 187, 186, 185, 184, 183, 196, 195, 194, 193, 192, 191, 190, 105, 104, 103, 102, 101, 100, 99, 112, 111, 110, 109, 108, 107, 106, 119, 118, 117, 116, 115, 114, 113, 126, 125, 124, 123, 122, 121, 120, 133, 132, 131, 130, 129, 128, 127, 140, 139, 138, 137, 136, 135, 134, 147, 146, 145, 144, 143, 142, 141, 56, 55, 54, 53, 52, 51, 50, 63, 62, 61, 60, 59, 58, 57, 70, 69, 68, 67, 66, 65, 64, 77, 76, 75, 74, 73, 72, 71, 84, 83, 82, 81, 80, 79, 78, 91, 90, 89, 88, 87, 86, 85, 98, 97, 96, 95, 94, 93, 92, 203, 202, 201, 200, 199, 198, 197, 210, 209, 208, 207, 206, 205, 204, 217, 216, 215, 214, 213, 212, 211, 224, 223, 222, 221, 220, 219, 218, 231, 230, 229, 228, 227, 226, 225, 238, 237, 236, 235, 234, 233, 232, 245, 244, 243, 242, 241, 240, 239, 252, 251, 250, 249, 248, 247, 246, 259, 258, 257, 256, 255, 254, 253, 266, 265, 264, 263, 262, 261, 260, 273, 272, 271, 270, 269, 268, 267, 280, 279, 278, 277, 276, 275, 274, 287, 286, 285, 284, 283, 282, 281, 294, 293, 292, 291, 290, 289, 288),
-    "reflect-x x y" : (0, 99, 106, 113, 120, 127, 134, 141, 100, 107, 114, 121, 128, 135, 142, 101, 108, 115, 122, 129, 136, 143, 102, 109, 116, 123, 130, 137, 144, 103, 110, 117, 124, 131, 138, 145, 104, 111, 118, 125, 132, 139, 146, 105, 112, 119, 126, 133, 140, 147, 43, 44, 45, 46, 47, 48, 49, 36, 37, 38, 39, 40, 41, 42, 29, 30, 31, 32, 33, 34, 35, 22, 23, 24, 25, 26, 27, 28, 15, 16, 17, 18, 19, 20, 21, 8, 9, 10, 11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7, 148, 155, 162, 169, 176, 183, 190, 149, 156, 163, 170, 177, 184, 191, 150, 157, 164, 171, 178, 185, 192, 151, 158, 165, 172, 179, 186, 193, 152, 159, 166, 173, 180, 187, 194, 153, 160, 167, 174, 181, 188, 195, 154, 161, 168, 175, 182, 189, 196, 252, 251, 250, 249, 248, 247, 246, 259, 258, 257, 256, 255, 254, 253, 266, 265, 264, 263, 262, 261, 260, 273, 272, 271, 270, 269, 268, 267, 280, 279, 278, 277, 276, 275, 274, 287, 286, 285, 284, 283, 282, 281, 294, 293, 292, 291, 290, 289, 288, 98, 91, 84, 77, 70, 63, 56, 97, 90, 83, 76, 69, 62, 55, 96, 89, 82, 75, 68, 61, 54, 95, 88, 81, 74, 67, 60, 53, 94, 87, 80, 73, 66, 59, 52, 93, 86, 79, 72, 65, 58, 51, 92, 85, 78, 71, 64, 57, 50, 197, 204, 211, 218, 225, 232, 239, 198, 205, 212, 219, 226, 233, 240, 199, 206, 213, 220, 227, 234, 241, 200, 207, 214, 221, 228, 235, 242, 201, 208, 215, 222, 229, 236, 243, 202, 209, 216, 223, 230, 237, 244, 203, 210, 217, 224, 231, 238, 245),
-    "reflect-x x y'" : (0, 147, 140, 133, 126, 119, 112, 105, 146, 139, 132, 125, 118, 111, 104, 145, 138, 131, 124, 117, 110, 103, 144, 137, 130, 123, 116, 109, 102, 143, 136, 129, 122, 115, 108, 101, 142, 135, 128, 121, 114, 107, 100, 141, 134, 127, 120, 113, 106, 99, 252, 251, 250, 249, 248, 247, 246, 259, 258, 257, 256, 255, 254, 253, 266, 265, 264, 263, 262, 261, 260, 273, 272, 271, 270, 269, 268, 267, 280, 279, 278, 277, 276, 275, 274, 287, 286, 285, 284, 283, 282, 281, 294, 293, 292, 291, 290, 289, 288, 98, 91, 84, 77, 70, 63, 56, 97, 90, 83, 76, 69, 62, 55, 96, 89, 82, 75, 68, 61, 54, 95, 88, 81, 74, 67, 60, 53, 94, 87, 80, 73, 66, 59, 52, 93, 86, 79, 72, 65, 58, 51, 92, 85, 78, 71, 64, 57, 50, 43, 44, 45, 46, 47, 48, 49, 36, 37, 38, 39, 40, 41, 42, 29, 30, 31, 32, 33, 34, 35, 22, 23, 24, 25, 26, 27, 28, 15, 16, 17, 18, 19, 20, 21, 8, 9, 10, 11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7, 148, 155, 162, 169, 176, 183, 190, 149, 156, 163, 170, 177, 184, 191, 150, 157, 164, 171, 178, 185, 192, 151, 158, 165, 172, 179, 186, 193, 152, 159, 166, 173, 180, 187, 194, 153, 160, 167, 174, 181, 188, 195, 154, 161, 168, 175, 182, 189, 196, 245, 238, 231, 224, 217, 210, 203, 244, 237, 230, 223, 216, 209, 202, 243, 236, 229, 222, 215, 208, 201, 242, 235, 228, 221, 214, 207, 200, 241, 234, 227, 220, 213, 206, 199, 240, 233, 226, 219, 212, 205, 198, 239, 232, 225, 218, 211, 204, 197),
-    "reflect-x x z" : (0, 92, 93, 94, 95, 96, 97, 98, 85, 86, 87, 88, 89, 90, 91, 78, 79, 80, 81, 82, 83, 84, 71, 72, 73, 74, 75, 76, 77, 64, 65, 66, 67, 68, 69, 70, 57, 58, 59, 60, 61, 62, 63, 50, 51, 52, 53, 54, 55, 56, 245, 238, 231, 224, 217, 210, 203, 244, 237, 230, 223, 216, 209, 202, 243, 236, 229, 222, 215, 208, 201, 242, 235, 228, 221, 214, 207, 200, 241, 234, 227, 220, 213, 206, 199, 240, 233, 226, 219, 212, 205, 198, 239, 232, 225, 218, 211, 204, 197, 1, 8, 15, 22, 29, 36, 43, 2, 9, 16, 23, 30, 37, 44, 3, 10, 17, 24, 31, 38, 45, 4, 11, 18, 25, 32, 39, 46, 5, 12, 19, 26, 33, 40, 47, 6, 13, 20, 27, 34, 41, 48, 7, 14, 21, 28, 35, 42, 49, 99, 106, 113, 120, 127, 134, 141, 100, 107, 114, 121, 128, 135, 142, 101, 108, 115, 122, 129, 136, 143, 102, 109, 116, 123, 130, 137, 144, 103, 110, 117, 124, 131, 138, 145, 104, 111, 118, 125, 132, 139, 146, 105, 112, 119, 126, 133, 140, 147, 246, 253, 260, 267, 274, 281, 288, 247, 254, 261, 268, 275, 282, 289, 248, 255, 262, 269, 276, 283, 290, 249, 256, 263, 270, 277, 284, 291, 250, 257, 264, 271, 278, 285, 292, 251, 258, 265, 272, 279, 286, 293, 252, 259, 266, 273, 280, 287, 294, 154, 153, 152, 151, 150, 149, 148, 161, 160, 159, 158, 157, 156, 155, 168, 167, 166, 165, 164, 163, 162, 175, 174, 173, 172, 171, 170, 169, 182, 181, 180, 179, 178, 177, 176, 189, 188, 187, 186, 185, 184, 183, 196, 195, 194, 193, 192, 191, 190),
-    "reflect-x x z'" : (0, 190, 191, 192, 193, 194, 195, 196, 183, 184, 185, 186, 187, 188, 189, 176, 177, 178, 179, 180, 181, 182, 169, 170, 171, 172, 173, 174, 175, 162, 163, 164, 165, 166, 167, 168, 155, 156, 157, 158, 159, 160, 161, 148, 149, 150, 151, 152, 153, 154, 147, 140, 133, 126, 119, 112, 105, 146, 139, 132, 125, 118, 111, 104, 145, 138, 131, 124, 117, 110, 103, 144, 137, 130, 123, 116, 109, 102, 143, 136, 129, 122, 115, 108, 101, 142, 135, 128, 121, 114, 107, 100, 141, 134, 127, 120, 113, 106, 99, 49, 42, 35, 28, 21, 14, 7, 48, 41, 34, 27, 20, 13, 6, 47, 40, 33, 26, 19, 12, 5, 46, 39, 32, 25, 18, 11, 4, 45, 38, 31, 24, 17, 10, 3, 44, 37, 30, 23, 16, 9, 2, 43, 36, 29, 22, 15, 8, 1, 197, 204, 211, 218, 225, 232, 239, 198, 205, 212, 219, 226, 233, 240, 199, 206, 213, 220, 227, 234, 241, 200, 207, 214, 221, 228, 235, 242, 201, 208, 215, 222, 229, 236, 243, 202, 209, 216, 223, 230, 237, 244, 203, 210, 217, 224, 231, 238, 245, 294, 287, 280, 273, 266, 259, 252, 293, 286, 279, 272, 265, 258, 251, 292, 285, 278, 271, 264, 257, 250, 291, 284, 277, 270, 263, 256, 249, 290, 283, 276, 269, 262, 255, 248, 289, 282, 275, 268, 261, 254, 247, 288, 281, 274, 267, 260, 253, 246, 56, 55, 54, 53, 52, 51, 50, 63, 62, 61, 60, 59, 58, 57, 70, 69, 68, 67, 66, 65, 64, 77, 76, 75, 74, 73, 72, 71, 84, 83, 82, 81, 80, 79, 78, 91, 90, 89, 88, 87, 86, 85, 98, 97, 96, 95, 94, 93, 92),
-    "reflect-x x y y" : (0, 105, 104, 103, 102, 101, 100, 99, 112, 111, 110, 109, 108, 107, 106, 119, 118, 117, 116, 115, 114, 113, 126, 125, 124, 123, 122, 121, 120, 133, 132, 131, 130, 129, 128, 127, 140, 139, 138, 137, 136, 135, 134, 147, 146, 145, 144, 143, 142, 141, 148, 155, 162, 169, 176, 183, 190, 149, 156, 163, 170, 177, 184, 191, 150, 157, 164, 171, 178, 185, 192, 151, 158, 165, 172, 179, 186, 193, 152, 159, 166, 173, 180, 187, 194, 153, 160, 167, 174, 181, 188, 195, 154, 161, 168, 175, 182, 189, 196, 252, 251, 250, 249, 248, 247, 246, 259, 258, 257, 256, 255, 254, 253, 266, 265, 264, 263, 262, 261, 260, 273, 272, 271, 270, 269, 268, 267, 280, 279, 278, 277, 276, 275, 274, 287, 286, 285, 284, 283, 282, 281, 294, 293, 292, 291, 290, 289, 288, 98, 91, 84, 77, 70, 63, 56, 97, 90, 83, 76, 69, 62, 55, 96, 89, 82, 75, 68, 61, 54, 95, 88, 81, 74, 67, 60, 53, 94, 87, 80, 73, 66, 59, 52, 93, 86, 79, 72, 65, 58, 51, 92, 85, 78, 71, 64, 57, 50, 43, 44, 45, 46, 47, 48, 49, 36, 37, 38, 39, 40, 41, 42, 29, 30, 31, 32, 33, 34, 35, 22, 23, 24, 25, 26, 27, 28, 15, 16, 17, 18, 19, 20, 21, 8, 9, 10, 11, 12, 13, 14, 1, 2, 3, 4, 5, 6, 7, 239, 240, 241, 242, 243, 244, 245, 232, 233, 234, 235, 236, 237, 238, 225, 226, 227, 228, 229, 230, 231, 218, 219, 220, 221, 222, 223, 224, 211, 212, 213, 214, 215, 216, 217, 204, 205, 206, 207, 208, 209, 210, 197, 198, 199, 200, 201, 202, 203),
-    "reflect-x x z z" : (0, 239, 240, 241, 242, 243, 244, 245, 232, 233, 234, 235, 236, 237, 238, 225, 226, 227, 228, 229, 230, 231, 218, 219, 220, 221, 222, 223, 224, 211, 212, 213, 214, 215, 216, 217, 204, 205, 206, 207, 208, 209, 210, 197, 198, 199, 200, 201, 202, 203, 196, 189, 182, 175, 168, 161, 154, 195, 188, 181, 174, 167, 160, 153, 194, 187, 180, 173, 166, 159, 152, 193, 186, 179, 172, 165, 158, 151, 192, 185, 178, 171, 164, 157, 150, 191, 184, 177, 170, 163, 156, 149, 190, 183, 176, 169, 162, 155, 148, 7, 6, 5, 4, 3, 2, 1, 14, 13, 12, 11, 10, 9, 8, 21, 20, 19, 18, 17, 16, 15, 28, 27, 26, 25, 24, 23, 22, 35, 34, 33, 32, 31, 30, 29, 42, 41, 40, 39, 38, 37, 36, 49, 48, 47, 46, 45, 44, 43, 50, 57, 64, 71, 78, 85, 92, 51, 58, 65, 72, 79, 86, 93, 52, 59, 66, 73, 80, 87, 94, 53, 60, 67, 74, 81, 88, 95, 54, 61, 68, 75, 82, 89, 96, 55, 62, 69, 76, 83, 90, 97, 56, 63, 70, 77, 84, 91, 98, 288, 289, 290, 291, 292, 293, 294, 281, 282, 283, 284, 285, 286, 287, 274, 275, 276, 277, 278, 279, 280, 267, 268, 269, 270, 271, 272, 273, 260, 261, 262, 263, 264, 265, 266, 253, 254, 255, 256, 257, 258, 259, 246, 247, 248, 249, 250, 251, 252, 105, 104, 103, 102, 101, 100, 99, 112, 111, 110, 109, 108, 107, 106, 119, 118, 117, 116, 115, 114, 113, 126, 125, 124, 123, 122, 121, 120, 133, 132, 131, 130, 129, 128, 127, 140, 139, 138, 137, 136, 135, 134, 147, 146, 145, 144, 143, 142, 141),
-    "reflect-x x' y" : (0, 245, 238, 231, 224, 217, 210, 203, 244, 237, 230, 223, 216, 209, 202, 243, 236, 229, 222, 215, 208, 201, 242, 235, 228, 221, 214, 207, 200, 241, 234, 227, 220, 213, 206, 199, 240, 233, 226, 219, 212, 205, 198, 239, 232, 225, 218, 211, 204, 197, 288, 289, 290, 291, 292, 293, 294, 281, 282, 283, 284, 285, 286, 287, 274, 275, 276, 277, 278, 279, 280, 267, 268, 269, 270, 271, 272, 273, 260, 261, 262, 263, 264, 265, 266, 253, 254, 255, 256, 257, 258, 259, 246, 247, 248, 249, 250, 251, 252, 196, 189, 182, 175, 168, 161, 154, 195, 188, 181, 174, 167, 160, 153, 194, 187, 180, 173, 166, 159, 152, 193, 186, 179, 172, 165, 158, 151, 192, 185, 178, 171, 164, 157, 150, 191, 184, 177, 170, 163, 156, 149, 190, 183, 176, 169, 162, 155, 148, 7, 6, 5, 4, 3, 2, 1, 14, 13, 12, 11, 10, 9, 8, 21, 20, 19, 18, 17, 16, 15, 28, 27, 26, 25, 24, 23, 22, 35, 34, 33, 32, 31, 30, 29, 42, 41, 40, 39, 38, 37, 36, 49, 48, 47, 46, 45, 44, 43, 50, 57, 64, 71, 78, 85, 92, 51, 58, 65, 72, 79, 86, 93, 52, 59, 66, 73, 80, 87, 94, 53, 60, 67, 74, 81, 88, 95, 54, 61, 68, 75, 82, 89, 96, 55, 62, 69, 76, 83, 90, 97, 56, 63, 70, 77, 84, 91, 98, 147, 140, 133, 126, 119, 112, 105, 146, 139, 132, 125, 118, 111, 104, 145, 138, 131, 124, 117, 110, 103, 144, 137, 130, 123, 116, 109, 102, 143, 136, 129, 122, 115, 108, 101, 142, 135, 128, 121, 114, 107, 100, 141, 134, 127, 120, 113, 106, 99),
-    "reflect-x x' y'" : (0, 197, 204, 211, 218, 225, 232, 239, 198, 205, 212, 219, 226, 233, 240, 199, 206, 213, 220, 227, 234, 241, 200, 207, 214, 221, 228, 235, 242, 201, 208, 215, 222, 229, 236, 243, 202, 209, 216, 223, 230, 237, 244, 203, 210, 217, 224, 231, 238, 245, 7, 6, 5, 4, 3, 2, 1, 14, 13, 12, 11, 10, 9, 8, 21, 20, 19, 18, 17, 16, 15, 28, 27, 26, 25, 24, 23, 22, 35, 34, 33, 32, 31, 30, 29, 42, 41, 40, 39, 38, 37, 36, 49, 48, 47, 46, 45, 44, 43, 50, 57, 64, 71, 78, 85, 92, 51, 58, 65, 72, 79, 86, 93, 52, 59, 66, 73, 80, 87, 94, 53, 60, 67, 74, 81, 88, 95, 54, 61, 68, 75, 82, 89, 96, 55, 62, 69, 76, 83, 90, 97, 56, 63, 70, 77, 84, 91, 98, 288, 289, 290, 291, 292, 293, 294, 281, 282, 283, 284, 285, 286, 287, 274, 275, 276, 277, 278, 279, 280, 267, 268, 269, 270, 271, 272, 273, 260, 261, 262, 263, 264, 265, 266, 253, 254, 255, 256, 257, 258, 259, 246, 247, 248, 249, 250, 251, 252, 196, 189, 182, 175, 168, 161, 154, 195, 188, 181, 174, 167, 160, 153, 194, 187, 180, 173, 166, 159, 152, 193, 186, 179, 172, 165, 158, 151, 192, 185, 178, 171, 164, 157, 150, 191, 184, 177, 170, 163, 156, 149, 190, 183, 176, 169, 162, 155, 148, 99, 106, 113, 120, 127, 134, 141, 100, 107, 114, 121, 128, 135, 142, 101, 108, 115, 122, 129, 136, 143, 102, 109, 116, 123, 130, 137, 144, 103, 110, 117, 124, 131, 138, 145, 104, 111, 118, 125, 132, 139, 146, 105, 112, 119, 126, 133, 140, 147),
-    "reflect-x x' z" : (0, 56, 55, 54, 53, 52, 51, 50, 63, 62, 61, 60, 59, 58, 57, 70, 69, 68, 67, 66, 65, 64, 77, 76, 75, 74, 73, 72, 71, 84, 83, 82, 81, 80, 79, 78, 91, 90, 89, 88, 87, 86, 85, 98, 97, 96, 95, 94, 93, 92, 99, 106, 113, 120, 127, 134, 141, 100, 107, 114, 121, 128, 135, 142, 101, 108, 115, 122, 129, 136, 143, 102, 109, 116, 123, 130, 137, 144, 103, 110, 117, 124, 131, 138, 145, 104, 111, 118, 125, 132, 139, 146, 105, 112, 119, 126, 133, 140, 147, 246, 253, 260, 267, 274, 281, 288, 247, 254, 261, 268, 275, 282, 289, 248, 255, 262, 269, 276, 283, 290, 249, 256, 263, 270, 277, 284, 291, 250, 257, 264, 271, 278, 285, 292, 251, 258, 265, 272, 279, 286, 293, 252, 259, 266, 273, 280, 287, 294, 245, 238, 231, 224, 217, 210, 203, 244, 237, 230, 223, 216, 209, 202, 243, 236, 229, 222, 215, 208, 201, 242, 235, 228, 221, 214, 207, 200, 241, 234, 227, 220, 213, 206, 199, 240, 233, 226, 219, 212, 205, 198, 239, 232, 225, 218, 211, 204, 197, 1, 8, 15, 22, 29, 36, 43, 2, 9, 16, 23, 30, 37, 44, 3, 10, 17, 24, 31, 38, 45, 4, 11, 18, 25, 32, 39, 46, 5, 12, 19, 26, 33, 40, 47, 6, 13, 20, 27, 34, 41, 48, 7, 14, 21, 28, 35, 42, 49, 190, 191, 192, 193, 194, 195, 196, 183, 184, 185, 186, 187, 188, 189, 176, 177, 178, 179, 180, 181, 182, 169, 170, 171, 172, 173, 174, 175, 162, 163, 164, 165, 166, 167, 168, 155, 156, 157, 158, 159, 160, 161, 148, 149, 150, 151, 152, 153, 154),
-    "reflect-x x' z'" : (0, 154, 153, 152, 151, 150, 149, 148, 161, 160, 159, 158, 157, 156, 155, 168, 167, 166, 165, 164, 163, 162, 175, 174, 173, 172, 171, 170, 169, 182, 181, 180, 179, 178, 177, 176, 189, 188, 187, 186, 185, 184, 183, 196, 195, 194, 193, 192, 191, 190, 197, 204, 211, 218, 225, 232, 239, 198, 205, 212, 219, 226, 233, 240, 199, 206, 213, 220, 227, 234, 241, 200, 207, 214, 221, 228, 235, 242, 201, 208, 215, 222, 229, 236, 243, 202, 209, 216, 223, 230, 237, 244, 203, 210, 217, 224, 231, 238, 245, 294, 287, 280, 273, 266, 259, 252, 293, 286, 279, 272, 265, 258, 251, 292, 285, 278, 271, 264, 257, 250, 291, 284, 277, 270, 263, 256, 249, 290, 283, 276, 269, 262, 255, 248, 289, 282, 275, 268, 261, 254, 247, 288, 281, 274, 267, 260, 253, 246, 147, 140, 133, 126, 119, 112, 105, 146, 139, 132, 125, 118, 111, 104, 145, 138, 131, 124, 117, 110, 103, 144, 137, 130, 123, 116, 109, 102, 143, 136, 129, 122, 115, 108, 101, 142, 135, 128, 121, 114, 107, 100, 141, 134, 127, 120, 113, 106, 99, 49, 42, 35, 28, 21, 14, 7, 48, 41, 34, 27, 20, 13, 6, 47, 40, 33, 26, 19, 12, 5, 46, 39, 32, 25, 18, 11, 4, 45, 38, 31, 24, 17, 10, 3, 44, 37, 30, 23, 16, 9, 2, 43, 36, 29, 22, 15, 8, 1, 92, 93, 94, 95, 96, 97, 98, 85, 86, 87, 88, 89, 90, 91, 78, 79, 80, 81, 82, 83, 84, 71, 72, 73, 74, 75, 76, 77, 64, 65, 66, 67, 68, 69, 70, 57, 58, 59, 60, 61, 62, 63, 50, 51, 52, 53, 54, 55, 56),
-    "reflect-x y x x" : (0, 49, 42, 35, 28, 21, 14, 7, 48, 41, 34, 27, 20, 13, 6, 47, 40, 33, 26, 19, 12, 5, 46, 39, 32, 25, 18, 11, 4, 45, 38, 31, 24, 17, 10, 3, 44, 37, 30, 23, 16, 9, 2, 43, 36, 29, 22, 15, 8, 1, 105, 104, 103, 102, 101, 100, 99, 112, 111, 110, 109, 108, 107, 106, 119, 118, 117, 116, 115, 114, 113, 126, 125, 124, 123, 122, 121, 120, 133, 132, 131, 130, 129, 128, 127, 140, 139, 138, 137, 136, 135, 134, 147, 146, 145, 144, 143, 142, 141, 56, 55, 54, 53, 52, 51, 50, 63, 62, 61, 60, 59, 58, 57, 70, 69, 68, 67, 66, 65, 64, 77, 76, 75, 74, 73, 72, 71, 84, 83, 82, 81, 80, 79, 78, 91, 90, 89, 88, 87, 86, 85, 98, 97, 96, 95, 94, 93, 92, 203, 202, 201, 200, 199, 198, 197, 210, 209, 208, 207, 206, 205, 204, 217, 216, 215, 214, 213, 212, 211, 224, 223, 222, 221, 220, 219, 218, 231, 230, 229, 228, 227, 226, 225, 238, 237, 236, 235, 234, 233, 232, 245, 244, 243, 242, 241, 240, 239, 154, 153, 152, 151, 150, 149, 148, 161, 160, 159, 158, 157, 156, 155, 168, 167, 166, 165, 164, 163, 162, 175, 174, 173, 172, 171, 170, 169, 182, 181, 180, 179, 178, 177, 176, 189, 188, 187, 186, 185, 184, 183, 196, 195, 194, 193, 192, 191, 190, 246, 253, 260, 267, 274, 281, 288, 247, 254, 261, 268, 275, 282, 289, 248, 255, 262, 269, 276, 283, 290, 249, 256, 263, 270, 277, 284, 291, 250, 257, 264, 271, 278, 285, 292, 251, 258, 265, 272, 279, 286, 293, 252, 259, 266, 273, 280, 287, 294),
-    "reflect-x y z z" : (0, 1, 8, 15, 22, 29, 36, 43, 2, 9, 16, 23, 30, 37, 44, 3, 10, 17, 24, 31, 38, 45, 4, 11, 18, 25, 32, 39, 46, 5, 12, 19, 26, 33, 40, 47, 6, 13, 20, 27, 34, 41, 48, 7, 14, 21, 28, 35, 42, 49, 203, 202, 201, 200, 199, 198, 197, 210, 209, 208, 207, 206, 205, 204, 217, 216, 215, 214, 213, 212, 211, 224, 223, 222, 221, 220, 219, 218, 231, 230, 229, 228, 227, 226, 225, 238, 237, 236, 235, 234, 233, 232, 245, 244, 243, 242, 241, 240, 239, 154, 153, 152, 151, 150, 149, 148, 161, 160, 159, 158, 157, 156, 155, 168, 167, 166, 165, 164, 163, 162, 175, 174, 173, 172, 171, 170, 169, 182, 181, 180, 179, 178, 177, 176, 189, 188, 187, 186, 185, 184, 183, 196, 195, 194, 193, 192, 191, 190, 105, 104, 103, 102, 101, 100, 99, 112, 111, 110, 109, 108, 107, 106, 119, 118, 117, 116, 115, 114, 113, 126, 125, 124, 123, 122, 121, 120, 133, 132, 131, 130, 129, 128, 127, 140, 139, 138, 137, 136, 135, 134, 147, 146, 145, 144, 143, 142, 141, 56, 55, 54, 53, 52, 51, 50, 63, 62, 61, 60, 59, 58, 57, 70, 69, 68, 67, 66, 65, 64, 77, 76, 75, 74, 73, 72, 71, 84, 83, 82, 81, 80, 79, 78, 91, 90, 89, 88, 87, 86, 85, 98, 97, 96, 95, 94, 93, 92, 294, 287, 280, 273, 266, 259, 252, 293, 286, 279, 272, 265, 258, 251, 292, 285, 278, 271, 264, 257, 250, 291, 284, 277, 270, 263, 256, 249, 290, 283, 276, 269, 262, 255, 248, 289, 282, 275, 268, 261, 254, 247, 288, 281, 274, 267, 260, 253, 246),
-    "reflect-x z x x" : (0, 148, 155, 162, 169, 176, 183, 190, 149, 156, 163, 170, 177, 184, 191, 150, 157, 164, 171, 178, 185, 192, 151, 158, 165, 172, 179, 186, 193, 152, 159, 166, 173, 180, 187, 194, 153, 160, 167, 174, 181, 188, 195, 154, 161, 168, 175, 182, 189, 196, 49, 42, 35, 28, 21, 14, 7, 48, 41, 34, 27, 20, 13, 6, 47, 40, 33, 26, 19, 12, 5, 46, 39, 32, 25, 18, 11, 4, 45, 38, 31, 24, 17, 10, 3, 44, 37, 30, 23, 16, 9, 2, 43, 36, 29, 22, 15, 8, 1, 197, 204, 211, 218, 225, 232, 239, 198, 205, 212, 219, 226, 233, 240, 199, 206, 213, 220, 227, 234, 241, 200, 207, 214, 221, 228, 235, 242, 201, 208, 215, 222, 229, 236, 243, 202, 209, 216, 223, 230, 237, 244, 203, 210, 217, 224, 231, 238, 245, 294, 287, 280, 273, 266, 259, 252, 293, 286, 279, 272, 265, 258, 251, 292, 285, 278, 271, 264, 257, 250, 291, 284, 277, 270, 263, 256, 249, 290, 283, 276, 269, 262, 255, 248, 289, 282, 275, 268, 261, 254, 247, 288, 281, 274, 267, 260, 253, 246, 147, 140, 133, 126, 119, 112, 105, 146, 139, 132, 125, 118, 111, 104, 145, 138, 131, 124, 117, 110, 103, 144, 137, 130, 123, 116, 109, 102, 143, 136, 129, 122, 115, 108, 101, 142, 135, 128, 121, 114, 107, 100, 141, 134, 127, 120, 113, 106, 99, 50, 57, 64, 71, 78, 85, 92, 51, 58, 65, 72, 79, 86, 93, 52, 59, 66, 73, 80, 87, 94, 53, 60, 67, 74, 81, 88, 95, 54, 61, 68, 75, 82, 89, 96, 55, 62, 69, 76, 83, 90, 97, 56, 63, 70, 77, 84, 91, 98),
-    "reflect-x z y y" : (0, 98, 91, 84, 77, 70, 63, 56, 97, 90, 83, 76, 69, 62, 55, 96, 89, 82, 75, 68, 61, 54, 95, 88, 81, 74, 67, 60, 53, 94, 87, 80, 73, 66, 59, 52, 93, 86, 79, 72, 65, 58, 51, 92, 85, 78, 71, 64, 57, 50, 246, 253, 260, 267, 274, 281, 288, 247, 254, 261, 268, 275, 282, 289, 248, 255, 262, 269, 276, 283, 290, 249, 256, 263, 270, 277, 284, 291, 250, 257, 264, 271, 278, 285, 292, 251, 258, 265, 272, 279, 286, 293, 252, 259, 266, 273, 280, 287, 294, 245, 238, 231, 224, 217, 210, 203, 244, 237, 230, 223, 216, 209, 202, 243, 236, 229, 222, 215, 208, 201, 242, 235, 228, 221, 214, 207, 200, 241, 234, 227, 220, 213, 206, 199, 240, 233, 226, 219, 212, 205, 198, 239, 232, 225, 218, 211, 204, 197, 1, 8, 15, 22, 29, 36, 43, 2, 9, 16, 23, 30, 37, 44, 3, 10, 17, 24, 31, 38, 45, 4, 11, 18, 25, 32, 39, 46, 5, 12, 19, 26, 33, 40, 47, 6, 13, 20, 27, 34, 41, 48, 7, 14, 21, 28, 35, 42, 49, 99, 106, 113, 120, 127, 134, 141, 100, 107, 114, 121, 128, 135, 142, 101, 108, 115, 122, 129, 136, 143, 102, 109, 116, 123, 130, 137, 144, 103, 110, 117, 124, 131, 138, 145, 104, 111, 118, 125, 132, 139, 146, 105, 112, 119, 126, 133, 140, 147, 196, 189, 182, 175, 168, 161, 154, 195, 188, 181, 174, 167, 160, 153, 194, 187, 180, 173, 166, 159, 152, 193, 186, 179, 172, 165, 158, 151, 192, 185, 178, 171, 164, 157, 150, 191, 184, 177, 170, 163, 156, 149, 190, 183, 176, 169, 162, 155, 148),
-}
+ 'z2': (0, 294, 293, 292, 291, 290, 289, 288, 287, 286, 285, 284, 283, 282, 281, 280, 279, 278, 277, 276, 275, 274, 273, 272, 271, 270, 269, 268, 267, 266, 265, 264, 263, 262, 261, 260, 259, 258, 257, 256, 255, 254, 253, 252, 251, 250, 249, 248, 247, 246, 196, 195, 194, 193, 192, 191, 190, 189, 188, 187, 186, 185, 184, 183, 182, 181, 180, 179, 178, 177, 176, 175, 174, 173, 172, 171, 170, 169, 168, 167, 166, 165, 164, 163, 162, 161, 160, 159, 158, 157, 156, 155, 154, 153, 152, 151, 150, 149, 148, 147, 146, 145, 144, 143, 142, 141, 140, 139, 138, 137, 136, 135, 134, 133, 132, 131, 130, 129, 128, 127, 126, 125, 124, 123, 122, 121, 120, 119, 118, 117, 116, 115, 114, 113, 112, 111, 110, 109, 108, 107, 106, 105, 104, 103, 102, 101, 100, 99, 98, 97, 96, 95, 94, 93, 92, 91, 90, 89, 88, 87, 86, 85, 84, 83, 82, 81, 80, 79, 78, 77, 76, 75, 74, 73, 72, 71, 70, 69, 68, 67, 66, 65, 64, 63, 62, 61, 60, 59, 58, 57, 56, 55, 54, 53, 52, 51, 50, 245, 244, 243, 242, 241, 240, 239, 238, 237, 236, 235, 234, 233, 232, 231, 230, 229, 228, 227, 226, 225, 224, 223, 222, 221, 220, 219, 218, 217, 216, 215, 214, 213, 212, 211, 210, 209, 208, 207, 206, 205, 204, 203, 202, 201, 200, 199, 198, 197, 49, 48, 47, 46, 45, 44, 43, 42, 41, 40, 39, 38, 37, 36, 35, 34, 33, 32, 31, 30, 29, 28, 27, 26, 25, 24, 23, 22, 21, 20, 19, 18, 17, 16, 15, 14, 13, 12, 11, 10, 9, 8, 7, 6, 5, 4, 3, 2, 1)}
 
 def rotate_777(cube, step):
     return [cube[x] for x in swaps_777[step]]
