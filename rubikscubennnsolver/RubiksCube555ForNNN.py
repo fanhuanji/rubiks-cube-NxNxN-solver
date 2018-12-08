@@ -41,28 +41,20 @@ class LookupTable555CycleEdges(LookupTable):
     0-deep
     lookup-table-555-step810-edges.txt
     ==================================
-    3 steps has 1 entries (0 percent, 0.00x previous step)
+    1 steps has 1 entries (0 percent, 0.00x previous step)
     5 steps has 894 entries (0 percent, 894.00x previous step)
     6 steps has 2,295 entries (0 percent, 2.57x previous step)
-    7 steps has 17,562 entries (1 percent, 7.65x previous step)
-    8 steps has 145,519 entries (12 percent, 8.29x previous step)
-    9 steps has 964,432 entries (85 percent, 6.63x previous step)
+    7 steps has 17,650 entries (0 percent, 7.69x previous step)
+    8 steps has 145,639 entries (5 percent, 8.25x previous step)
+    9 steps has 964,668 entries (37 percent, 6.62x previous step)
+    10 steps has 1,388,230 entries (54 percent, 1.44x previous step)
+    11 steps has 10,060 entries (0 percent, 0.01x previous step)
+    12 steps has 16,575 entries (0 percent, 1.65x previous step)
+    13 steps has 6,798 entries (0 percent, 0.41x previous step)
+    14 steps has 488 entries (0 percent, 0.07x previous step)
 
-    Total: 1,130,703 entries
-
-
-    1-deep
-    lookup-table-555-step810-edges.txt
-    ==================================
-    3 steps has 1 entries (0 percent, 0.00x previous step)
-    5 steps has 894 entries (0 percent, 894.00x previous step)
-    6 steps has 4,265 entries (0 percent, 4.77x previous step)
-    7 steps has 36,300 entries (0 percent, 8.51x previous step)
-    8 steps has 269,023 entries (2 percent, 7.41x previous step)
-    9 steps has 2,083,100 entries (18 percent, 7.74x previous step)
-    10 steps has 8,786,611 entries (78 percent, 4.22x previous step)
-
-    Total: 11,180,194 entries
+    Total: 2,553,298 entries
+    Average: 9.51 moves
     """
 
     def __init__(self, parent):
@@ -73,12 +65,12 @@ class LookupTable555CycleEdges(LookupTable):
             'TBD',
 
             # 0-deep
-            #linecount=1130703,
-            #filesize=81410616,
+            linecount=2553298,
+            filesize=217030330,
 
             # 1-deep
-            linecount=11180194,
-            filesize=838514550,
+            #linecount=11180194,
+            #filesize=838514550,
         )
 
     def state(self):
@@ -871,7 +863,6 @@ class RubiksCube555ForNNN(RubiksCube555):
         self.solution.append('CENTERS_SOLVED')
 
         # algorithms table approach is WIP
-        '''
         LR_pairable = self.edges_pairable_without_LR()
         log.info("%s: %d pairable without LR (%s)" %
             (self, len(LR_pairable), " ".join(LR_pairable)))
@@ -947,5 +938,6 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.pair_second_four_edges_via_l4e()
             self.stage_final_four_edges_in_x_plane()
             self.pair_x_plane_edges_in_l4e()
+        '''
 
         self.solution.append('EDGES_GROUPED')
