@@ -863,6 +863,7 @@ class RubiksCube555ForNNN(RubiksCube555):
         self.solution.append('CENTERS_SOLVED')
 
         # algorithms table approach is WIP
+        '''
         LR_pairable = self.edges_pairable_without_LR()
         log.info("%s: %d pairable without LR (%s)" %
             (self, len(LR_pairable), " ".join(LR_pairable)))
@@ -938,6 +939,5 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.pair_second_four_edges_via_l4e()
             self.stage_final_four_edges_in_x_plane()
             self.pair_x_plane_edges_in_l4e()
-        '''
 
         self.solution.append('EDGES_GROUPED')
