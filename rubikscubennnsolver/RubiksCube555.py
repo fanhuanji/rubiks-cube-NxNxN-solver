@@ -477,6 +477,229 @@ wings_for_recolor_555= (
 )
 
 
+def get_edges_paired_binary_signature_555(edges_state):
+    """
+    This assumes all midges are at their native orientation
+    """
+    # OOopPPQQqrRRsSSTTtuUUVVvWWwxXXYYyzZZ
+
+    # 000 000 000 011 111 111 112 222 222 222 333 333
+    # 012 345 678 901 234 567 890 123 456 789 012 345
+    # OOo pPP QQq rRR sSS TTt uUU VVv WWw xXX YYy zZZ
+    results = []
+
+    # OOo
+    if edges_state[0] == "O":
+        results.append("1")
+    else:
+        results.append("0")
+
+    if edges_state[2] == "o":
+        results.append("1")
+    else:
+        results.append("0")
+
+
+    # pPP
+    if edges_state[3] == "p":
+        results.append("1")
+    else:
+        results.append("0")
+
+    if edges_state[5] == "P":
+        results.append("1")
+    else:
+        results.append("0")
+
+    # QQq
+    if edges_state[6] == "Q":
+        results.append("1")
+    else:
+        results.append("0")
+
+    if edges_state[8] == "q":
+        results.append("1")
+    else:
+        results.append("0")
+
+    # rRR
+    if edges_state[9] == "r":
+        results.append("1")
+    else:
+        results.append("0")
+
+    if edges_state[11] == "R":
+        results.append("1")
+    else:
+        results.append("0")
+
+    # sSS
+    if edges_state[12] == "s":
+        results.append("1")
+    else:
+        results.append("0")
+
+    if edges_state[14] == "S":
+        results.append("1")
+    else:
+        results.append("0")
+
+    # TTt
+    if edges_state[15] == "T":
+        results.append("1")
+    else:
+        results.append("0")
+
+    if edges_state[17] == "t":
+        results.append("1")
+    else:
+        results.append("0")
+
+    # uUU
+    if edges_state[18] == "u":
+        results.append("1")
+    else:
+        results.append("0")
+
+    if edges_state[20] == "U":
+        results.append("1")
+    else:
+        results.append("0")
+
+    # VVv
+    if edges_state[21] == "V":
+        results.append("1")
+    else:
+        results.append("0")
+
+    if edges_state[23] == "v":
+        results.append("1")
+    else:
+        results.append("0")
+
+    # WWw
+    if edges_state[24] == "W":
+        results.append("1")
+    else:
+        results.append("0")
+
+    if edges_state[26] == "w":
+        results.append("1")
+    else:
+        results.append("0")
+
+    # xXX
+    if edges_state[27] == "x":
+        results.append("1")
+    else:
+        results.append("0")
+
+    if edges_state[29] == "X":
+        results.append("1")
+    else:
+        results.append("0")
+
+    # YYy
+    if edges_state[30] == "Y":
+        results.append("1")
+    else:
+        results.append("0")
+
+    if edges_state[32] == "y":
+        results.append("1")
+    else:
+        results.append("0")
+
+    # zZZ
+    if edges_state[33] == "z":
+        results.append("1")
+    else:
+        results.append("0")
+
+    if edges_state[35] == "Z":
+        results.append("1")
+    else:
+        results.append("0")
+
+    return "".join(results)
+
+
+def get_wing_pair_count_555(strA, strB):
+    wing_count = 0
+    edge_count = 0
+
+    if strA == "tOVrPPQQWTRRsSSqTvuUUOVXpWwxXoYYyzZZ" and strB == "OOorPPQQWTRRsSSqTtuUUVVvpWwxXXYYyzZZ":
+        debug = True
+    else:
+        debug = False
+
+    # 000 000 000 011 111 111 112 222 222 222 333 333
+    # 012 345 678 901 234 567 890 123 456 789 012 345
+
+    # OOO PPP SqQ RrU xss TTT Yuu VVV WWW Xxq yyr ZZZ (14)
+    # OOO PPP QQQ RRR SSS TTT UUU VVV WWW XXX YYY ZZZ (4)
+    # SOY opR zqT urU xsp wTO Zuv tVr VWX sxq yyQ PzW
+    '''
+    matching_midges = []
+
+    for midge in (1, 4, 7, 10, 13, 16, 19, 22, 25, 28, 31, 34):
+        if strA[midge] == strB[midge]:
+            matching_midges.append(strA[midge].lower())
+    '''
+
+    if debug:
+        log.info(' '.join(strA[i:i+3] for i in range(0, len(strA), 3)))
+        log.info(' '.join(strB[i:i+3] for i in range(0, len(strB), 3)))
+        #log.info(matching_midges)
+
+    matches = []
+
+    for edge_index in range(12):
+        wing_pre = edge_index * 3
+        midge = wing_pre + 1
+        wing_post = wing_pre + 2
+
+        wing_pre_A = strA[wing_pre]
+        wing_pre_B = strB[wing_pre]
+        midge_A = strA[midge]
+        midge_B = strB[midge]
+        wing_post_A = strA[wing_post]
+        wing_post_B = strB[wing_post]
+
+        if wing_pre_A == wing_pre_B:
+            wing_count += 1
+
+            if debug:
+                log.info("wing_pre_A %s matches" % wing_pre_A)
+
+            if wing_pre_A.lower() in matches:
+                if debug:
+                    log.info("edge %s will pair\n" % wing_pre_A)
+                edge_count += 1
+            else:
+                matches.append(wing_pre_A.lower())
+
+        if wing_post_A == wing_post_B:
+            wing_count += 1
+
+            if debug:
+                log.info("wing_post_A %s matches" % wing_post_A)
+
+            if wing_post_A.lower() in matches:
+                if debug:
+                    log.info("edge %s will pair\n" % wing_post_A)
+                edge_count += 1
+            else:
+                matches.append(wing_post_A.lower())
+
+    if debug:
+        log.info("wing_count: %d" % wing_count)
+        log.info("matches: %s" % pformat(matches))
+        log.info("edge_count: %d" % edge_count)
+
+    return (wing_count, edge_count)
+
+
 def edges_recolor_pattern_555(state, only_colors=[], uppercase_paired_edges=False):
     midges_map = {
         'UB': None,

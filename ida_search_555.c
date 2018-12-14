@@ -564,9 +564,8 @@ ida_search_complete_ULFRBD_centers_555 (char *cube)
         cube[68] == '1' &&
         cube[69] == '1') {
 
-        return 1;
+        // return 1;
 
-        /*
         unsigned int wings_paired_count = 0;
         wings_paired_count = get_wings_paired_count(cube);
         LOG("CENTERS SOLVED!! %d wings paired\n", wings_paired_count);
@@ -576,7 +575,7 @@ ida_search_complete_ULFRBD_centers_555 (char *cube)
         } else {
             return 0;
         }
-         */
+
     } else {
         return 0;
     }

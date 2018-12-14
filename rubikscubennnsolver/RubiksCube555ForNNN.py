@@ -22,6 +22,8 @@ from rubikscubennnsolver.RubiksCube555 import (
     LookupTable555TCenterSolve,
     LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge,
     LookupTable555LRCenterStage432PairOneEdge,
+    get_wing_pair_count_555,
+    get_edges_paired_binary_signature_555,
 )
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
@@ -55,22 +57,58 @@ class LookupTable555CycleEdges(LookupTable):
 
     Total: 2,553,298 entries
     Average: 9.51 moves
+
+
+    1-deep
+    lookup-table-555-step810-edges.txt
+    ==================================
+    1 steps has 1 entries (0 percent, 0.00x previous step)
+    5 steps has 894 entries (0 percent, 894.00x previous step)
+    6 steps has 4,265 entries (0 percent, 4.77x previous step)
+    7 steps has 36,300 entries (0 percent, 8.51x previous step)
+    8 steps has 269,199 entries (0 percent, 7.42x previous step)
+    9 steps has 2,083,284 entries (6 percent, 7.74x previous step)
+    10 steps has 10,068,164 entries (29 percent, 4.83x previous step)
+    11 steps has 21,482,703 entries (63 percent, 2.13x previous step)
+    12 steps has 64,179 entries (0 percent, 0.00x previous step)
+    13 steps has 69,678 entries (0 percent, 1.09x previous step)
+    14 steps has 15,152 entries (0 percent, 0.22x previous step)
+    15 steps has 376 entries (0 percent, 0.02x previous step)
+
+    Total: 34,094,195 entries
+
+
+    lookup-table-5x5x5-step900-edges.txt.10-deep
+    ============================================
+    5 steps has 894 entries (0 percent, 0.00x previous step)
+    6 steps has 2,295 entries (0 percent, 2.57x previous step)
+    7 steps has 17,562 entries (0 percent, 7.65x previous step)
+    8 steps has 146,075 entries (1 percent, 8.32x previous step)
+    9 steps has 976,592 entries (10 percent, 6.69x previous step)
+    10 steps has 8,199,691 entries (87 percent, 8.40x previous step)
+
+    Total: 9,343,109 entries
+    Average: 9.86 moves
     """
 
     def __init__(self, parent):
         LookupTable.__init__(
             self,
             parent,
-            'lookup-table-555-step810-edges.txt',
+            #'lookup-table-555-step810-edges.txt',
+            'lookup-table-5x5x5-step900-edges.txt',
             'TBD',
 
             # 0-deep
-            linecount=2553298,
-            filesize=217030330,
+            #linecount=2553298,
+            #filesize=280862780,
 
             # 1-deep
-            #linecount=11180194,
-            #filesize=838514550,
+            #linecount=34094195,
+            #filesize=2966194965,
+
+            linecount=9343109,
+            filesize=934310900,
         )
 
     def state(self):
@@ -80,9 +118,51 @@ class LookupTable555CycleEdges(LookupTable):
 
     def ida_heuristic(self):
         state = edges_recolor_pattern_555(self.parent.state[:])
-        state = ''.join([state[index] for index in wings_for_edges_pattern_555])
-        cost_to_goal = self.heuristic(state)
+        edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+        signature = get_edges_paired_binary_signature_555(edges_state)
+        cost_to_goal = self.heuristic("%s_%s".format(signature, edges_state))
         return (state, cost_to_goal)
+
+    def best_match(self, state_to_find, init_wing_count):
+        max_wing_pair_count = 0
+        max_line = None
+        max_steps_len = 9999
+        max_edges_pair_count = 0
+
+        signature = get_edges_paired_binary_signature_555(state_to_find)
+        log.info("%s: signature %s" % (self, signature))
+
+        loose_signatures = self.find_edge_entries_with_loose_signature(signature)
+        log.info("{}: found {} loose signatures".format(self, len(loose_signatures)))
+
+        for loose_signature in loose_signatures:
+            (signature_edges_state, steps) = loose_signature.split(":")
+            (_signature, edges_state) = signature_edges_state.split("_")
+
+            steps = steps.split()
+            len_steps = len(steps)
+            (wing_pair_count, edges_pair_count) = get_wing_pair_count_555(state_to_find, edges_state)
+            wing_pair_count -= init_wing_count
+
+            # pair as many wings as possible
+            #if (wing_pair_count > max_wing_pair_count or
+            #    (wing_pair_count == max_wing_pair_count and len_steps < max_steps_len) or
+            #    (wing_pair_count == max_wing_pair_count and len_steps == max_steps_len and edges_pair_count > max_edges_pair_count)):
+
+            # pair as many edges as possible
+            if (edges_pair_count > max_edges_pair_count or
+                (edges_pair_count == max_edges_pair_count and len_steps < max_steps_len) or
+                (edges_pair_count == max_edges_pair_count and len_steps == max_steps_len and wing_pair_count > max_wing_pair_count)):
+
+                max_wing_pair_count = wing_pair_count
+                max_line = "{}:{}".format(edges_state, " ".join(steps))
+                max_steps_len = len_steps
+                max_edges_pair_count = edges_pair_count
+                #log.info("%s: %s vs %s will pair %d wings in %d moves" % (self, state_to_find, state, max_wing_pair_count, max_steps_len))
+                log.info("%s: %s will pair %d wings and %d edges in %d moves %s" %
+                    (self, edges_state, max_wing_pair_count, max_edges_pair_count, max_steps_len, " ".join(steps)))
+
+        return (max_wing_pair_count, max_edges_pair_count, max_line)
 
 
 
@@ -186,7 +266,6 @@ class LookupTable555StageSecondFourEdges(LookupTable):
                 state[partner_index] = 'x'
 
         edges_state = ''.join([state[square_index] for square_index in l4e_wings_555])
-        #log.info("FOO: %s" % edges_state)
         return edges_state
 
 
@@ -485,8 +564,6 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.state = original_state[:]
             self.solution = original_solution[:]
 
-            #log.info("")
-            #log.info("")
             #log.info("%s: pre_steps %s" % (self, " ".join(pre_steps)))
             for step in pre_steps:
                 self.rotate(step)
@@ -814,7 +891,7 @@ class RubiksCube555ForNNN(RubiksCube555):
         for pre_steps in pre_steps_to_try:
             self.state = tmp_state[:]
             self.solution = tmp_solution[:]
-    
+
             for step in pre_steps:
                 self.rotate(step)
 
@@ -832,7 +909,6 @@ class RubiksCube555ForNNN(RubiksCube555):
         for (state, steps) in results.items():
             steps = list(pre_steps_for_state[state]) + steps.split()
 
-            # dwalton here now
             if min_steps is None or len(steps) < len(min_steps):
                 min_steps = steps
                 log.info("%s: get_final_edges_steps %s (NEW MIN %d)" % (self, " ".join(steps), len(steps)))
@@ -863,18 +939,20 @@ class RubiksCube555ForNNN(RubiksCube555):
         self.solution.append('CENTERS_SOLVED')
 
         # algorithms table approach is WIP
-        '''
         LR_pairable = self.edges_pairable_without_LR()
         log.info("%s: %d pairable without LR (%s)" %
             (self, len(LR_pairable), " ".join(LR_pairable)))
 
-        tmp_state = self.state[:]
-        tmp_solution = self.solution[:]
+        original_state = self.state[:]
+        original_solution = self.solution[:]
 
         while not self.edges_paired():
             pre_wing_count = 24 - self.get_non_paired_wings_count()
             pre_edges_count = self.get_paired_edges_count()
 
+            log.info("*" * 80)
+            log.info("*" * 80)
+            log.info("*" * 80)
             if pre_edges_count >= 8:
                 self.stage_final_four_edges_in_x_plane()
                 self.pair_x_plane_edges_in_l4e()
@@ -889,13 +967,65 @@ class RubiksCube555ForNNN(RubiksCube555):
                 break
 
             else:
-                self.edges_flip_to_original_orientation()
-                state = self.lt_cycle_edges.state()
-                line = self.lt_cycle_edges.best_match(state, pre_wing_count)
-                (_state, steps) = line.strip().split(":")
+                tmp_state = self.state[:]
+                tmp_solution = self.solution[:]
+                tmp_solution_len = len(tmp_solution)
 
-                for step in steps.split():
-                    self.rotate(step)
+                min_wing_pair_avg = 99
+                #max_wing_pair_count = 0
+                #max_line = None
+                #max_steps_len = 9999
+                #max_edges_pair_count = 0
+
+                # dwalton
+                for pre_steps in pre_steps_to_try:
+
+                    #if pre_wing_count <= 4 and len(pre_steps) > 1:
+                    #    break
+
+                    if len(pre_steps) > 1:
+                        break
+
+                    self.state = tmp_state[:]
+                    self.solution = tmp_solution[:]
+
+                    log.info("%s: FOO pre_steps %s" % (self, " ".join(pre_steps)))
+                    for step in pre_steps:
+                        self.rotate(step)
+
+                    self.edges_flip_to_original_orientation()
+                    edges_state = self.lt_cycle_edges.state()
+                    (wing_pair_count, edge_pair_count, line) = self.lt_cycle_edges.best_match(edges_state, pre_wing_count)
+                    (_state, steps) = line.strip().split(":")
+                    steps = steps.split()
+
+                    for step in steps:
+                        self.rotate(step)
+
+                    steps_len = len(self.solution[tmp_solution_len:])
+                    wing_pair_avg = float(steps_len / wing_pair_count)
+
+                    if (wing_pair_avg < min_wing_pair_avg or
+                        (wing_pair_avg == min_wing_pair_avg and edge_pair_count > max_edge_pair_count)):
+
+                        max_state = self.state[:]
+                        max_solution = self.solution[:]
+                        #max_wing_pair_count = wing_pair_count
+                        #max_steps_len = steps_len
+                        max_edge_pair_count = edge_pair_count
+                        min_wing_pair_avg = wing_pair_avg
+                        log.warning("%s: %s will pair %d wings and %d edges in %d moves, avg %s,  %s (NEW MIN)\n\n\n" %
+                            (self, edges_state, wing_pair_count, max_edge_pair_count, steps_len, wing_pair_avg, " ".join(steps)))
+                    else:
+                        log.info("\n\n\n")
+                        continue
+
+                    #if pre_wing_count <= 7:
+                    #    break
+
+                self.state = max_state[:]
+                self.solution = max_solution[:]
+
                 self.print_cube()
                 post_wing_count = 24 - self.get_non_paired_wings_count()
                 wing_delta = post_wing_count - pre_wing_count
@@ -918,9 +1048,9 @@ class RubiksCube555ForNNN(RubiksCube555):
                 log.info("%s: kociemba %s" % (self, self.get_kociemba_string(True)))
                 log.info("\n\n\n")
 
-        steps = self.solution[len(tmp_solution):]
-        self.state = tmp_state[:]
-        self.solution = tmp_solution[:]
+        steps = self.solution[len(original_solution):]
+        self.state = original_state[:]
+        self.solution = original_solution[:]
 
         for step in steps:
             if step.startswith("COMMENT"):
@@ -939,5 +1069,6 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.pair_second_four_edges_via_l4e()
             self.stage_final_four_edges_in_x_plane()
             self.pair_x_plane_edges_in_l4e()
+        '''
 
         self.solution.append('EDGES_GROUPED')
