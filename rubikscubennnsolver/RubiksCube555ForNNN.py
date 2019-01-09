@@ -21,11 +21,13 @@ from rubikscubennnsolver.RubiksCube555 import (
     LookupTable555LRTCenterStageEven,
     LookupTable555TCenterSolve,
     LookupTable555XPlaneYPlaneEdgesOrientPairOneEdge,
+    midges_for_horseshoe_555,
 )
 from rubikscubennnsolver.LookupTable import (
     LookupTable,
     LookupTableIDA,
     LookupTableHashCostOnly,
+    NoSteps,
 )
 from pprint import pformat
 import itertools
@@ -33,6 +35,101 @@ import logging
 import sys
 
 log = logging.getLogger(__name__)
+
+
+class LookupTable555StageFirstSixEdges(LookupTable):
+    """
+    lookup-table-5x5x5-step100-stage-first-six-edges.txt
+    ====================================================
+    2 steps has 12 entries (0 percent, 0.00x previous step)
+    3 steps has 86 entries (0 percent, 7.17x previous step)
+    4 steps has 710 entries (0 percent, 8.26x previous step)
+    5 steps has 11,814 entries (0 percent, 16.64x previous step)
+    6 steps has 113,246 entries (0 percent, 9.59x previous step)
+    7 steps has 993,363 entries (1 percent, 8.77x previous step)
+    8 steps has 9,034,622 entries (9 percent, 9.09x previous step)
+    9 steps has 87,411,594 entries (89 percent, 9.68x previous step)
+
+    Total: 97,565,447 entries
+    Average: 8.88 moves
+    """
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step100-stage-first-six-edges.txt',
+            'TBD',
+            linecount=97565447,
+            filesize=10537068276,
+        )
+
+    def state(self, wing_strs_to_stage):
+        state = self.parent.state[:]
+
+        for square_index in l4e_wings_555:
+            partner_index = edges_partner_555[square_index]
+            square_value = state[square_index]
+            partner_value = state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+
+            if wing_str in wing_strs_to_stage:
+                state[square_index] = 'L'
+                state[partner_index] = 'L'
+            else:
+                state[square_index] = '-'
+                state[partner_index] = '-'
+
+        edges_state = ''.join([state[square_index] for square_index in edges_555])
+        return edges_state
+
+
+class LookupTable555SolveFirstSixEdges(LookupTable):
+    """
+    lookup-table-5x5x5-step100-solve-first-six-edges.txt
+    ====================================================
+    2 steps has 1 entries (0 percent, 0.00x previous step)
+    5 steps has 10 entries (0 percent, 10.00x previous step)
+    6 steps has 93 entries (0 percent, 9.30x previous step)
+    7 steps has 360 entries (0 percent, 3.87x previous step)
+    8 steps has 755 entries (0 percent, 2.10x previous step)
+    9 steps has 5,001 entries (0 percent, 6.62x previous step)
+    10 steps has 19,652 entries (0 percent, 3.93x previous step)
+    11 steps has 78,556 entries (0 percent, 4.00x previous step)
+    12 steps has 400,860 entries (0 percent, 5.10x previous step)
+    13 steps has 1,899,168 entries (2 percent, 4.74x previous step)
+    14 steps has 8,393,229 entries (9 percent, 4.42x previous step)
+    15 steps has 32,970,960 entries (36 percent, 3.93x previous step)
+    16 steps has 46,785,112 entries (51 percent, 1.42x previous step)
+
+    Total: 90,553,757 entries
+    """
+    def __init__(self, parent):
+        LookupTable.__init__(
+            self,
+            parent,
+            'lookup-table-5x5x5-step100-solve-first-six-edges.txt',
+            'OOopPPQQqrRRsSSTTtuUUVVvWWwxXXYYyzZZ',
+            linecount=90553757,
+            max_depth=16,
+            filesize=8602606915)
+
+    def ida_heuristic(self):
+        state = edges_recolor_pattern_555(self.parent.state[:])
+        edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
+
+        #  UB  UL  UR  UF  LB  LF  RF  RB  DF  DL  DR  DB
+        # OOo pPP QQq rRR sSS TTt uUU VVv WWw xXX YYy zZZ
+        # 000 000 000 011 111 111 112 222 222 222 333 333
+        # 012 345 678 901 234 567 890 123 456 789 012 345
+
+        # For the horseshoe patter we only care about UB, UL, UR, UF, DF and DB
+        # Treat LB LF RF FB DL DR as paired
+        edges_state = edges_state[0:12] + "sSSTTtuUUVVv" + edges_state[24:27] + "xXXYYy" + edges_state[33:36]
+        #log.info("%s: edges_state %s" % (self, edges_state))
+
+        cost_to_goal = self.heuristic(edges_state)
+
+        return (edges_state, cost_to_goal)
 
 
 class LookupTable555StageFirstFourEdges(LookupTable):
@@ -331,8 +428,218 @@ class RubiksCube555ForNNN(RubiksCube555):
         # No need to preload these, they use binary_seach_multiple
         self.lt_edges_stage_first_four = LookupTable555StageFirstFourEdges(self)
         self.lt_edges_stage_second_four = LookupTable555StageSecondFourEdges(self)
+        self.lt_edges_stage_first_six = LookupTable555StageFirstSixEdges(self)
+        self.lt_edges_solve_first_six = LookupTable555SolveFirstSixEdges(self)
 
         self.lt_edges_x_plane_centers_solved = LookupTable555EdgesXPlaneCentersSolved(self)
+
+    def rotate_horse_shoe(self, wing_strs):
+        """
+        rotate the cube so that the horse-shoe pattern has 4 unpaired edges on side U
+        and the other two at DF DB
+        """
+        horse_shoe_edges = []
+
+        for square_index in midges_for_horseshoe_555:
+            partner_index = edges_partner_555[square_index]
+            square_value = self.state[square_index]
+            partner_value = self.state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+
+            if wing_str in wing_strs:
+                horse_shoe_edges.append(square_index)
+
+        horse_shoe_edges.sort()
+
+        if horse_shoe_edges == [23, 36, 40, 86, 90, 128]:
+            self.rotate("x")
+            self.rotate("y")
+
+        elif horse_shoe_edges == [3, 23, 128, 136, 140, 148]:
+            self.rotate("x")
+            self.rotate("x")
+
+        elif horse_shoe_edges == [3, 11, 15, 23, 128, 148]:
+            pass
+
+        elif horse_shoe_edges == [3, 11, 15, 23, 136, 140]:
+            self.rotate("y")
+
+        elif horse_shoe_edges == [11, 15, 86, 90, 136, 140]:
+            self.rotate("z'")
+            self.rotate("y")
+
+        elif horse_shoe_edges == [11, 15, 36, 40, 136, 140]:
+            self.rotate("z")
+            self.rotate("y")
+
+        elif horse_shoe_edges == [15, 36, 40, 86, 90, 140]:
+            self.rotate("z'")
+
+        elif horse_shoe_edges == [11, 36, 40, 86, 90, 136]:
+            self.rotate("z")
+
+        elif horse_shoe_edges == [11, 15, 128, 136, 140, 148]:
+            self.rotate("x")
+            self.rotate("x")
+            self.rotate("y")
+
+        else:
+            #self.print_horse_shoe()
+            self.print_cube()
+            self.print_cube_layout()
+            log.info("Add support for {}".format(horse_shoe_edges))
+            sys.exit(0)
+
+    def print_horse_shoe(self, wing_strs):
+
+        # Remember what things looked like
+        original_state = self.state[:]
+
+        self.nuke_corners()
+        self.nuke_centers()
+
+        for square_index in edges_555:
+            partner_index = edges_partner_555[square_index]
+            square_value = self.state[square_index]
+            partner_value = self.state[partner_index]
+
+            if square_value == "L" and partner_value == "L":
+                pass
+            else:
+                wing_str = wing_str_map[square_value + partner_value]
+                if wing_str in wing_strs:
+                    pass
+                else:
+                    self.state[square_index] = "-"
+                    self.state[partner_index] = "-"
+
+        self.print_cube()
+        self.state = original_state[:]
+
+    def stage_first_six_edges_555(self):
+        """
+        There are 12!/(6!*6!) or 924 different permutations of 6-edges out of 12-edges, use the one
+        that gives us the shortest solution for getting 6-edges staged.
+        """
+
+        # Remember what things looked like
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(self.solution)
+
+        min_solution_len = None
+        min_solution_steps = None
+        min_wing_strs = None
+
+        for pre_steps in pre_steps_to_try:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            #log.info("")
+            #log.info("")
+            #log.info("%s: pre_steps %s" % (self, " ".join(pre_steps)))
+            for step in pre_steps:
+                self.rotate(step)
+
+            post_pre_steps_state = self.state[:]
+            post_pre_steps_solution = self.solution[:]
+            states_to_find = []
+            state_to_wing_str_combo = {}
+
+            for wing_strs in itertools.combinations(wing_strs_all, 6):
+                state = self.lt_edges_stage_first_six.state(wing_strs)
+                state_to_wing_str_combo[state] = wing_strs
+                states_to_find.append(state)
+
+            #log.info("%s: %d states_to_find" % (self, len(states_to_find)))
+            results = self.lt_edges_stage_first_six.binary_search_multiple(states_to_find)
+            len_results = len(results)
+            log.info("%s: pre_steps %s, %d/%d states found" % (self, " ".join(pre_steps), len(results), len(states_to_find)))
+
+            # We sort the keys of the dict so that the order is the same everytime, this isn't
+            # required but makes troubleshooting easier.
+            for (line_number, key) in enumerate(sorted(results.keys())):
+                steps = results[key]
+                self.state = post_pre_steps_state[:]
+                self.solution = post_pre_steps_solution[:]
+                wing_strs = state_to_wing_str_combo[key]
+
+                for step in steps.split():
+                    self.rotate(step)
+
+                self.rotate_horse_shoe(wing_strs)
+                #self.print_horse_shoe(wing_strs)
+
+                solution_steps = self.solution[original_solution_len:]
+                solution_len = self.get_solution_len_minus_rotates(solution_steps)
+
+                try:
+                    # dwalton
+                    self.pair_first_six_edges_555(False)
+                    self.rotate("z")
+                    self.rotate("D2")
+                    self.rotate("R2")
+                    self.pair_first_six_edges_555(False)
+                except NoSteps as e:
+                    log.info("%s: %d/%d 1st 6-edges can be staged in %d steps but we do not have an entry to solve them (15-deep for now)" % (
+                        self, line_number+1, len_results, solution_len))
+                    continue
+
+                if min_solution_len is None or solution_len < min_solution_len:
+                    log.info("%s: %d/%d 1st 6-edges can be staged in %d steps %s (NEW MIN)" % (
+                        self, line_number+1, len_results, solution_len, ' '.join(solution_steps)))
+                    min_solution_len = solution_len
+                    min_solution_steps = solution_steps
+                    min_wing_strs = wing_strs
+                else:
+                    log.info("%s: %d/%d 1st 6-edges can be staged in %d steps" % (
+                        self, line_number+1, len_results, solution_len))
+
+            if min_solution_len is not None:
+                self.state = original_state[:]
+                self.solution = original_solution[:]
+
+                for step in min_solution_steps:
+                    self.rotate(step)
+                #self.print_horse_shoe(wing_strs)
+                break
+
+        if min_wing_strs:
+            self.print_horse_shoe(min_wing_strs)
+            self.solution.append("COMMENT_%d_steps_555_horseshoe_staged" % self.get_solution_len_minus_rotates(self.solution[original_solution_len:]))
+            log.info("%s: 1st 6-edges staged to horseshoe, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
+        else:
+            raise SolveError("Could not pair horseshoe edges")
+
+    def pair_first_six_edges_555(self, print_the_cube):
+
+        # Remember what things looked like
+        original_state = self.state[:]
+        original_solution = self.solution[:]
+        original_solution_len = len(self.solution)
+
+        # Recolor the edges to they are all oriented using their original orientation.
+        # We do this because our tables were built with all edges at their original orientation.
+        self.edges_flip_to_original_orientation()
+
+        # Now we can solve
+        self.lt_edges_solve_first_six.solve()
+
+        # Put the cube back the way it was (to undo all of the recoloring we did) and apply the solution
+        six_edges_solution = self.solution[original_solution_len:]
+        self.state = original_state[:]
+        self.solution = original_solution[:]
+
+        for step in six_edges_solution:
+            self.rotate(step)
+
+        if print_the_cube:
+            self.print_cube()
+            self.solution.append("COMMENT_%d_steps_555_six_edges_paired" %\
+                self.get_solution_len_minus_rotates(self.solution[original_solution_len:]))
+            log.info("%s: 6-edges paired in %d steps, %d steps in" %\
+                (self, len(six_edges_solution), self.get_solution_len_minus_rotates(self.solution)))
 
     def stage_first_four_edges_555(self):
         """
@@ -621,7 +928,7 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.state[x] = centers_recolor[self.state[x]]
 
         # Recolor the edges to they are all oriented using their original orientation.
-        # We do this because our tables were built will all edges at their original orientation.
+        # We do this because our tables were built with all edges at their original orientation.
         self.edges_flip_to_original_orientation()
 
         # Now we can solve
@@ -629,7 +936,7 @@ class RubiksCube555ForNNN(RubiksCube555):
         '''
 
         # Recolor the edges to they are all oriented using their original orientation.
-        # We do this because our tables were built will all edges at their original orientation.
+        # We do this because our tables were built with all edges at their original orientation.
         self.edges_flip_to_original_orientation()
 
         # Now we can solve
@@ -756,9 +1063,21 @@ class RubiksCube555ForNNN(RubiksCube555):
         self.solution.append('CENTERS_SOLVED')
 
         if not self.edges_paired():
+            self.stage_first_six_edges_555()
+            self.pair_first_six_edges_555(True)
+            self.rotate("z")
+            self.rotate("D2")
+            self.rotate("R2")
+            self.print_cube()
+            #self.compress_solution()
+            #self.print_solution(True)
+            self.pair_first_six_edges_555(True)
+            # dwalton
+            '''
             self.stage_first_four_edges_555()
             self.stage_second_four_edges_555()
             self.pair_all_three_l4e()
             self.print_cube()
+            '''
 
         self.solution.append('EDGES_GROUPED')

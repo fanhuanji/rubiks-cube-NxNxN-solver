@@ -243,6 +243,26 @@ wings_for_edges_pattern_555 = (
     147, 148, 149
 )
 
+
+midges_for_horseshoe_555 = (
+    3, # Upper
+    11,
+    15,
+    23,
+
+    36, # Left
+    40,
+
+    86, # Right
+    90,
+
+    128, # Down
+    136,
+    140,
+    148,
+)
+
+
 high_edges_555 = (
     (2, 104),
     (10, 79),
@@ -1707,8 +1727,8 @@ class LookupTableIDA555EdgesZPlane(LookupTableIDA):
 
 class LookupTable555XPlaneYPlaneEdgesOrientEdgesOnly(LookupTable):
     """
-    starting-states-lookup-table-5x5x5-step351-x-plane-y-plane-edges-orient-edges-only.txt
-    ======================================================================================
+    lookup-table-5x5x5-step351-x-plane-y-plane-edges-orient-edges-only.txt
+    ======================================================================
     1 steps has 678,720 entries (75 percent, 0.00x previous step)
     2 steps has 212,100 entries (23 percent, 0.31x previous step)
     3 steps has 8,960 entries (0 percent, 0.04x previous step)
