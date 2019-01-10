@@ -1065,9 +1065,11 @@ class RubiksCube555ForNNN(RubiksCube555):
         if not self.edges_paired():
             self.stage_first_six_edges_555()
             self.pair_first_six_edges_555(True)
+            tmp_solution_len = len(self.solution)
             self.rotate("z")
             self.rotate("D2")
             self.rotate("R2")
+            self.solution.append("COMMENT_%d_steps_555_horseshoe_staged" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
             self.print_cube()
             #self.compress_solution()
             #self.print_solution(True)

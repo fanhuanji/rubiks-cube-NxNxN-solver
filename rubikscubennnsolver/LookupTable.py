@@ -891,7 +891,6 @@ class LookupTable(object):
                 (wing_pair_count, edges_pair_count) = get_wing_pair_count_555(state_to_find, state)
                 wing_pair_count -= init_wing_count
 
-                # dwalton
                 if (wing_pair_count > max_wing_pair_count or
                         (wing_pair_count == max_wing_pair_count and len_steps < max_steps_len) or
                         (wing_pair_count == max_wing_pair_count and len_steps == max_steps_len and edges_pair_count > max_edges_pair_count)):
