@@ -42,16 +42,28 @@ class LookupTable555StageFirstSixEdges(LookupTable):
     lookup-table-5x5x5-step100-stage-first-six-edges.txt
     ====================================================
     2 steps has 12 entries (0 percent, 0.00x previous step)
-    3 steps has 86 entries (0 percent, 7.17x previous step)
-    4 steps has 710 entries (0 percent, 8.26x previous step)
-    5 steps has 11,814 entries (0 percent, 16.64x previous step)
-    6 steps has 113,246 entries (0 percent, 9.59x previous step)
-    7 steps has 993,363 entries (1 percent, 8.77x previous step)
-    8 steps has 9,034,622 entries (9 percent, 9.09x previous step)
-    9 steps has 87,411,594 entries (89 percent, 9.68x previous step)
+    3 steps has 60 entries (0 percent, 5.00x previous step)
+    4 steps has 336 entries (0 percent, 5.60x previous step)
+    5 steps has 5,952 entries (0 percent, 17.71x previous step)
+    6 steps has 33,876 entries (0 percent, 5.69x previous step)
+    7 steps has 191,388 entries (2 percent, 5.65x previous step)
+    8 steps has 1,192,296 entries (17 percent, 6.23x previous step)
+    9 steps has 5,506,092 entries (79 percent, 4.62x previous step)
 
-    Total: 97,565,447 entries
-    Average: 8.88 moves
+    Total: 6,930,012 entries
+
+    If we built this table the entire way it would have:
+    (24!/(12!*12!)) * (12!/(6!*6!)) = 2,498,640,144 states
+
+    Extrapolating shows the table would roughly look like:
+
+    10 steps has 25,438,145 entries (4.62x previous step)
+    11 steps has 117,524,229 entries (4.62x previous step)
+    12 steps has 542,961,937 entries (4.62x previous step)
+    13 steps has 1,805,785,821 entries (3.33x previous step)
+
+    Average: 12.622028410826653
+    Total  : 2,498,640,144
     """
     def __init__(self, parent):
         LookupTable.__init__(
@@ -59,8 +71,8 @@ class LookupTable555StageFirstSixEdges(LookupTable):
             parent,
             'lookup-table-5x5x5-step100-stage-first-six-edges.txt',
             'TBD',
-            linecount=97565447,
-            filesize=10537068276,
+            linecount=6930012,
+            filesize=748441296,
         )
 
     def state(self, wing_strs_to_stage):
@@ -96,12 +108,21 @@ class LookupTable555SolveFirstSixEdges(LookupTable):
     10 steps has 19,652 entries (0 percent, 3.93x previous step)
     11 steps has 78,556 entries (0 percent, 4.00x previous step)
     12 steps has 400,860 entries (0 percent, 5.10x previous step)
-    13 steps has 1,899,168 entries (2 percent, 4.74x previous step)
-    14 steps has 8,393,229 entries (9 percent, 4.42x previous step)
-    15 steps has 32,970,960 entries (36 percent, 3.93x previous step)
-    16 steps has 46,785,112 entries (51 percent, 1.42x previous step)
+    13 steps has 1,899,168 entries (0 percent, 4.74x previous step)
+    14 steps has 8,393,229 entries (4 percent, 4.42x previous step)
+    15 steps has 32,970,960 entries (16 percent, 3.93x previous step)
+    16 steps has 116,204,620 entries (59 percent, 3.52x previous step)
+    17 steps has 34,381,792 entries (17 percent, 0.30x previous step)
 
-    Total: 90,553,757 entries
+    Total: 194,355,057 entries
+
+    How many entries are left?
+        12! is 479,001,600
+        12! - 159,973,265 = 319,028,335
+
+    How many moves would it take to reach them?
+        depth 17 would roughly add 3.5 x 116,204,620 = 406,716,170
+        So there might be a few beyond depth 17 but not many at all.
     """
     def __init__(self, parent):
         LookupTable.__init__(
@@ -109,9 +130,9 @@ class LookupTable555SolveFirstSixEdges(LookupTable):
             parent,
             'lookup-table-5x5x5-step100-solve-first-six-edges.txt',
             'OOopPPQQqrRRsSSTTtuUUVVvWWwxXXYYyzZZ',
-            linecount=90553757,
-            max_depth=16,
-            filesize=8602606915)
+            linecount=194355057,
+            max_depth=17,
+            filesize=19241150643)
 
     def ida_heuristic(self):
         state = edges_recolor_pattern_555(self.parent.state[:])
@@ -484,7 +505,18 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.rotate("x")
             self.rotate("y")
 
+        elif horse_shoe_edges == [3, 36, 40, 86, 90, 148]:
+            self.rotate("x'")
+            self.rotate("y")
+
+        elif horse_shoe_edges == [3, 23, 40, 86, 128, 148]:
+            self.rotate("x")
+
+        elif horse_shoe_edges == [3, 23, 36, 90, 128, 148]:
+            self.rotate("x'")
+
         else:
+            # dwalton how do we know all of these are correct?
             #self.print_horse_shoe()
             self.print_cube()
             self.print_cube_layout()
@@ -544,22 +576,28 @@ class RubiksCube555ForNNN(RubiksCube555):
 
             post_pre_steps_state = self.state[:]
             post_pre_steps_solution = self.solution[:]
-            states_to_find = []
+            states_to_find = set()
             state_to_wing_str_combo = {}
 
             for wing_strs in itertools.combinations(wing_strs_all, 6):
                 state = self.lt_edges_stage_first_six.state(wing_strs)
                 state_to_wing_str_combo[state] = wing_strs
-                states_to_find.append(state)
+                states_to_find.add(state)
+                assert state.count("L") == 36
+                assert state.count("-") == 36
 
+            states_to_find = sorted(list(states_to_find))
             #log.info("%s: %d states_to_find" % (self, len(states_to_find)))
+            #log.info("%s: states_to_find\n%s\n" % (self, "\n".join(states_to_find)))
             results = self.lt_edges_stage_first_six.binary_search_multiple(states_to_find)
             len_results = len(results)
             log.info("%s: pre_steps %s, %d/%d states found" % (self, " ".join(pre_steps), len(results), len(states_to_find)))
+            #log.info("%s: results\n%s\n" % (self, pformat(results)))
 
             # We sort the keys of the dict so that the order is the same everytime, this isn't
             # required but makes troubleshooting easier.
             for (line_number, key) in enumerate(sorted(results.keys())):
+                #log.info("%s: %s has %d Ls, %d -s" % (self, key, key.count("L"), key.count("-")))
                 steps = results[key]
                 self.state = post_pre_steps_state[:]
                 self.solution = post_pre_steps_solution[:]
@@ -582,7 +620,7 @@ class RubiksCube555ForNNN(RubiksCube555):
                     self.rotate("R2")
                     self.pair_first_six_edges_555(False)
                 except NoSteps as e:
-                    log.info("%s: %d/%d 1st 6-edges can be staged in %d steps but we do not have an entry to solve them (15-deep for now)" % (
+                    log.info("%s: %d/%d 1st 6-edges can be staged in %d steps but we do not have an entry to solve them (16-deep for now)" % (
                         self, line_number+1, len_results, solution_len))
                     continue
 
