@@ -46,23 +46,24 @@ class LookupTable555StageFirstSixEdges(LookupTable):
     4 steps has 336 entries (0 percent, 5.60x previous step)
     5 steps has 5,952 entries (0 percent, 17.71x previous step)
     6 steps has 33,876 entries (0 percent, 5.69x previous step)
-    7 steps has 191,388 entries (2 percent, 5.65x previous step)
-    8 steps has 1,192,296 entries (17 percent, 6.23x previous step)
-    9 steps has 5,506,092 entries (79 percent, 4.62x previous step)
+    7 steps has 191,388 entries (0 percent, 5.65x previous step)
+    8 steps has 1,192,296 entries (4 percent, 6.23x previous step)
+    9 steps has 5,506,092 entries (19 percent, 4.62x previous step)
+    10 steps has 21,975,176 entries (76 percent, 3.99x previous step)
 
-    Total: 6,930,012 entries
+    Total: 28,905,188 entries
 
     If we built this table the entire way it would have:
     (24!/(12!*12!)) * (12!/(6!*6!)) = 2,498,640,144 states
 
     Extrapolating shows the table would roughly look like:
 
-    10 steps has 25,438,145 entries (4.62x previous step)
-    11 steps has 117,524,229 entries (4.62x previous step)
-    12 steps has 542,961,937 entries (4.62x previous step)
-    13 steps has 1,805,785,821 entries (3.33x previous step)
+    11 steps has 87,680,952 entries (3.99x previous step)
+    12 steps has 349,846,998 entries (3.99x previous step)
+    13 steps has 1,395,889,522 entries (3.99x previous step)
+    14 steps has 636,317,484 entries (0.46x previous step)
 
-    Average: 12.622028410826653
+    Average: 12.894078840190122
     Total  : 2,498,640,144
     """
     def __init__(self, parent):
@@ -71,8 +72,8 @@ class LookupTable555StageFirstSixEdges(LookupTable):
             parent,
             'lookup-table-5x5x5-step100-stage-first-six-edges.txt',
             'TBD',
-            linecount=6930012,
-            filesize=748441296,
+            linecount=28905188,
+            filesize=3208475868,
         )
 
     def state(self, wing_strs_to_stage):
@@ -454,6 +455,28 @@ class RubiksCube555ForNNN(RubiksCube555):
 
         self.lt_edges_x_plane_centers_solved = LookupTable555EdgesXPlaneCentersSolved(self)
 
+    def verify_horse_shoe(self, horse_shoe_edges):
+
+        horse_shoe_edges_555 = (
+            2, 3, 4,
+            6, 11, 16,
+            10, 15, 20,
+            22, 23, 24,
+            127, 128, 129,
+            147, 148, 149
+        )
+        horse_shoe_wing_strs = set()
+
+        for square_index in horse_shoe_edges_555:
+            partner_index = edges_partner_555[square_index]
+            square_value = self.state[square_index]
+            partner_value = self.state[partner_index]
+            wing_str = wing_str_map[square_value + partner_value]
+            horse_shoe_wing_strs.add(wing_str)
+
+        if len(horse_shoe_wing_strs) != 6:
+            raise SolveError("{} is not a horse_shoe...{}".format(horse_shoe_edges, horse_shoe_wing_strs))
+
     def rotate_horse_shoe(self, wing_strs):
         """
         rotate the cube so that the horse-shoe pattern has 4 unpaired edges on side U
@@ -515,13 +538,18 @@ class RubiksCube555ForNNN(RubiksCube555):
         elif horse_shoe_edges == [3, 23, 36, 90, 128, 148]:
             self.rotate("x'")
 
+        #elif horse_shoe_edges == [23, 36, 40, 90, 136, 140]:
+        #    self.rotate("")
+        #    self.rotate("")
+
         else:
-            # dwalton how do we know all of these are correct?
             #self.print_horse_shoe()
             self.print_cube()
             self.print_cube_layout()
-            log.info("Add support for {}".format(horse_shoe_edges))
+            log.info("Add horse shoe support for {}".format(horse_shoe_edges))
             sys.exit(0)
+
+        self.verify_horse_shoe(horse_shoe_edges)
 
     def print_horse_shoe(self, wing_strs):
 
@@ -563,8 +591,15 @@ class RubiksCube555ForNNN(RubiksCube555):
         min_solution_len = None
         min_solution_steps = None
         min_wing_strs = None
+        states_to_find = set()
+        state_to_wing_str_combo = {}
+        state_to_pre_steps = {}
 
         for pre_steps in pre_steps_to_try:
+
+            if len(pre_steps) >= 2:
+                break
+
             self.state = original_state[:]
             self.solution = original_solution[:]
 
@@ -574,74 +609,81 @@ class RubiksCube555ForNNN(RubiksCube555):
             for step in pre_steps:
                 self.rotate(step)
 
-            post_pre_steps_state = self.state[:]
-            post_pre_steps_solution = self.solution[:]
-            states_to_find = set()
-            state_to_wing_str_combo = {}
+            #post_pre_steps_state = self.state[:]
+            #post_pre_steps_solution = self.solution[:]
 
             for wing_strs in itertools.combinations(wing_strs_all, 6):
                 state = self.lt_edges_stage_first_six.state(wing_strs)
                 state_to_wing_str_combo[state] = wing_strs
+                state_to_pre_steps[(wing_strs, state)] = pre_steps
                 states_to_find.add(state)
                 assert state.count("L") == 36
                 assert state.count("-") == 36
 
-            states_to_find = sorted(list(states_to_find))
-            #log.info("%s: %d states_to_find" % (self, len(states_to_find)))
-            #log.info("%s: states_to_find\n%s\n" % (self, "\n".join(states_to_find)))
-            results = self.lt_edges_stage_first_six.binary_search_multiple(states_to_find)
-            len_results = len(results)
-            log.info("%s: pre_steps %s, %d/%d states found" % (self, " ".join(pre_steps), len(results), len(states_to_find)))
-            #log.info("%s: results\n%s\n" % (self, pformat(results)))
+        states_to_find = sorted(list(states_to_find))
+        log.info("%s: %d states_to_find" % (self, len(states_to_find)))
+        #log.info("%s: states_to_find\n%s\n" % (self, "\n".join(states_to_find)))
+        results = self.lt_edges_stage_first_six.binary_search_multiple(states_to_find)
+        len_results = len(results)
+        log.info("%s: %d/%d states found" % (self, len(results), len(states_to_find)))
+        #log.info("%s: results\n%s\n" % (self, pformat(results)))
 
-            # We sort the keys of the dict so that the order is the same everytime, this isn't
-            # required but makes troubleshooting easier.
-            for (line_number, key) in enumerate(sorted(results.keys())):
-                #log.info("%s: %s has %d Ls, %d -s" % (self, key, key.count("L"), key.count("-")))
-                steps = results[key]
-                self.state = post_pre_steps_state[:]
-                self.solution = post_pre_steps_solution[:]
-                wing_strs = state_to_wing_str_combo[key]
+        # We sort the keys of the dict so that the order is the same everytime, this isn't
+        # required but makes troubleshooting easier.
+        for (line_number, key) in enumerate(sorted(results.keys())):
+            steps = results[key]
+            #self.state = post_pre_steps_state[:]
+            #self.solution = post_pre_steps_solution[:]
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+            wing_strs = state_to_wing_str_combo[key]
+            pre_steps = state_to_pre_steps[(wing_strs, key)]
 
-                for step in steps.split():
-                    self.rotate(step)
+            for step in pre_steps:
+                self.rotate(step)
 
-                self.rotate_horse_shoe(wing_strs)
-                #self.print_horse_shoe(wing_strs)
+            for step in steps.split():
+                self.rotate(step)
 
-                solution_steps = self.solution[original_solution_len:]
-                solution_len = self.get_solution_len_minus_rotates(solution_steps)
+            self.rotate_horse_shoe(wing_strs)
+            #self.print_horse_shoe(wing_strs)
 
-                try:
-                    # dwalton
-                    self.pair_first_six_edges_555(False)
-                    self.rotate("z")
-                    self.rotate("D2")
-                    self.rotate("R2")
-                    self.pair_first_six_edges_555(False)
-                except NoSteps as e:
-                    log.info("%s: %d/%d 1st 6-edges can be staged in %d steps but we do not have an entry to solve them (16-deep for now)" % (
-                        self, line_number+1, len_results, solution_len))
-                    continue
+            solution_steps = self.solution[original_solution_len:]
 
-                if min_solution_len is None or solution_len < min_solution_len:
-                    log.info("%s: %d/%d 1st 6-edges can be staged in %d steps %s (NEW MIN)" % (
-                        self, line_number+1, len_results, solution_len, ' '.join(solution_steps)))
-                    min_solution_len = solution_len
-                    min_solution_steps = solution_steps
-                    min_wing_strs = wing_strs
-                else:
-                    log.info("%s: %d/%d 1st 6-edges can be staged in %d steps" % (
-                        self, line_number+1, len_results, solution_len))
+            try:
+                # dwalton
+                self.pair_first_six_edges_555(False)
+                self.rotate("z")
+                self.rotate("D2")
+                self.rotate("R2")
+                #self.rotate("U2")
+                #self.rotate("L2")
+                self.pair_first_six_edges_555(False)
+            except NoSteps as e:
+                log.info("%s: %d/%d 1st 6-edges can be staged in %d steps but we do not have an entry to solve them (16-deep for now)" % (
+                    self, line_number+1, len_results, self.get_solution_len_minus_rotates(solution_steps)))
+                continue
 
-            if min_solution_len is not None:
-                self.state = original_state[:]
-                self.solution = original_solution[:]
+            solve_steps = self.solution[original_solution_len:]
+            solution_len = self.get_solution_len_minus_rotates(solve_steps)
 
-                for step in min_solution_steps:
-                    self.rotate(step)
-                #self.print_horse_shoe(wing_strs)
-                break
+            if min_solution_len is None or solution_len < min_solution_len:
+                log.warning("%s: %d/%d 1st 6-edges can be staged in %d steps %s (NEW MIN)" % (
+                    self, line_number+1, len_results, solution_len, ' '.join(solution_steps)))
+                min_solution_len = solution_len
+                min_solution_steps = solution_steps
+                min_wing_strs = wing_strs
+            else:
+                log.info("%s: %d/%d 1st 6-edges can be staged in %d steps" % (
+                    self, line_number+1, len_results, solution_len))
+
+        if min_solution_len is not None:
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+
+            for step in min_solution_steps:
+                self.rotate(step)
+            #self.print_horse_shoe(wing_strs)
 
         if min_wing_strs:
             self.print_horse_shoe(min_wing_strs)
@@ -1112,7 +1154,6 @@ class RubiksCube555ForNNN(RubiksCube555):
             #self.compress_solution()
             #self.print_solution(True)
             self.pair_first_six_edges_555(True)
-            # dwalton
             '''
             self.stage_first_four_edges_555()
             self.stage_second_four_edges_555()
