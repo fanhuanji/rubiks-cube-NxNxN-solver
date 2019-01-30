@@ -72,8 +72,14 @@ class LookupTable555StageFirstSixEdges(LookupTable):
             parent,
             'lookup-table-5x5x5-step100-stage-first-six-edges.txt',
             'TBD',
-            linecount=28905188,
-            filesize=3208475868,
+
+            # 10-deep
+            #linecount=28905188,
+            #filesize=3208475868,
+
+            # 11-deep (partial)
+            linecount=42243283,
+            filesize=4815734262,
         )
 
     def state(self, wing_strs_to_stage):
@@ -651,17 +657,18 @@ class RubiksCube555ForNNN(RubiksCube555):
             solution_steps = self.solution[original_solution_len:]
 
             try:
-                # dwalton
                 self.pair_first_six_edges_555(False)
                 self.rotate("z")
+
+                # It doesn't appear to matter much if you do D2 R2 vs U2 L2
                 self.rotate("D2")
                 self.rotate("R2")
                 #self.rotate("U2")
                 #self.rotate("L2")
                 self.pair_first_six_edges_555(False)
             except NoSteps as e:
-                log.info("%s: %d/%d 1st 6-edges can be staged in %d steps but we do not have an entry to solve them (16-deep for now)" % (
-                    self, line_number+1, len_results, self.get_solution_len_minus_rotates(solution_steps)))
+                #log.info("%s: %d/%d 1st 6-edges can be staged in %d steps but we do not have an entry to solve them (16-deep for now)" % (
+                #    self, line_number+1, len_results, self.get_solution_len_minus_rotates(solution_steps)))
                 continue
 
             solve_steps = self.solution[original_solution_len:]
