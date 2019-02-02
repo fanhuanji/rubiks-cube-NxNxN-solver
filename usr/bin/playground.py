@@ -35,19 +35,21 @@ ed_state = ed_state.replace("B", "B")
 ed_state = ed_state.replace("Y", "D")
 '''
 
+#cube = RubiksCube555(solved_555, "URFDLB")
 cube = RubiksCube555ForNNN(solved_555, "URFDLB")
 cube.cpu_mode = "fast"
+cube.rotate("z'")
 
-for step in "Rw2 B2 U2 Lw U2 Rw' U2 Rw U2 F2 Rw F2 Lw' B2 Rw2".split():
+for step in reverse_steps("D' F2 Rw Uw2 Lw' Fw2 Uw' F2 L Uw' Lw R2 Uw Rw' Fw2 Rw Fw2 R Uw' Dw2 U2 Bw' Fw' R' B' D2 Fw' L2 Uw2 R' Fw D' Fw2 Bw R Fw Bw' L2 D Rw Dw2 F U F' Dw2 U' Rw' Uw2 Lw' L F L' F' Lw Uw2 U F Uw2 F L' D L F' Uw2 R' L B2 U D F2 D' F' B2 D' L2 R2 B L' D2 L2 R' U".split()):
+    cube.rotate(step)
+cube.print_cube()
+
+for step in "D' F2 Rw Uw2 Lw' Fw2 Uw' F2 L Uw' Lw R2 Uw Rw' Fw2 Rw Fw2 R Uw' Dw2 U2 Bw' Fw' R' B' D2 Fw' L2 Uw2 R' Fw D' Fw2 Bw R Fw Bw' ".split():
     cube.rotate(step)
 
+cube.solution = []
 cube.print_cube()
-#cube.edges_flip_to_original_orientation()
-
-#state = edges_recolor_pattern_555(cube.state[:])
-#edges_state = ''.join([state[index] for index in wings_for_edges_pattern_555])
-#print(edges_state)
-
+#sys.exit(0)
 
 cube.solve()
 cube.print_solution(True)

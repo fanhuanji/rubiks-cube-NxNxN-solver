@@ -51,6 +51,9 @@ class LookupTable555StageFirstSixEdges(LookupTable):
     9 steps has 5,506,092 entries (19 percent, 4.62x previous step)
     10 steps has 21,975,176 entries (76 percent, 3.99x previous step)
 
+    partial
+    11 steps has 37,717,034 entries (56 percent, 1.72x previous step)
+
     Total: 28,905,188 entries
 
     If we built this table the entire way it would have:
@@ -78,8 +81,8 @@ class LookupTable555StageFirstSixEdges(LookupTable):
             #filesize=3208475868,
 
             # 11-deep (partial)
-            linecount=42243283,
-            filesize=4815734262,
+            linecount=66622222,
+            filesize=7594933308,
         )
 
     def state(self, wing_strs_to_stage):
@@ -603,7 +606,7 @@ class RubiksCube555ForNNN(RubiksCube555):
 
         for pre_steps in pre_steps_to_try:
 
-            if len(pre_steps) >= 2:
+            if len(pre_steps) >= 1:
                 break
 
             self.state = original_state[:]
@@ -658,14 +661,17 @@ class RubiksCube555ForNNN(RubiksCube555):
 
             try:
                 self.pair_first_six_edges_555(False)
-                self.rotate("z")
 
-                # It doesn't appear to matter much if you do D2 R2 vs U2 L2
-                self.rotate("D2")
-                self.rotate("R2")
-                #self.rotate("U2")
-                #self.rotate("L2")
-                self.pair_first_six_edges_555(False)
+                if not self.edges_paired():
+                    self.rotate("z")
+
+                    # It doesn't appear to matter much if you do D2 R2 vs U2 L2
+                    self.rotate("D2")
+                    self.rotate("R2")
+                    #self.rotate("U2")
+                    #self.rotate("L2")
+                    self.pair_first_six_edges_555(False)
+
             except NoSteps as e:
                 #log.info("%s: %d/%d 1st 6-edges can be staged in %d steps but we do not have an entry to solve them (16-deep for now)" % (
                 #    self, line_number+1, len_results, self.get_solution_len_minus_rotates(solution_steps)))
@@ -1153,14 +1159,20 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.stage_first_six_edges_555()
             self.pair_first_six_edges_555(True)
             tmp_solution_len = len(self.solution)
-            self.rotate("z")
-            self.rotate("D2")
-            self.rotate("R2")
+
+            if not self.edges_paired():
+                self.rotate("z")
+                self.rotate("D2")
+                self.rotate("R2")
+
             self.solution.append("COMMENT_%d_steps_555_horseshoe_staged" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
             self.print_cube()
             #self.compress_solution()
             #self.print_solution(True)
-            self.pair_first_six_edges_555(True)
+
+            if not self.edges_paired():
+                self.pair_first_six_edges_555(True)
+
             '''
             self.stage_first_four_edges_555()
             self.stage_second_four_edges_555()
