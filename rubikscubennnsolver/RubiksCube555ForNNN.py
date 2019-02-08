@@ -37,6 +37,10 @@ import sys
 log = logging.getLogger(__name__)
 
 
+class HorseShoeSolveError(SolveError):
+    pass
+
+
 class LookupTable555StageFirstSixEdges(LookupTable):
     """
     lookup-table-5x5x5-step100-stage-first-six-edges.txt
@@ -52,9 +56,7 @@ class LookupTable555StageFirstSixEdges(LookupTable):
     10 steps has 21,975,176 entries (76 percent, 3.99x previous step)
 
     partial
-    11 steps has 37,717,034 entries (56 percent, 1.72x previous step)
-
-    Total: 28,905,188 entries
+    11 steps has 53,853,742 entries (65 percent, 2.45x previous step)
 
     If we built this table the entire way it would have:
     (24!/(12!*12!)) * (12!/(6!*6!)) = 2,498,640,144 states
@@ -81,8 +83,8 @@ class LookupTable555StageFirstSixEdges(LookupTable):
             #filesize=3208475868,
 
             # 11-deep (partial)
-            linecount=66622222,
-            filesize=7594933308,
+            linecount=82758930,
+            filesize=9434518020,
         )
 
     def state(self, wing_strs_to_stage):
@@ -586,11 +588,12 @@ class RubiksCube555ForNNN(RubiksCube555):
         self.print_cube()
         self.state = original_state[:]
 
-    def stage_first_six_edges_555(self):
+    def stage_first_six_edges_555(self, max_pre_steps_length):
         """
         There are 12!/(6!*6!) or 924 different permutations of 6-edges out of 12-edges, use the one
         that gives us the shortest solution for getting 6-edges staged.
         """
+        log.info("%s: stage_first_six_edges_555 called with max_pre_steps_length %d" % (self, max_pre_steps_length))
 
         # Remember what things looked like
         original_state = self.state[:]
@@ -606,7 +609,7 @@ class RubiksCube555ForNNN(RubiksCube555):
 
         for pre_steps in pre_steps_to_try:
 
-            if len(pre_steps) >= 1:
+            if len(pre_steps) > max_pre_steps_length:
                 break
 
             self.state = original_state[:]
@@ -703,7 +706,9 @@ class RubiksCube555ForNNN(RubiksCube555):
             self.solution.append("COMMENT_%d_steps_555_horseshoe_staged" % self.get_solution_len_minus_rotates(self.solution[original_solution_len:]))
             log.info("%s: 1st 6-edges staged to horseshoe, %d steps in" % (self, self.get_solution_len_minus_rotates(self.solution)))
         else:
-            raise SolveError("Could not pair horseshoe edges")
+            self.state = original_state[:]
+            self.solution = original_solution[:]
+            raise HorseShoeSolveError("Could not pair horseshoe edges")
 
     def pair_first_six_edges_555(self, print_the_cube):
 
@@ -1156,7 +1161,16 @@ class RubiksCube555ForNNN(RubiksCube555):
         self.solution.append('CENTERS_SOLVED')
 
         if not self.edges_paired():
-            self.stage_first_six_edges_555()
+
+            for x in range(3):
+                try:
+                    self.stage_first_six_edges_555(x)
+                    break
+                except HorseShoeSolveError:
+                    continue
+            else:
+                raise HorseShoeSolveError("Could not pair horseshoe edges")
+
             self.pair_first_six_edges_555(True)
             tmp_solution_len = len(self.solution)
 
@@ -1167,8 +1181,6 @@ class RubiksCube555ForNNN(RubiksCube555):
 
             self.solution.append("COMMENT_%d_steps_555_horseshoe_staged" % self.get_solution_len_minus_rotates(self.solution[tmp_solution_len:]))
             self.print_cube()
-            #self.compress_solution()
-            #self.print_solution(True)
 
             if not self.edges_paired():
                 self.pair_first_six_edges_555(True)

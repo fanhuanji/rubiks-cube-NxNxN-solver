@@ -367,7 +367,6 @@ ida_heuristic_LFRB_inner_x_centers_and_oblique_edges_solve_666(
         } else {
             // Not admissible but much faster
             cost_to_goal = max((int) cost_to_goal * 1.2, MAX_DEPTH+1);
-            //cost_to_goal = max(cost_to_goal, MAX_DEPTH + 1);
         }
     }
 
